@@ -61,7 +61,16 @@ export default function HomePage() {
 
       <SectionDivider />
 
-      {/* 3. Les 3 étapes */}
+      {/* 3. Illustration */}
+      <section className="container" style={{ padding: '8px 24px 48px', display: 'flex', justifyContent: 'center' }}>
+        <ScrollReveal>
+          <AstrolabeIllustration size={300} />
+        </ScrollReveal>
+      </section>
+
+      <SectionDivider />
+
+      {/* 4. Les 3 étapes */}
       <section style={{ background: 'var(--brume)' }}>
         <div className="container" style={{ padding: '52px 24px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 36 }} id="parcours">
           {ETAPES.map((e, i) => (
@@ -72,15 +81,6 @@ export default function HomePage() {
             </ScrollReveal>
           ))}
         </div>
-      </section>
-
-      <SectionDivider />
-
-      {/* 4. Illustration */}
-      <section className="container" style={{ padding: '48px 24px', display: 'flex', justifyContent: 'center' }}>
-        <ScrollReveal>
-          <AstrolabeIllustration size={300} />
-        </ScrollReveal>
       </section>
 
       <SectionDivider />
