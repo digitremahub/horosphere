@@ -6,11 +6,24 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "setup:stripe": "node scripts/setup-stripe.mjs"
   },
   "dependencies": {
-    "next": "14.2.35",
+    "@auth/pg-adapter": "^1.4.0",
+    "next": "^16.3.3",
+    "next-auth": "^5.0.0-beta.32",
+    "pg": "^8.12.0",
+    "postgres": "^3.4.4",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "stripe": "^16.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/pg": "^8.11.6",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "typescript": "^5.5.4"
   }
 }

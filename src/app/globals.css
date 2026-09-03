@@ -1,0 +1,283 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root{
+  /* ===== Identité Horosphère v2 : l'instrument plutôt que le mystère ===== */
+  --aube: #F8E9DD;      /* fond principal, crème pêche */
+  --brume: #EFDCC8;     /* fond secondaire, cartes, séparateurs */
+  --nacre: #FFFCF8;     /* surface de carte légèrement plus claire que l'aube */
+  --lever: #E2826A;     /* accent principal — CTA, liens, focus */
+  --lever-profond: #A64E36; /* variante plus soutenue — survol, texte d'emphase, erreurs */
+  --ambre: #C08A3E;     /* or mat — traits fins, graduations, séparateurs */
+  --encre: #3D2B24;     /* texte principal */
+  --encre-doux: #4A372E;/* variante hover pour surfaces --encre */
+  --ombre: #5B4638;     /* texte secondaire (ex-umber) */
+  --sourdine: #8A7361;  /* texte tertiaire, discret (ex-mute) */
+  --trait: rgba(61, 43, 36, 0.14); /* bordure fine dérivée de l'encre (ex-border) */
+  --crepuscule: #241925; /* fond mode sombre, aubergine — jamais bleuté */
+
+  --prune: #6C4058;     /* accent mineur (ex-plum), pour les jauges du tableau de bord */
+  --sauge: #5F7F5C;     /* accent mineur (ex-sage), pour les jauges du tableau de bord */
+
+  --focus: #A64E36;
+  --shadow: 0 24px 60px -30px rgba(61, 43, 36, 0.35);
+  --radius-lg: 22px;
+  --radius-md: 14px;
+  --radius-sm: 9px;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'Instrument Sans', system-ui, -apple-system, sans-serif;
+  --font-data: 'IBM Plex Mono', ui-monospace, monospace;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark){
+  :root{
+    --aube: #241925;
+    --brume: #2E2030;
+    --nacre: #2A1D2C;
+    --lever: #EF9478;
+    --lever-profond: #F5AB8F;
+    --ambre: #D9A860;
+    --encre: #F3E7DE;
+    --encre-doux: #E8D8C8;
+    --ombre: #D8C4B4;
+    --sourdine: #A9907C;
+    --trait: rgba(243, 231, 222, 0.14);
+    --crepuscule: #241925;
+
+    --prune: #C093AF;
+    --sauge: #8FB48A;
+
+    --focus: #F5AB8F;
+    --shadow: 0 24px 70px -24px rgba(0, 0, 0, 0.6);
+    color-scheme: dark;
+  }
+}
+
+*{ box-sizing: border-box; }
+html, body{ margin: 0; padding: 0; }
+
+body{
+  background: var(--aube);
+  color: var(--encre);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.6;
+}
+
+a{ color: inherit; }
+
+h1, h2, h3, .display{
+  font-family: var(--font-display);
+  font-weight: 600;
+  text-wrap: balance;
+  margin: 0;
+}
+
+.mono{
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+}
+
+.field-label{
+  display: block;
+  font-family: var(--font-data);
+  text-transform: uppercase;
+  font-variant: small-caps;
+  font-size: 0.65rem;
+  letter-spacing: 0.09em;
+  color: var(--ambre);
+  margin-bottom: 6px;
+}
+
+.container{
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.container-narrow{
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+button, input{ font-family: inherit; }
+
+.btn{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 999px;
+  padding: 13px 26px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform .2s var(--ease-out), box-shadow .2s var(--ease-out), background .2s var(--ease-out), border-color .2s var(--ease-out);
+  text-decoration: none;
+  position: relative;
+}
+.btn:focus-visible{ outline: 2px solid var(--focus); outline-offset: 2px; }
+.btn:hover{ transform: translateY(-1px); }
+
+.btn-primary{
+  background: var(--encre);
+  color: var(--aube);
+  padding-left: 30px;
+  overflow: hidden;
+}
+.btn-primary::before{
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--ambre);
+}
+.btn-primary::after{
+  content: '';
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--lever);
+  opacity: 0;
+  transform: translateY(-50%) scale(0.4);
+  transition: opacity .2s var(--ease-out), transform .2s var(--ease-out);
+}
+.btn-primary:hover{ background: var(--encre-doux); }
+.btn-primary:hover::after{ opacity: 1; transform: translateY(-50%) scale(1); }
+
+.btn-ghost{
+  background: transparent;
+  color: var(--encre);
+  border-color: var(--trait);
+}
+.btn-ghost:hover{ background: var(--brume); }
+
+.card{
+  background: var(--nacre);
+  border: 1px solid var(--trait);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  position: relative;
+}
+
+.pill{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ombre);
+  background: var(--brume);
+  border: 1px solid var(--trait);
+  border-radius: 999px;
+  padding: 5px 12px;
+}
+
+input:focus-visible, textarea:focus-visible, select:focus-visible{
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+::selection{ background: var(--lever); color: var(--aube); }
+
+/* ===== Mouvement : entrée, transitions, micro-interactions =====
+   Tout ce qui suit est désactivé par la règle prefers-reduced-motion
+   ci-dessous (animation: none !important fait retomber chaque élément sur
+   sa valeur de base, sans jamais rester bloqué en opacité/transform 0). */
+
+@keyframes astrolabeSpin{
+  from{ transform: rotate(0deg); }
+  to{ transform: rotate(360deg); }
+}
+.astrolabe-spin{ animation: astrolabeSpin 90s linear infinite; }
+
+@keyframes cardEnter{
+  from{ opacity: 0; transform: translateY(14px); }
+  to{ opacity: 1; transform: translateY(0); }
+}
+.card-enter{ animation: cardEnter .5s var(--ease-out) both; }
+
+@keyframes heroIn{
+  from{ opacity: 0; transform: translateY(16px); }
+  to{ opacity: 1; transform: translateY(0); }
+}
+.hero-in-1{ animation: heroIn .6s var(--ease-out) both; }
+.hero-in-2{ animation: heroIn .6s var(--ease-out) .1s both; }
+.hero-in-3{ animation: heroIn .6s var(--ease-out) .2s both; }
+.hero-in-4{ animation: heroIn .6s var(--ease-out) .3s both; }
+
+@keyframes heroInCard{
+  from{ opacity: 0; transform: translateY(16px) scale(0.98); }
+  to{ opacity: 1; transform: translateY(0) scale(1); }
+}
+.hero-in-card{ animation: heroInCard .7s var(--ease-out) .18s both; }
+
+@keyframes fadeSwap{
+  from{ opacity: 0; }
+  to{ opacity: 1; }
+}
+.fade-swap{ animation: fadeSwap .35s var(--ease-out) both; }
+
+@keyframes meterFill{
+  from{ transform: scaleX(0); }
+  to{ transform: scaleX(1); }
+}
+.meter-fill{ transform-origin: left center; animation: meterFill .8s var(--ease-out) both; }
+
+.lucky-grid > *{ animation: cardEnter .45s var(--ease-out) both; }
+
+.pick-btn{ transition: transform .2s var(--ease-out), border-color .2s var(--ease-out), background .2s var(--ease-out); }
+.pick-btn:hover{ transform: translateY(-1px); }
+.pick-btn:active{ transform: translateY(0) scale(0.99); }
+
+@keyframes btnPulse{
+  0%, 100%{ opacity: 1; }
+  50%{ opacity: .72; }
+}
+.btn-loading{ animation: btnPulse 1.1s var(--ease-out) infinite; }
+
+/* Révélation au scroll (voir ScrollReveal.tsx) */
+.reveal{ opacity: 0; transform: translateY(22px); transition: opacity .7s var(--ease-out), transform .7s var(--ease-out); }
+.reveal-visible{ opacity: 1; transform: translateY(0); }
+
+/* Cadre photo — habille les images réelles dans le même langage que .card
+   (rayon, ombre) tout en gardant un ton chaud cohérent avec l'illustration
+   au trait : léger scrim ambre plutôt qu'un contraste brut. */
+.photo-frame{
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  isolation: isolate;
+}
+.photo-frame img{
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.02);
+  transition: transform .6s var(--ease-out);
+}
+.photo-frame:hover img{ transform: scale(1.06); }
+.photo-frame::after{
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(61,43,36,0) 55%, rgba(61,43,36,0.28) 100%);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce){
+  *{ animation: none !important; transition: none !important; }
+}

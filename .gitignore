@@ -1,6 +1,7 @@
-node_modules
-.next
-out
-.vercel
-.env*
-npm-debug.log*
+node_modules/
+.next/
+.vercel/
+*.tsbuildinfo
+.env
+.env*.local
+*.min
