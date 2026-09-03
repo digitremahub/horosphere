@@ -1,5 +1,5 @@
 import { Sign } from './zodiac';
-import { fallbackHoroscope, fallbackAstralChart } from './fallback-generator';
+import { fallbackHoroscope, fallbackAstralChart, fallbackSentiment, fallbackCompatibility, fallbackGrandeAnalyse } from './fallback-generator';
 
 export type HoroscopeReading = {
   headline: string;
@@ -173,6 +173,167 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
     conseilDeVie: String(parsed.conseilDeVie ?? ''),
     pierrePorteBonheur: String(parsed.pierrePorteBonheur ?? 'Améthyste'),
     symboleCle: String(parsed.symboleCle ?? 'une clé ancienne'),
+    mode: 'ia',
+  };
+}
+
+export type SentimentReading = {
+  titre: string;
+  dominante: string;
+  enJeu: string;
+  relations: string;
+  conseil: string;
+  scoreClarte: number;
+  scoreIntensite: number;
+  motCle: string;
+  mode: 'ia' | 'demo';
+};
+
+/** Analyse sentimentale hebdomadaire — portée d'une semaine (pas du jour),
+ * régénérée de façon stable pour la semaine ISO en cours. */
+export async function generateSentiment(opts: { sign: Sign; weekKey: string }): Promise<SentimentReading> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return { ...fallbackSentiment(opts.sign.key, opts.weekKey), mode: 'demo' };
+  }
+  const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
+  const prompt = `Tu écris une analyse sentimentale hebdomadaire pour l'application Horosphère, en français, pour le signe ${opts.sign.nom} (élément ${opts.sign.element}). Portée : la semaine en cours (semaine ${opts.weekKey}), pas la journée.
+Ton : chaleureux, introspectif, jamais culpabilisant ni fataliste. Une seule idée par phrase.
+Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
+{
+  "titre": "titre court de 3 à 6 mots pour cette semaine",
+  "dominante": "1 à 2 phrases sur l'émotion ou le besoin dominant de la semaine",
+  "enJeu": "1 à 2 phrases sur ce qui se joue ou se transforme intérieurement",
+  "relations": "1 à 2 phrases sur l'impact dans les relations proches",
+  "conseil": "une phrase impérative courte, actionnable cette semaine",
+  "scoreClarte": nombre entier entre 30 et 98,
+  "scoreIntensite": nombre entier entre 20 et 95,
+  "motCle": "un seul mot résumant la semaine, en français"
+}`;
+  const parsed = await callClaude(apiKey, model, prompt, 500);
+  return {
+    titre: String(parsed.titre ?? ''),
+    dominante: String(parsed.dominante ?? ''),
+    enJeu: String(parsed.enJeu ?? ''),
+    relations: String(parsed.relations ?? ''),
+    conseil: String(parsed.conseil ?? ''),
+    scoreClarte: clampScore(parsed.scoreClarte),
+    scoreIntensite: clampScore(parsed.scoreIntensite),
+    motCle: String(parsed.motCle ?? 'Clarté'),
+    mode: 'ia',
+  };
+}
+
+export type CompatibilityReading = {
+  scoreGlobal: number;
+  resume: string;
+  pointsForts: string;
+  pointsFriction: string;
+  amour: string;
+  communication: string;
+  conseil: string;
+  mode: 'ia' | 'demo';
+};
+
+/** Compatibilité amoureuse entre le signe de l'utilisateur et un second
+ * signe choisi librement — la seule lecture qui compare à un signe qui
+ * n'est pas le sien. */
+export async function generateCompatibility(opts: { sign: Sign; autreSign: Sign; seedKey: string }): Promise<CompatibilityReading> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return { ...fallbackCompatibility(opts.sign.key, opts.autreSign.key, opts.seedKey), mode: 'demo' };
+  }
+  const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
+  const prompt = `Tu écris une analyse de compatibilité amoureuse pour l'application Horosphère, en français, entre le signe ${opts.sign.nom} (élément ${opts.sign.element}) et le signe ${opts.autreSign.nom} (élément ${opts.autreSign.element}).
+Ton : nuancé, jamais binaire ("ça marche" / "ça marche pas"), valorise les deux signes, reste concret. Pas de fatalisme.
+Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
+{
+  "scoreGlobal": nombre entier entre 35 et 98,
+  "resume": "1 à 2 phrases de résumé de cette entente",
+  "pointsForts": "1 à 2 phrases sur les points forts du duo",
+  "pointsFriction": "1 à 2 phrases sur le principal point de friction, formulé avec bienveillance",
+  "amour": "1 à 2 phrases sur la dynamique amoureuse spécifique",
+  "communication": "1 à 2 phrases sur la façon dont ce duo communique le mieux",
+  "conseil": "un conseil concret pour faire durer cette relation"
+}`;
+  const parsed = await callClaude(apiKey, model, prompt, 700);
+  return {
+    scoreGlobal: clampScore(parsed.scoreGlobal),
+    resume: String(parsed.resume ?? ''),
+    pointsForts: String(parsed.pointsForts ?? ''),
+    pointsFriction: String(parsed.pointsFriction ?? ''),
+    amour: String(parsed.amour ?? ''),
+    communication: String(parsed.communication ?? ''),
+    conseil: String(parsed.conseil ?? ''),
+    mode: 'ia',
+  };
+}
+
+export type GrandeAnalyse = {
+  synthese: string;
+  amour: string;
+  carriere: string;
+  finances: string;
+  sante: string;
+  famille: string;
+  evolutionPersonnelle: string;
+  scoreAmour: number;
+  scoreCarriere: number;
+  scoreSante: number;
+  scoreFinances: number;
+  conseilPrincipal: string;
+  periodeCle: string;
+  mode: 'ia' | 'demo';
+};
+
+/** Grande analyse personnalisée — le bilan le plus complet, tous les axes
+ * de vie (contrairement au thème astral, qui reste un portrait de fond, ou
+ * à l'horoscope, limité au jour). Basée sur le profil de naissance. */
+export async function generateGrandeAnalyse(opts: { sign: Sign; naissance: { date: string; heure?: string; lieu?: string } }): Promise<GrandeAnalyse> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return { ...fallbackGrandeAnalyse(opts.sign.key, opts.naissance.date + opts.naissance.lieu), mode: 'demo' };
+  }
+  const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
+  const contexteNaissance =
+    `Informations de naissance : date ${opts.naissance.date}` +
+    (opts.naissance.heure ? `, heure ${opts.naissance.heure}` : '') +
+    (opts.naissance.lieu ? `, lieu ${opts.naissance.lieu}` : '') +
+    `.`;
+  const prompt = `Tu écris une grande analyse personnalisée pour l'application Horosphère, en français, pour le signe ${opts.sign.nom} (élément ${opts.sign.element}, planète maîtresse ${opts.sign.planete}). ${contexteNaissance}
+C'est le bilan le plus complet proposé par l'application : couvre tous les grands axes de vie (amour, carrière, finances, santé, famille, évolution personnelle), pas seulement un portrait de fond. Ne prétends jamais calculer une position astronomique précise (pas d'ascendant, de maison ou de transit inventés) — reste qualitatif, basé sur le signe solaire et les informations fournies.
+Ton : dense, structuré, valorisant sans flatterie vide, jamais anxiogène.
+Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
+{
+  "synthese": "3 à 4 phrases de synthèse générale de la période",
+  "amour": "1 à 2 phrases sur l'axe amoureux",
+  "carriere": "1 à 2 phrases sur l'axe carrière",
+  "finances": "1 à 2 phrases sur l'axe financier",
+  "sante": "1 à 2 phrases sur l'axe santé/énergie",
+  "famille": "1 à 2 phrases sur l'axe famille/entourage",
+  "evolutionPersonnelle": "1 à 2 phrases sur l'évolution personnelle",
+  "scoreAmour": nombre entier entre 30 et 98,
+  "scoreCarriere": nombre entier entre 30 et 98,
+  "scoreSante": nombre entier entre 30 et 98,
+  "scoreFinances": nombre entier entre 30 et 98,
+  "conseilPrincipal": "le conseil central de cette analyse, 1 phrase",
+  "periodeCle": "une expression courte de période, ex: 'les quatre prochaines semaines'"
+}`;
+  const parsed = await callClaude(apiKey, model, prompt, 1400);
+  return {
+    synthese: String(parsed.synthese ?? ''),
+    amour: String(parsed.amour ?? ''),
+    carriere: String(parsed.carriere ?? ''),
+    finances: String(parsed.finances ?? ''),
+    sante: String(parsed.sante ?? ''),
+    famille: String(parsed.famille ?? ''),
+    evolutionPersonnelle: String(parsed.evolutionPersonnelle ?? ''),
+    scoreAmour: clampScore(parsed.scoreAmour),
+    scoreCarriere: clampScore(parsed.scoreCarriere),
+    scoreSante: clampScore(parsed.scoreSante),
+    scoreFinances: clampScore(parsed.scoreFinances),
+    conseilPrincipal: String(parsed.conseilPrincipal ?? ''),
+    periodeCle: String(parsed.periodeCle ?? 'les prochaines semaines'),
     mode: 'ia',
   };
 }

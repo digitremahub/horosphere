@@ -7,7 +7,11 @@ import { FEATURE_LABELS, FeatureKey } from '@/lib/pricing';
 import { findSign } from '@/lib/zodiac';
 import ReadingCard, { type Reading } from '@/components/ReadingCard';
 import AstralChartCard, { type AstralChart } from '@/components/AstralChartCard';
+import SentimentCard from '@/components/SentimentCard';
+import CompatibilityCard from '@/components/CompatibilityCard';
+import GrandeAnalyseCard from '@/components/GrandeAnalyseCard';
 import EmptyStateIllustration from '@/components/EmptyStateIllustration';
+import type { SentimentReading, CompatibilityReading, GrandeAnalyse } from '@/lib/anthropic';
 
 export default async function HistoriquePage() {
   const session = await auth();
@@ -104,6 +108,46 @@ export default async function HistoriquePage() {
                 <AstralChartCard
                   key={entry.id}
                   chart={chart}
+                  signInfo={signInfo}
+                  dateLabel={dateLabel}
+                  creditsSpent={entry.credits_spent}
+                />
+              );
+            }
+          } else if (entry.feature === 'analyse_sentimentale') {
+            const sentiment = rawReading as SentimentReading | null;
+            if (sentiment?.titre) {
+              return (
+                <SentimentCard
+                  key={entry.id}
+                  reading={sentiment}
+                  signInfo={signInfo}
+                  dateLabel={dateLabel}
+                  creditsSpent={entry.credits_spent}
+                />
+              );
+            }
+          } else if (entry.feature === 'compatibilite_amoureuse') {
+            const compat = rawReading as (CompatibilityReading & { autreSigne?: { key: string; nom: string; symbole: string } }) | null;
+            if (compat?.resume) {
+              return (
+                <CompatibilityCard
+                  key={entry.id}
+                  reading={compat}
+                  signInfo={signInfo}
+                  autreSigne={compat.autreSigne ?? null}
+                  dateLabel={dateLabel}
+                  creditsSpent={entry.credits_spent}
+                />
+              );
+            }
+          } else if (entry.feature === 'grande_analyse') {
+            const grande = rawReading as GrandeAnalyse | null;
+            if (grande?.synthese) {
+              return (
+                <GrandeAnalyseCard
+                  key={entry.id}
+                  reading={grande}
                   signInfo={signInfo}
                   dateLabel={dateLabel}
                   creditsSpent={entry.credits_spent}

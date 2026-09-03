@@ -2,15 +2,21 @@
 
 import { useState } from 'react';
 import { FEATURE_COSTS, FEATURE_LABELS, FeatureKey } from '@/lib/pricing';
+import { SIGNS } from '@/lib/zodiac';
 import ReadingCard, { type Reading } from '@/components/ReadingCard';
 import AstralChartCard, { type AstralChart } from '@/components/AstralChartCard';
+import SentimentCard from '@/components/SentimentCard';
+import CompatibilityCard from '@/components/CompatibilityCard';
+import GrandeAnalyseCard from '@/components/GrandeAnalyseCard';
 import EmptyStateIllustration from '@/components/EmptyStateIllustration';
 import { SignCircle } from '@/components/CardParts';
+import type { SentimentReading, CompatibilityReading, GrandeAnalyse } from '@/lib/anthropic';
 
 const FEATURE_ORDER = Object.keys(FEATURE_COSTS) as FeatureKey[];
 
 type UserSign = { key: string; nom: string; symbole: string; dates: string };
 type ResultSignInfo = { nom: string; symbole: string; dates: string; element?: string; planete?: string };
+type CompatReading = CompatibilityReading & { autreSigne: { key: string; nom: string; symbole: string } };
 
 export default function Dashboard({
   userName,
@@ -27,11 +33,17 @@ export default function Dashboard({
   const [balance, setBalance] = useState(initialBalance);
   const [reading, setReading] = useState<Reading | null>(null);
   const [chart, setChart] = useState<AstralChart | null>(null);
+  const [sentiment, setSentiment] = useState<SentimentReading | null>(null);
+  const [compat, setCompat] = useState<CompatReading | null>(null);
+  const [grandeAnalyse, setGrandeAnalyse] = useState<GrandeAnalyse | null>(null);
   const [signInfo, setSignInfo] = useState<ResultSignInfo | null>(null);
+  const [autreSigneKey, setAutreSigneKey] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const cost = FEATURE_COSTS[feature];
+  const needsAutreSigne = feature === 'compatibilite_amoureuse';
+  const canGenerate = !needsAutreSigne || Boolean(autreSigneKey);
 
   async function generate() {
     setLoading(true);
@@ -40,7 +52,7 @@ export default function Dashboard({
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ feature }),
+        body: JSON.stringify(needsAutreSigne ? { feature, autreSigne: autreSigneKey } : { feature }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -48,13 +60,16 @@ export default function Dashboard({
         setLoading(false);
         return;
       }
-      if (feature === 'theme_astral_complet') {
-        setChart(data.reading);
-        setReading(null);
-      } else {
-        setReading(data.reading);
-        setChart(null);
-      }
+      setReading(null);
+      setChart(null);
+      setSentiment(null);
+      setCompat(null);
+      setGrandeAnalyse(null);
+      if (feature === 'theme_astral_complet') setChart(data.reading);
+      else if (feature === 'analyse_sentimentale') setSentiment(data.reading);
+      else if (feature === 'compatibilite_amoureuse') setCompat(data.reading);
+      else if (feature === 'grande_analyse') setGrandeAnalyse(data.reading);
+      else setReading(data.reading);
       setSignInfo(data.sign);
       setBalance(data.balance);
     } catch {
@@ -63,6 +78,8 @@ export default function Dashboard({
       setLoading(false);
     }
   }
+
+  const hasResult = reading || chart || sentiment || compat || grandeAnalyse;
 
   return (
     <div>
@@ -154,13 +171,63 @@ export default function Dashboard({
             </div>
           )}
 
+          {feature === 'analyse_sentimentale' && (
+            <div className="card" style={{ padding: '12px 16px', marginBottom: 24, boxShadow: 'none', fontSize: '0.84rem', color: 'var(--ombre)' }}>
+              Portée d'une semaine entière — stable si vous la régénérez plusieurs fois cette semaine.
+            </div>
+          )}
+
+          {feature === 'grande_analyse' && (
+            <div className="card" style={{ padding: '12px 16px', marginBottom: 24, boxShadow: 'none', fontSize: '0.84rem', color: 'var(--ombre)' }}>
+              Le bilan le plus complet : amour, carrière, finances, santé, famille et évolution personnelle.
+            </div>
+          )}
+
+          {needsAutreSigne && (
+            <div className="card" style={{ padding: '14px 16px', marginBottom: 24, boxShadow: 'none' }}>
+              <div className="field-label" style={{ marginBottom: 10 }}>Comparer votre signe à</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
+                {SIGNS.map((s) => (
+                  <button
+                    key={s.key}
+                    onClick={() => setAutreSigneKey(s.key)}
+                    aria-pressed={autreSigneKey === s.key}
+                    className="pick-btn"
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 2,
+                      padding: '8px 4px',
+                      borderRadius: 10,
+                      border: `1px solid ${autreSigneKey === s.key ? 'var(--lever)' : 'var(--trait)'}`,
+                      background: autreSigneKey === s.key ? 'var(--brume)' : 'transparent',
+                      color: 'var(--ombre)',
+                      fontSize: '0.6rem',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <span style={{ fontSize: '1.1rem', color: autreSigneKey === s.key ? 'var(--lever-profond)' : 'var(--sourdine)' }}>{s.symbole}</span>
+                    {s.nom}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <button
             onClick={generate}
-            disabled={loading || balance < cost}
+            disabled={loading || balance < cost || !canGenerate}
             className={`btn btn-primary${loading ? ' btn-loading' : ''}`}
             style={{ width: '100%' }}
           >
-            {loading ? 'Lecture en cours…' : balance < cost ? `Crédits insuffisants (${balance}/${cost})` : `Générer (${cost} crédit${cost > 1 ? 's' : ''})`}
+            {loading
+              ? 'Lecture en cours…'
+              : balance < cost
+              ? `Crédits insuffisants (${balance}/${cost})`
+              : !canGenerate
+              ? 'Choisissez un second signe'
+              : `Générer (${cost} crédit${cost > 1 ? 's' : ''})`}
           </button>
           {error && (
             <p style={{ fontSize: '0.84rem', color: 'var(--lever-profond)', marginTop: 10 }}>
@@ -170,7 +237,7 @@ export default function Dashboard({
         </div>
 
         <div>
-          {!reading && !chart && (
+          {!hasResult && (
             <div className="card" style={{ padding: '40px 26px', textAlign: 'center', color: 'var(--sourdine)' }}>
               <EmptyStateIllustration size={72} />
               <p style={{ margin: '14px 0 0' }}>Choisissez une lecture, votre horoscope apparaîtra ici.</p>
@@ -179,6 +246,9 @@ export default function Dashboard({
 
           {reading && signInfo && <ReadingCard reading={reading} signInfo={signInfo} />}
           {chart && signInfo && <AstralChartCard chart={chart} signInfo={signInfo} />}
+          {sentiment && signInfo && <SentimentCard reading={sentiment} signInfo={signInfo} />}
+          {compat && signInfo && <CompatibilityCard reading={compat} signInfo={signInfo} autreSigne={compat.autreSigne} />}
+          {grandeAnalyse && signInfo && <GrandeAnalyseCard reading={grandeAnalyse} signInfo={signInfo} />}
         </div>
       </div>
 

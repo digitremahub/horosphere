@@ -132,3 +132,121 @@ export function fallbackAstralChart(signKey: string, seedKey: string) {
     symboleCle: pick(rng, SYMBOLES),
   };
 }
+
+// ===== Analyse sentimentale (hebdomadaire) =====
+
+const SENT_TITRES = ['Une semaine de recentrage', 'Le cœur en mouvement', 'Une semaine plus claire que prévu', 'Un cycle qui se referme'];
+const SENT_DOMINANTE = [
+  "Cette semaine, une envie de vérité prend le dessus sur les non-dits accumulés.",
+  "Un besoin de tendresse simple domine, plus que les grandes déclarations.",
+  "La semaine est marquée par une envie de reprendre la main sur vos choix affectifs.",
+];
+const SENT_EN_JEU = [
+  "Ce qui se joue : la capacité à rester vous-même face à l'attente de l'autre.",
+  "Ce qui se transforme : la façon dont vous exprimez ce qui compte pour vous.",
+  "Un ajustement discret s'opère entre ce que vous ressentez et ce que vous montrez.",
+];
+const SENT_RELATIONS = [
+  "Dans vos relations, une conversation reportée trouve enfin sa place.",
+  "Les liens proches se resserrent si vous acceptez de baisser la garde un instant.",
+  "Une personne de votre entourage a besoin d'un signe de votre part, même petit.",
+];
+const SENT_CONSEIL = [
+  "Nommez ce que vous ressentez avant de décider comment agir.",
+  "Accordez-vous le droit de changer d'avis sur une histoire ancienne.",
+  "Privilégiez une conversation en face à face plutôt qu'un message.",
+];
+const SENT_MOTS_CLES = ['Sincérité', 'Ancrage', 'Clarté', 'Tendresse', 'Recentrage'];
+
+export function fallbackSentiment(signKey: string, weekKey: string) {
+  const rng = mulberry32(hashStr('sentiment::' + signKey + '::' + weekKey));
+  return {
+    titre: pick(rng, SENT_TITRES),
+    dominante: pick(rng, SENT_DOMINANTE),
+    enJeu: pick(rng, SENT_EN_JEU),
+    relations: pick(rng, SENT_RELATIONS),
+    conseil: pick(rng, SENT_CONSEIL),
+    scoreClarte: range(rng, 40, 95),
+    scoreIntensite: range(rng, 30, 90),
+    motCle: pick(rng, SENT_MOTS_CLES),
+  };
+}
+
+// ===== Compatibilité amoureuse =====
+
+const COMPAT_RESUME = [
+  "Un duo qui fonctionne par contraste : ce que l'un n'a pas, l'autre l'apporte naturellement.",
+  "Une entente qui se construit dans la durée, pas dans l'évidence immédiate.",
+  "Deux tempéraments qui se reconnaissent vite, à condition de respecter le rythme de l'autre.",
+];
+const COMPAT_FORTS = [
+  "Points forts : une complicité facile et une capacité commune à se rassurer mutuellement.",
+  "Points forts : un respect naturel de l'indépendance de l'autre, sans distance froide.",
+  "Points forts : une communication qui s'installe sans effort une fois la confiance posée.",
+];
+const COMPAT_FRICTION = [
+  "Point de friction : le rythme d'engagement n'est pas toujours le même des deux côtés.",
+  "Point de friction : la gestion des désaccords demande à être apprivoisée avec le temps.",
+  "Point de friction : l'un a besoin de parler, l'autre de silence — un terrain d'entente existe.",
+];
+const COMPAT_AMOUR = [
+  "Sur le plan amoureux, l'alchimie est réelle mais se révèle davantage dans la durée que dans l'instant.",
+  "L'attirance est immédiate ; c'est la constance qui demandera un effort partagé.",
+];
+const COMPAT_COMMUNICATION = [
+  "La communication passe mieux dans l'action partagée que dans les grandes discussions.",
+  "Un mot dit au bon moment compte plus, pour ce duo, qu'un long discours.",
+];
+const COMPAT_CONSEIL = [
+  "Laissez à cette relation le temps de trouver son propre rythme, sans le comparer à d'autres.",
+  "Nommez vos besoins clairement plutôt que d'attendre qu'ils soient devinés.",
+];
+
+export function fallbackCompatibility(signKey: string, autreSignKey: string, seedKey: string) {
+  const pairKey = [signKey, autreSignKey].sort().join('+');
+  const rng = mulberry32(hashStr('compat::' + pairKey + '::' + seedKey));
+  return {
+    scoreGlobal: range(rng, 45, 96),
+    resume: pick(rng, COMPAT_RESUME),
+    pointsForts: pick(rng, COMPAT_FORTS),
+    pointsFriction: pick(rng, COMPAT_FRICTION),
+    amour: pick(rng, COMPAT_AMOUR),
+    communication: pick(rng, COMPAT_COMMUNICATION),
+    conseil: pick(rng, COMPAT_CONSEIL),
+  };
+}
+
+// ===== Grande analyse personnalisée =====
+
+const GA_SYNTHESE = [
+  "Ce bilan dessine une période de consolidation : moins une remise en question totale qu'un ajustement fin de ce qui fonctionne déjà.",
+  "Cette période invite à faire le tri entre ce qui vous porte réellement et ce que vous maintenez par habitude.",
+  "Un cycle se referme doucement, laissant place à des choix plus alignés avec ce que vous êtes devenu·e.",
+];
+const GA_AMOUR = ["En amour, la sincérité prime sur la stratégie — dites ce qui compte, sans détour.", "La vie affective bénéficie d'un ralentissement volontaire du rythme."];
+const GA_CARRIERE = ["Côté carrière, un effort de fond commence à porter ses fruits, même sans reconnaissance immédiate.", "Une réorientation discrète se prépare, plus qu'un changement brutal."];
+const GA_FINANCES = ["Sur le plan financier, la prudence mesurée l'emporte sur la prise de risque ces prochaines semaines.", "Un ajustement budgétaire simple libère plus de marge que prévu."];
+const GA_SANTE = ["Côté santé, le corps demande de la régularité plus que des efforts ponctuels intenses.", "Le sommeil est le levier le plus rentable de cette période."];
+const GA_FAMILLE = ["Du côté de la famille, une clarification de rôle apaise une tension latente.", "Un lien familial ancien mérite d'être renoué, sans attendre une occasion parfaite."];
+const GA_EVOLUTION = ["Sur le plan personnel, vous gagnez à consolider plutôt qu'à multiplier les chantiers.", "Une prise de recul volontaire ouvre une clarté que l'agitation empêchait de voir."];
+const GA_CONSEIL = ["Le conseil central de cette période : choisissez un axe et allez-y jusqu'au bout avant d'en ouvrir un autre.", "Le conseil central : ce qui est simple est souvent ce qui est juste — méfiez-vous des solutions trop compliquées."];
+const GA_PERIODES = ['les quatre prochaines semaines', 'ce trimestre', 'les prochaines semaines', 'la période à venir'];
+
+export function fallbackGrandeAnalyse(signKey: string, seedKey: string) {
+  const rng = mulberry32(hashStr('grande::' + signKey + '::' + seedKey));
+  return {
+    synthese: pick(rng, GA_SYNTHESE),
+    amour: pick(rng, GA_AMOUR),
+    carriere: pick(rng, GA_CARRIERE),
+    finances: pick(rng, GA_FINANCES),
+    sante: pick(rng, GA_SANTE),
+    famille: pick(rng, GA_FAMILLE),
+    evolutionPersonnelle: pick(rng, GA_EVOLUTION),
+    scoreAmour: range(rng, 35, 96),
+    scoreCarriere: range(rng, 35, 96),
+    scoreSante: range(rng, 35, 96),
+    scoreFinances: range(rng, 35, 96),
+    conseilPrincipal: pick(rng, GA_CONSEIL),
+    periodeCle: pick(rng, GA_PERIODES),
+  };
+}

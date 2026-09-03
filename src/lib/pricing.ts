@@ -54,10 +54,10 @@ export type FeatureKey = keyof typeof FEATURE_COSTS;
 export const FEATURE_LABELS: Record<FeatureKey, { nom: string; description: string; disponible: boolean }> = {
   horoscope_quotidien: { nom: 'Horoscope du jour', description: "La lecture quotidienne pour votre signe.", disponible: true },
   horoscope_personnalise: { nom: 'Horoscope personnalisé', description: "Basé sur votre date, heure et lieu de naissance.", disponible: true },
-  analyse_sentimentale: { nom: 'Analyse sentimentale', description: "Ce que traverse votre cœur cette semaine.", disponible: false },
-  compatibilite_amoureuse: { nom: 'Compatibilité amoureuse', description: "Comparez deux signes en détail.", disponible: false },
+  analyse_sentimentale: { nom: 'Analyse sentimentale', description: "Ce que traverse votre cœur cette semaine.", disponible: true },
+  compatibilite_amoureuse: { nom: 'Compatibilité amoureuse', description: "Comparez deux signes en détail.", disponible: true },
   theme_astral_complet: { nom: 'Thème astral complet', description: "Votre carte du ciel à la naissance.", disponible: true },
-  grande_analyse: { nom: 'Grande analyse personnalisée', description: "Un bilan long format, tous les axes.", disponible: false },
+  grande_analyse: { nom: 'Grande analyse personnalisée', description: "Un bilan long format, tous les axes.", disponible: true },
 };
 
 // Les crédits achetés (packs) expirent 45 jours après l'achat.
