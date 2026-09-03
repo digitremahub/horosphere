@@ -62,10 +62,11 @@ export async function POST(req: NextRequest) {
   // client — sans jamais quitter le sien (issu du profil) comme point de
   // départ. Le signe est toujours recalculé ici, jamais reçu du client.
   let autrePrenom = '';
+  let autreDate = '';
   let autreSign = null as ReturnType<typeof signFromBirthdate> | null;
   if (feature === 'compatibilite_amoureuse') {
     autrePrenom = String(body.autrePrenom || '').trim().slice(0, 60);
-    const autreDate = String(body.autreDateNaissance || '');
+    autreDate = String(body.autreDateNaissance || '');
     const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(autreDate);
     if (!autrePrenom || !match) {
       return NextResponse.json({ error: 'Indique le prénom et la date de naissance de la personne à comparer.' }, { status: 400 });
@@ -144,12 +145,21 @@ export async function POST(req: NextRequest) {
           reading = await generateSentiment({ sign, weekKey: isoWeekKey(new Date()) });
           break;
         case 'compatibilite_amoureuse': {
-          const compat = await generateCompatibility({ sign, autreSign: autreSign!, seedKey: dateISO.slice(0, 7) });
-          // Le prénom et le second signe sont stockés avec la lecture :
-          // indispensable pour pouvoir la réafficher à l'identique dans
-          // l'historique plus tard.
+          const compat = await generateCompatibility({
+            prenom: profile.prenom,
+            sign,
+            dateNaissance: profile.date_naissance,
+            autrePrenom,
+            autreSign: autreSign!,
+            autreDateNaissance: autreDate,
+            seedKey: dateISO.slice(0, 7),
+          });
+          // Les deux prénoms et le second signe sont stockés avec la
+          // lecture : indispensable pour pouvoir la réafficher à
+          // l'identique dans l'historique plus tard.
           reading = {
             ...compat,
+            moiPrenom: profile.prenom,
             autreSigne: { key: autreSign!.key, nom: autreSign!.nom, symbole: autreSign!.symbole, prenom: autrePrenom },
           };
           break;

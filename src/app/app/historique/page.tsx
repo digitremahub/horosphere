@@ -134,7 +134,7 @@ export default async function HistoriquePage() {
               );
             }
           } else if (entry.feature === 'compatibilite_amoureuse') {
-            const compat = rawReading as (CompatibilityReading & { autreSigne?: { key: string; nom: string; symbole: string; prenom?: string } }) | null;
+            const compat = rawReading as (CompatibilityReading & { autreSigne?: { key: string; nom: string; symbole: string; prenom?: string }; moiPrenom?: string }) | null;
             if (compat?.resume) {
               return (
                 <CompatibilityCard
@@ -142,6 +142,7 @@ export default async function HistoriquePage() {
                   reading={compat}
                   signInfo={signInfo}
                   autreSigne={compat.autreSigne ?? null}
+                  moiPrenom={compat.moiPrenom}
                   dateLabel={dateLabel}
                   creditsSpent={entry.credits_spent}
                 />

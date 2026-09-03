@@ -14,6 +14,7 @@ export default function CompatibilityCard({
   reading,
   signInfo,
   autreSigne,
+  moiPrenom,
   dateLabel,
   creditsSpent,
   cornerArc = true,
@@ -21,6 +22,7 @@ export default function CompatibilityCard({
   reading: CompatibilityReading;
   signInfo: SignInfo | null;
   autreSigne: AutreSigne | null;
+  moiPrenom?: string;
   dateLabel?: string;
   creditsSpent?: number;
   cornerArc?: boolean;
@@ -57,7 +59,10 @@ export default function CompatibilityCard({
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginBottom: 18, paddingBottom: 18, borderBottom: '1px solid var(--trait)' }}>
         <div style={{ textAlign: 'center' }}>
           <SignCircle symbole={signInfo?.symbole ?? '?'} />
-          <div style={{ fontSize: '0.76rem', marginTop: 6 }}>{signInfo?.nom ?? 'Vous'}</div>
+          <div style={{ fontSize: '0.76rem', marginTop: 6 }}>{moiPrenom || signInfo?.nom || 'Vous'}</div>
+          {moiPrenom && signInfo?.nom && (
+            <div className="mono" style={{ fontSize: '0.64rem', color: 'var(--sourdine)' }}>{signInfo.nom}</div>
+          )}
         </div>
         <div className="display" style={{ fontStyle: 'italic', fontSize: '1.6rem', color: 'var(--lever-profond)' }}>+</div>
         <div style={{ textAlign: 'center' }}>

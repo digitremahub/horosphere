@@ -40,3 +40,29 @@ export function signFromBirthdate(month: number, day: number): Sign {
   }
   return SIGNS[0];
 }
+
+const CUMUL_JOURS = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+function jourDeLAnnee(month: number, day: number): number {
+  return CUMUL_JOURS[month - 1] + day;
+}
+
+/** Décan (1, 2 ou 3) : subdivision traditionnelle d'un signe en trois tiers
+ * d'environ 10 jours chacun, calculée à partir de la date exacte de
+ * naissance — permet d'affiner une lecture au-delà du seul signe solaire,
+ * sans jamais prétendre calculer une position astronomique précise
+ * (ascendant, maison, transit). */
+export function decanOf(sign: Sign, month: number, day: number): 1 | 2 | 3 {
+  const debut = jourDeLAnnee(sign.debut[0], sign.debut[1]);
+  const fin = jourDeLAnnee(sign.fin[0], sign.fin[1]);
+  const date = jourDeLAnnee(month, day);
+  let span = fin - debut;
+  let pos = date - debut;
+  if (span < 0) {
+    span += 365;
+    if (pos < 0) pos += 365;
+  }
+  const ratio = pos / (span + 1);
+  if (ratio < 1 / 3) return 1;
+  if (ratio < 2 / 3) return 2;
+  return 3;
+}

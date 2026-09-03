@@ -24,7 +24,7 @@ function isThemeKey(f: FeatureKey): f is FeatureKey & ThemeKey {
 
 type UserSign = { key: string; nom: string; symbole: string; dates: string };
 type ResultSignInfo = { nom: string; symbole: string; dates: string; element?: string; planete?: string };
-type CompatReading = CompatibilityReading & { autreSigne: { key: string; nom: string; symbole: string; prenom?: string } };
+type CompatReading = CompatibilityReading & { autreSigne: { key: string; nom: string; symbole: string; prenom?: string }; moiPrenom?: string };
 
 export default function Dashboard({
   userName,
@@ -292,7 +292,7 @@ export default function Dashboard({
           {reading && signInfo && <ReadingCard reading={reading} signInfo={signInfo} />}
           {chart && signInfo && <AstralChartCard chart={chart} signInfo={signInfo} />}
           {sentiment && signInfo && <SentimentCard reading={sentiment} signInfo={signInfo} />}
-          {compat && signInfo && <CompatibilityCard reading={compat} signInfo={signInfo} autreSigne={compat.autreSigne} />}
+          {compat && signInfo && <CompatibilityCard reading={compat} signInfo={signInfo} autreSigne={compat.autreSigne} moiPrenom={compat.moiPrenom} />}
           {grandeAnalyse && signInfo && <GrandeAnalyseCard reading={grandeAnalyse} signInfo={signInfo} />}
           {thematic && signInfo && isThemeKey(feature) && <ThematicCard reading={thematic} signInfo={signInfo} featureNom={FEATURE_LABELS[feature].nom} />}
           {lunar && signInfo && <LunarCycleCard reading={lunar} signInfo={signInfo} />}

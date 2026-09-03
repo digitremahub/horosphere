@@ -175,46 +175,65 @@ export function fallbackSentiment(signKey: string, weekKey: string) {
 }
 
 // ===== Compatibilité amoureuse =====
+// Les modèles utilisent {prenom}/{autrePrenom} — remplacés à l'usage par les
+// prénoms réels des deux personnes, pour que le mode démo reste personnalisé
+// même sans clé IA.
 
 const COMPAT_RESUME = [
-  "Un duo qui fonctionne par contraste : ce que l'un n'a pas, l'autre l'apporte naturellement.",
-  "Une entente qui se construit dans la durée, pas dans l'évidence immédiate.",
-  "Deux tempéraments qui se reconnaissent vite, à condition de respecter le rythme de l'autre.",
+  "{prenom} et {autrePrenom} forment un duo qui fonctionne par contraste : ce que l'un n'a pas, l'autre l'apporte naturellement.",
+  "Entre {prenom} et {autrePrenom}, l'entente se construit dans la durée, pas dans l'évidence immédiate.",
+  "{prenom} et {autrePrenom} sont deux tempéraments qui se reconnaissent vite, à condition de respecter le rythme de l'autre.",
 ];
 const COMPAT_FORTS = [
-  "Points forts : une complicité facile et une capacité commune à se rassurer mutuellement.",
-  "Points forts : un respect naturel de l'indépendance de l'autre, sans distance froide.",
-  "Points forts : une communication qui s'installe sans effort une fois la confiance posée.",
+  "Points forts : une complicité facile entre {prenom} et {autrePrenom}, et une capacité commune à se rassurer mutuellement.",
+  "Points forts : {prenom} et {autrePrenom} respectent naturellement l'indépendance de l'autre, sans distance froide.",
+  "Points forts : la communication s'installe sans effort entre {prenom} et {autrePrenom}, une fois la confiance posée.",
 ];
 const COMPAT_FRICTION = [
-  "Point de friction : le rythme d'engagement n'est pas toujours le même des deux côtés.",
-  "Point de friction : la gestion des désaccords demande à être apprivoisée avec le temps.",
-  "Point de friction : l'un a besoin de parler, l'autre de silence — un terrain d'entente existe.",
+  "Point de friction : le rythme d'engagement de {prenom} n'est pas toujours celui de {autrePrenom}.",
+  "Point de friction : la gestion des désaccords demande à être apprivoisée avec le temps entre {prenom} et {autrePrenom}.",
+  "Point de friction : {prenom} a besoin de parler quand {autrePrenom} a besoin de silence — un terrain d'entente existe.",
 ];
 const COMPAT_AMOUR = [
-  "Sur le plan amoureux, l'alchimie est réelle mais se révèle davantage dans la durée que dans l'instant.",
-  "L'attirance est immédiate ; c'est la constance qui demandera un effort partagé.",
+  "Sur le plan amoureux, l'alchimie entre {prenom} et {autrePrenom} est réelle mais se révèle davantage dans la durée que dans l'instant.",
+  "Entre {prenom} et {autrePrenom}, l'attirance est immédiate ; c'est la constance qui demandera un effort partagé.",
 ];
 const COMPAT_COMMUNICATION = [
-  "La communication passe mieux dans l'action partagée que dans les grandes discussions.",
+  "La communication passe mieux dans l'action partagée que dans les grandes discussions, pour {prenom} comme pour {autrePrenom}.",
   "Un mot dit au bon moment compte plus, pour ce duo, qu'un long discours.",
 ];
 const COMPAT_CONSEIL = [
   "Laissez à cette relation le temps de trouver son propre rythme, sans le comparer à d'autres.",
-  "Nommez vos besoins clairement plutôt que d'attendre qu'ils soient devinés.",
+  "{prenom} et {autrePrenom} gagnent à nommer leurs besoins clairement plutôt qu'à attendre qu'ils soient devinés.",
 ];
 
-export function fallbackCompatibility(signKey: string, autreSignKey: string, seedKey: string) {
-  const pairKey = [signKey, autreSignKey].sort().join('+');
-  const rng = mulberry32(hashStr('compat::' + pairKey + '::' + seedKey));
+function interpole(texte: string, prenom: string, autrePrenom: string): string {
+  return texte.replaceAll('{prenom}', prenom).replaceAll('{autrePrenom}', autrePrenom);
+}
+
+export function fallbackCompatibility(opts: {
+  prenom: string;
+  signKey: string;
+  decan: 1 | 2 | 3;
+  autrePrenom: string;
+  autreSignKey: string;
+  autreDecan: 1 | 2 | 3;
+  seedKey: string;
+}) {
+  // La clé de hachage inclut les décans (issus des dates de naissance
+  // exactes) : deux personnes du même signe mais nées à des moments
+  // différents du signe obtiennent un résultat distinct.
+  const pairKey = [`${opts.signKey}-${opts.decan}`, `${opts.autreSignKey}-${opts.autreDecan}`].sort().join('+');
+  const rng = mulberry32(hashStr('compat::' + pairKey + '::' + opts.seedKey));
+  const t = (texte: string) => interpole(texte, opts.prenom, opts.autrePrenom);
   return {
     scoreGlobal: range(rng, 45, 96),
-    resume: pick(rng, COMPAT_RESUME),
-    pointsForts: pick(rng, COMPAT_FORTS),
-    pointsFriction: pick(rng, COMPAT_FRICTION),
-    amour: pick(rng, COMPAT_AMOUR),
-    communication: pick(rng, COMPAT_COMMUNICATION),
-    conseil: pick(rng, COMPAT_CONSEIL),
+    resume: t(pick(rng, COMPAT_RESUME)),
+    pointsForts: t(pick(rng, COMPAT_FORTS)),
+    pointsFriction: t(pick(rng, COMPAT_FRICTION)),
+    amour: t(pick(rng, COMPAT_AMOUR)),
+    communication: t(pick(rng, COMPAT_COMMUNICATION)),
+    conseil: t(pick(rng, COMPAT_CONSEIL)),
   };
 }
 

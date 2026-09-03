@@ -1,4 +1,4 @@
-import { Sign } from './zodiac';
+import { Sign, decanOf } from './zodiac';
 import { currentPlanetPositions, zodiacSignAt } from './planets';
 import { moonPhaseInfo } from '../components/MoonPhase';
 import { THEMES, type ThemeKey } from './themes';
@@ -247,17 +247,47 @@ export type CompatibilityReading = {
   mode: 'ia' | 'demo';
 };
 
-/** Compatibilité amoureuse entre le signe de l'utilisateur et un second
- * signe choisi librement — la seule lecture qui compare à un signe qui
- * n'est pas le sien. */
-export async function generateCompatibility(opts: { sign: Sign; autreSign: Sign; seedKey: string }): Promise<CompatibilityReading> {
+/** Compatibilité amoureuse entre l'utilisateur et une seconde personne
+ * choisie librement — la seule lecture qui compare à un profil qui n'est
+ * pas le sien. Affinée avec le prénom et la date de naissance exacte des
+ * deux personnes (décan, en plus du seul signe solaire), jamais avec des
+ * positions astronomiques inventées (pas d'ascendant, de maison ou de
+ * transit calculé). */
+export async function generateCompatibility(opts: {
+  prenom: string;
+  sign: Sign;
+  dateNaissance: string;
+  autrePrenom: string;
+  autreSign: Sign;
+  autreDateNaissance: string;
+  seedKey: string;
+}): Promise<CompatibilityReading> {
+  const [, m1, d1] = opts.dateNaissance.split('-').map(Number);
+  const [, m2, d2] = opts.autreDateNaissance.split('-').map(Number);
+  const decan1 = decanOf(opts.sign, m1, d1);
+  const decan2 = decanOf(opts.autreSign, m2, d2);
+
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return { ...fallbackCompatibility(opts.sign.key, opts.autreSign.key, opts.seedKey), mode: 'demo' };
+    return {
+      ...fallbackCompatibility({
+        prenom: opts.prenom,
+        signKey: opts.sign.key,
+        decan: decan1,
+        autrePrenom: opts.autrePrenom,
+        autreSignKey: opts.autreSign.key,
+        autreDecan: decan2,
+        seedKey: opts.seedKey,
+      }),
+      mode: 'demo',
+    };
   }
   const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
-  const prompt = `Tu écris une analyse de compatibilité amoureuse pour l'application Horosphère, en français, entre le signe ${opts.sign.nom} (élément ${opts.sign.element}) et le signe ${opts.autreSign.nom} (élément ${opts.autreSign.element}).
-Ton : nuancé, jamais binaire ("ça marche" / "ça marche pas"), valorise les deux signes, reste concret. Pas de fatalisme.
+  const prompt = `Tu écris une analyse de compatibilité amoureuse pour l'application Horosphère, en français, entre deux personnes :
+- ${opts.prenom}, signe ${opts.sign.nom} (élément ${opts.sign.element}), ${decan1}e décan (né(e) le ${opts.dateNaissance})
+- ${opts.autrePrenom}, signe ${opts.autreSign.nom} (élément ${opts.autreSign.element}), ${decan2}e décan (né(e) le ${opts.autreDateNaissance})
+Utilise les deux prénoms directement dans le texte plutôt que de dire "l'un" et "l'autre". Le décan (tiers du signe selon la date exacte de naissance) doit nuancer l'analyse sans jamais prétendre calculer une position astronomique précise (pas d'ascendant, de maison ou de transit inventés).
+Ton : nuancé, jamais binaire ("ça marche" / "ça marche pas"), valorise les deux personnes, reste concret. Pas de fatalisme.
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
 {
   "scoreGlobal": nombre entier entre 35 et 98,
