@@ -17,6 +17,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="container" style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
             <span>© {new Date().getFullYear()} Horosphère</span>
             <span>Un rituel quotidien, pensé pour durer.</span>
+            <span style={{ display: 'flex', gap: 18 }}>
+              <a href="/mentions-legales" style={{ color: 'var(--sourdine)' }}>Mentions légales</a>
+              <a href="/cgv" style={{ color: 'var(--sourdine)' }}>CGV</a>
+            </span>
           </div>
         </footer>
       </body>
