@@ -25,3 +25,7 @@ npm run dev
 
 Déployé sur Vercel (projet `horosphere-live`), connecté à ce dépôt GitHub —
 chaque push sur la branche de production déclenche un nouveau déploiement.
+
+Paiements : Stripe (produits/prix et webhook déjà configurés côté Stripe ;
+`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` et les `STRIPE_PRICE_*` sont
+définis dans les variables d'environnement Vercel).
