@@ -3,11 +3,13 @@ import { Field, SignCircle } from '@/components/CardParts';
 import type { CompatibilityReading } from '@/lib/anthropic';
 
 type SignInfo = { nom: string; symbole: string; dates: string };
-type AutreSigne = { key: string; nom: string; symbole: string };
+type AutreSigne = { key: string; nom: string; symbole: string; prenom?: string };
 
 // Carte de compatibilité amoureuse — la seule lecture qui compare le signe
-// de l'utilisateur (issu du profil) à un second signe choisi librement.
-// Réutilisée pour le résultat frais (Dashboard) et l'historique.
+// de l'utilisateur (issu du profil) à celui d'une seconde personne, entrée
+// par son prénom et sa date de naissance (le signe est toujours recalculé
+// côté serveur). Réutilisée pour le résultat frais (Dashboard) et
+// l'historique.
 export default function CompatibilityCard({
   reading,
   signInfo,
@@ -60,7 +62,10 @@ export default function CompatibilityCard({
         <div className="display" style={{ fontStyle: 'italic', fontSize: '1.6rem', color: 'var(--lever-profond)' }}>+</div>
         <div style={{ textAlign: 'center' }}>
           <SignCircle symbole={autreSigne?.symbole ?? '?'} />
-          <div style={{ fontSize: '0.76rem', marginTop: 6 }}>{autreSigne?.nom ?? '—'}</div>
+          <div style={{ fontSize: '0.76rem', marginTop: 6 }}>{autreSigne?.prenom || autreSigne?.nom || '—'}</div>
+          {autreSigne?.prenom && (
+            <div className="mono" style={{ fontSize: '0.64rem', color: 'var(--sourdine)' }}>{autreSigne.nom}</div>
+          )}
         </div>
       </div>
 

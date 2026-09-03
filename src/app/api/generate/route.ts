@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { signFromBirthdate, findSign, SIGNS } from '@/lib/zodiac';
+import { signFromBirthdate } from '@/lib/zodiac';
 import {
   generateHoroscope,
   generateAstralChart,
@@ -57,17 +57,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Cette fonctionnalité arrive bientôt.' }, { status: 400 });
   }
 
-  // La compatibilité amoureuse est la seule lecture qui compare à un second
-  // signe, choisi librement côté client — sans jamais quitter le sien
-  // (issu du profil) comme point de départ.
-  let autreSign = null as ReturnType<typeof findSign> | null;
+  // La compatibilité amoureuse est la seule lecture qui compare à une
+  // seconde personne — prénom + date de naissance, saisis librement côté
+  // client — sans jamais quitter le sien (issu du profil) comme point de
+  // départ. Le signe est toujours recalculé ici, jamais reçu du client.
+  let autrePrenom = '';
+  let autreSign = null as ReturnType<typeof signFromBirthdate> | null;
   if (feature === 'compatibilite_amoureuse') {
-    const autreSlug = String(body.autreSigne || '');
-    const isValidSlug = SIGNS.some((s) => s.key === autreSlug);
-    if (!isValidSlug) {
-      return NextResponse.json({ error: 'Choisis un second signe pour la compatibilité.' }, { status: 400 });
+    autrePrenom = String(body.autrePrenom || '').trim().slice(0, 60);
+    const autreDate = String(body.autreDateNaissance || '');
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(autreDate);
+    if (!autrePrenom || !match) {
+      return NextResponse.json({ error: 'Indique le prénom et la date de naissance de la personne à comparer.' }, { status: 400 });
     }
-    autreSign = findSign(autreSlug);
+    autreSign = signFromBirthdate(Number(match[2]), Number(match[3]));
   }
 
   const uid = Number(userId);
@@ -142,9 +145,13 @@ export async function POST(req: NextRequest) {
           break;
         case 'compatibilite_amoureuse': {
           const compat = await generateCompatibility({ sign, autreSign: autreSign!, seedKey: dateISO.slice(0, 7) });
-          // Le second signe est stocké avec la lecture : indispensable pour
-          // pouvoir la réafficher à l'identique dans l'historique plus tard.
-          reading = { ...compat, autreSigne: { key: autreSign!.key, nom: autreSign!.nom, symbole: autreSign!.symbole } };
+          // Le prénom et le second signe sont stockés avec la lecture :
+          // indispensable pour pouvoir la réafficher à l'identique dans
+          // l'historique plus tard.
+          reading = {
+            ...compat,
+            autreSigne: { key: autreSign!.key, nom: autreSign!.nom, symbole: autreSign!.symbole, prenom: autrePrenom },
+          };
           break;
         }
         case 'grande_analyse':

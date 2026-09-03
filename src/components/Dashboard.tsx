@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { FEATURE_COSTS, FEATURE_LABELS, FEATURE_CATEGORIES, FeatureCategory, FeatureKey } from '@/lib/pricing';
 import { THEMES, type ThemeKey } from '@/lib/themes';
-import { SIGNS } from '@/lib/zodiac';
 import ReadingCard, { type Reading } from '@/components/ReadingCard';
 import AstralChartCard, { type AstralChart } from '@/components/AstralChartCard';
 import SentimentCard from '@/components/SentimentCard';
@@ -25,7 +24,7 @@ function isThemeKey(f: FeatureKey): f is FeatureKey & ThemeKey {
 
 type UserSign = { key: string; nom: string; symbole: string; dates: string };
 type ResultSignInfo = { nom: string; symbole: string; dates: string; element?: string; planete?: string };
-type CompatReading = CompatibilityReading & { autreSigne: { key: string; nom: string; symbole: string } };
+type CompatReading = CompatibilityReading & { autreSigne: { key: string; nom: string; symbole: string; prenom?: string } };
 
 export default function Dashboard({
   userName,
@@ -51,13 +50,14 @@ export default function Dashboard({
   const [lunar, setLunar] = useState<LunarCycleReading | null>(null);
   const [transits, setTransits] = useState<TransitsReading | null>(null);
   const [signInfo, setSignInfo] = useState<ResultSignInfo | null>(null);
-  const [autreSigneKey, setAutreSigneKey] = useState('');
+  const [autrePrenom, setAutrePrenom] = useState('');
+  const [autreDateNaissance, setAutreDateNaissance] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const cost = FEATURE_COSTS[feature];
-  const needsAutreSigne = feature === 'compatibilite_amoureuse';
-  const canGenerate = !needsAutreSigne || Boolean(autreSigneKey);
+  const needsAutrePersonne = feature === 'compatibilite_amoureuse';
+  const canGenerate = !needsAutrePersonne || (Boolean(autrePrenom.trim()) && Boolean(autreDateNaissance));
   const featureLocked = Boolean(FEATURE_LABELS[feature].subscriptionOnly) && !hasSubscription;
 
   async function generate() {
@@ -67,7 +67,7 @@ export default function Dashboard({
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(needsAutreSigne ? { feature, autreSigne: autreSigneKey } : { feature }),
+        body: JSON.stringify(needsAutrePersonne ? { feature, autrePrenom, autreDateNaissance } : { feature }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -231,34 +231,29 @@ export default function Dashboard({
             </div>
           )}
 
-          {needsAutreSigne && !featureLocked && (
-            <div className="card" style={{ padding: '14px 16px', marginBottom: 24, boxShadow: 'none' }}>
-              <div className="field-label" style={{ marginBottom: 10 }}>Comparer votre signe à</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
-                {SIGNS.map((s) => (
-                  <button
-                    key={s.key}
-                    onClick={() => setAutreSigneKey(s.key)}
-                    aria-pressed={autreSigneKey === s.key}
-                    className="pick-btn"
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: 2,
-                      padding: '8px 4px',
-                      borderRadius: 10,
-                      border: `1px solid ${autreSigneKey === s.key ? 'var(--lever)' : 'var(--trait)'}`,
-                      background: autreSigneKey === s.key ? 'var(--brume)' : 'transparent',
-                      color: 'var(--ombre)',
-                      fontSize: '0.6rem',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <span style={{ fontSize: '1.1rem', color: autreSigneKey === s.key ? 'var(--lever-profond)' : 'var(--sourdine)' }}>{s.symbole}</span>
-                    {s.nom}
-                  </button>
-                ))}
+          {needsAutrePersonne && !featureLocked && (
+            <div className="card" style={{ padding: '14px 16px', marginBottom: 24, boxShadow: 'none', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div className="field-label" style={{ marginBottom: -4 }}>Comparer votre signe à</div>
+              <div>
+                <label htmlFor="autre-prenom" style={{ fontSize: '0.76rem', color: 'var(--sourdine)', display: 'block', marginBottom: 4 }}>Prénom</label>
+                <input
+                  id="autre-prenom"
+                  type="text"
+                  value={autrePrenom}
+                  onChange={(e) => setAutrePrenom(e.target.value)}
+                  placeholder="Ex. Camille"
+                  style={{ padding: '10px 12px', borderRadius: 10, border: '1px solid var(--trait)', background: 'var(--nacre)', color: 'var(--encre)', fontSize: '0.9rem', width: '100%' }}
+                />
+              </div>
+              <div>
+                <label htmlFor="autre-date" style={{ fontSize: '0.76rem', color: 'var(--sourdine)', display: 'block', marginBottom: 4 }}>Date de naissance</label>
+                <input
+                  id="autre-date"
+                  type="date"
+                  value={autreDateNaissance}
+                  onChange={(e) => setAutreDateNaissance(e.target.value)}
+                  style={{ padding: '10px 12px', borderRadius: 10, border: '1px solid var(--trait)', background: 'var(--nacre)', color: 'var(--encre)', fontSize: '0.9rem', width: '100%' }}
+                />
               </div>
             </div>
           )}
@@ -275,7 +270,7 @@ export default function Dashboard({
                 : balance < cost
                 ? `Crédits insuffisants (${balance}/${cost})`
                 : !canGenerate
-                ? 'Choisissez un second signe'
+                ? 'Renseignez le prénom et la date de naissance'
                 : `Générer (${cost} crédit${cost > 1 ? 's' : ''})`}
             </button>
           )}
