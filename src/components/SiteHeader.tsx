@@ -16,6 +16,7 @@ export default async function SiteHeader() {
         </Link>
 
         <nav style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: '0.92rem', flexWrap: 'wrap' }}>
+          <Link href="/" style={{ textDecoration: 'none', color: 'var(--ombre)' }}>Accueil</Link>
           <Link href="/tarifs" style={{ textDecoration: 'none', color: 'var(--ombre)' }}>Tarifs</Link>
           {session?.user ? (
             <>

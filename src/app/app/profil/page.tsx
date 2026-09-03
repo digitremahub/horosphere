@@ -67,19 +67,35 @@ export default async function ProfilPage() {
 
   return (
     <main className="container-narrow" style={{ paddingTop: 48, paddingBottom: 96, position: 'relative', overflow: 'hidden' }}>
+      {/* Fond de page homogène avec /connexion : même image, même dégradé. */}
+      <img
+        src="/images/bg-formulaire-naissance.png"
+        alt=""
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          opacity: 0.3,
+          zIndex: 0,
+        }}
+      />
       <div
-        style={{ position: 'absolute', top: -60, right: -110, pointerEvents: 'none', zIndex: 0 }}
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'radial-gradient(ellipse at top, transparent 0%, var(--aube) 78%)',
+          zIndex: 0,
+        }}
+      />
+      <div
+        style={{ position: 'absolute', top: -60, right: -110, pointerEvents: 'none', zIndex: 1 }}
         aria-hidden="true"
       >
         <ZodiacWheelIllustration size={320} opacity={0.22} />
-      </div>
-
-      <div className="photo-frame" style={{ height: 160, marginBottom: 28, position: 'relative', zIndex: 1 }}>
-        <img
-          src="/images/bg-formulaire-naissance.png"
-          alt="Une carte du ciel étoilé, en fond du formulaire de naissance."
-          loading="lazy"
-        />
       </div>
 
       <div style={{ marginBottom: 30, position: 'relative', zIndex: 1 }}>
@@ -99,12 +115,12 @@ export default async function ProfilPage() {
       </div>
 
       {error && (
-        <div className="card" style={{ padding: '14px 18px', marginBottom: 20, borderColor: 'var(--lever)', color: 'var(--lever-profond)', fontSize: '0.86rem' }}>
+        <div className="card" style={{ padding: '14px 18px', marginBottom: 20, borderColor: 'var(--lever)', color: 'var(--lever-profond)', fontSize: '0.86rem', position: 'relative', zIndex: 1 }}>
           {error}
         </div>
       )}
 
-      <form action={submit} className="card" style={{ padding: '26px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <form action={submit} className="card" style={{ padding: '26px 24px', display: 'flex', flexDirection: 'column', gap: 16, position: 'relative', zIndex: 1 }}>
         <div style={{ display: 'flex', gap: 10 }}>
           <div style={{ flex: 1 }}>
             <label htmlFor="prenom" className="field-label">Prénom</label>
