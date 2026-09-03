@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { SIGNS } from '@/lib/zodiac';
 import { fallbackHoroscope } from '@/lib/fallback-generator';
-import DegreeArc from '@/components/DegreeArc';
+import BrandMark from '@/components/BrandMark';
 import { SignCircle } from '@/components/CardParts';
 
 export default function FreeTeaser() {
@@ -18,7 +18,7 @@ export default function FreeTeaser() {
         style={{ position: 'absolute', top: -14, right: -14, pointerEvents: 'none' }}
         aria-hidden="true"
       >
-        <DegreeArc startAngle={0} endAngle={80} size={72} ticks={3} strokeWidth={1.4} />
+        <BrandMark size={72} />
       </div>
 
       <div className="pill" style={{ marginBottom: 16 }}>Aperçu gratuit</div>

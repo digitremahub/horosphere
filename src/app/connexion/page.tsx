@@ -1,6 +1,6 @@
 import { signIn } from '@/lib/auth';
 import { authConfigured } from '@/lib/auth';
-import DegreeArc from '@/components/DegreeArc';
+import BrandMark from '@/components/BrandMark';
 import ZodiacWheelIllustration from '@/components/ZodiacWheelIllustration';
 
 const PHOTO_FOND = '/images/bg-connexion.png';
@@ -50,7 +50,7 @@ export default async function ConnexionPage({ searchParams }: { searchParams: Pr
 
       <div className="card" style={{ padding: '38px 32px', textAlign: 'center', overflow: 'visible', position: 'relative', zIndex: 2 }}>
         <div style={{ position: 'absolute', top: -14, left: -14, pointerEvents: 'none' }} aria-hidden="true">
-          <DegreeArc startAngle={180} endAngle={260} size={68} ticks={3} strokeWidth={1.4} />
+          <BrandMark size={68} />
         </div>
 
         <h1 style={{ fontSize: '1.7rem', marginBottom: 10 }}>

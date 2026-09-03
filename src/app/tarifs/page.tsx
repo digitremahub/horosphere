@@ -2,7 +2,7 @@ import { auth } from '@/lib/auth';
 import { stripeConfigured } from '@/lib/stripe';
 import { CREDIT_PACKS, SUBSCRIPTIONS, FEATURE_COSTS, FEATURE_LABELS, euros } from '@/lib/pricing';
 import PricingButton from '@/components/PricingButton';
-import DegreeArc from '@/components/DegreeArc';
+import BrandMark from '@/components/BrandMark';
 import ScrollReveal from '@/components/ScrollReveal';
 
 const PHOTO_BANNIERE = '/images/bg-tarifs.png';
@@ -45,7 +45,7 @@ export default async function TarifsPage() {
           <ScrollReveal key={p.slug} delay={i * 60}>
             <div className="card" style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 14, overflow: 'visible', marginTop: i % 2 === 1 ? 10 : 0 }}>
               <div style={{ position: 'absolute', top: -13, right: -13, pointerEvents: 'none' }} aria-hidden="true">
-                <DegreeArc startAngle={-80} endAngle={0} size={56} ticks={3} strokeWidth={1.3} />
+                <BrandMark size={56} />
               </div>
               <div style={{ fontSize: '1.6rem' }}>{p.emoji}</div>
               <div>
@@ -79,7 +79,7 @@ export default async function TarifsPage() {
               }}
             >
               <div style={{ position: 'absolute', top: -13, right: -13, pointerEvents: 'none' }} aria-hidden="true">
-                <DegreeArc startAngle={-80} endAngle={0} size={56} ticks={3} strokeWidth={1.3} />
+                <BrandMark size={56} />
               </div>
               {s.misEnAvant && (
                 <div className="pill" style={{ position: 'absolute', top: -13, left: 24, background: 'var(--lever)', color: 'var(--aube)', borderColor: 'var(--lever)' }}>

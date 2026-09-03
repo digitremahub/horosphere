@@ -1,4 +1,4 @@
-import DegreeArc from '@/components/DegreeArc';
+import BrandMark from '@/components/BrandMark';
 import { Field, Meter, Lucky, SignCircle } from '@/components/CardParts';
 
 export type AstralChart = {
@@ -47,7 +47,7 @@ export default function AstralChartCard({
 
       {cornerArc && (
         <div style={{ position: 'absolute', top: -13, right: -13, pointerEvents: 'none' }} aria-hidden="true">
-          <DegreeArc startAngle={-80} endAngle={0} size={60} ticks={3} strokeWidth={1.4} showTick />
+          <BrandMark size={60} />
         </div>
       )}
 
