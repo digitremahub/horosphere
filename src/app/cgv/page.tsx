@@ -13,12 +13,7 @@ export default function CGVPage() {
         Les présentes conditions régissent les ventes de packs de crédits et d'abonnements réalisées sur
         Horosphère. En procédant à un achat, vous les acceptez sans réserve.
       </p>
-      <div className="card" style={{ padding: '14px 18px', marginBottom: 36, borderColor: 'var(--ambre)', color: 'var(--ambre)', fontSize: '0.84rem' }}>
-        Ce document est un projet rédigé à partir du fonctionnement réel du service. Il doit être relu par
-        un professionnel du droit avant toute publication définitive.
-      </div>
-
-      <div className="card" style={{ padding: '26px 24px', marginBottom: 24 }}>
+      <div className="card" style={{ padding: '26px 24px', marginBottom: 24, marginTop: 36 }}>
         <h2 style={{ fontSize: '1.1rem', marginBottom: 14 }}>1. Objet et nature du service</h2>
         <p style={{ margin: 0, fontSize: '0.92rem' }}>
           Horosphère propose des lectures astrologiques générées à la demande (horoscopes, thèmes astraux,

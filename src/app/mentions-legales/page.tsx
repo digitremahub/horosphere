@@ -40,10 +40,10 @@ export default function MentionsLegalesPage() {
           SIRET / RCS : <ACompleter>numéro d'immatriculation, si applicable</ACompleter>
         </p>
         <p style={{ margin: '0 0 8px', fontSize: '0.92rem' }}>
-          Directeur de la publication : <ACompleter>nom du responsable de la publication</ACompleter>
+          Directeur de la publication : François T.
         </p>
         <p style={{ margin: 0, fontSize: '0.92rem' }}>
-          Contact : <ACompleter>adresse e-mail de contact</ACompleter>
+          Contact : <a href="mailto:contact@horosphere.fr" style={{ color: 'var(--lever-profond)' }}>contact@horosphere.fr</a>
         </p>
       </div>
 
@@ -79,7 +79,7 @@ export default function MentionsLegalesPage() {
           Le traitement des données personnelles collectées via Horosphère (adresse e-mail, date, heure et
           lieu de naissance, historique des lectures) est nécessaire à la fourniture du service. Pour toute
           question relative à vos données ou pour exercer vos droits d'accès, de rectification ou de
-          suppression, contactez <ACompleter>adresse e-mail de contact</ACompleter>.
+          suppression, contactez <a href="mailto:contact@horosphere.fr" style={{ color: 'var(--lever-profond)' }}>contact@horosphere.fr</a>.
         </p>
       </div>
     </main>
