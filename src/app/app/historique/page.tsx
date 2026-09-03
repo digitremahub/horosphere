@@ -43,80 +43,39 @@ export default async function HistoriquePage() {
     error = "La base de données n'est pas encore connectée — l'historique ne peut pas être affiché.";
   }
 
-  // Fond de page homogène avec /connexion (même image, même dégradé) —
-  // mais cette page reprend la palette sombre de l'identité (celle de
-  // globals.css en prefers-color-scheme: dark), en dur, pour rester
-  // lisible sur un ciel étoilé quelle que soit la préférence système.
-  // Tous les composants enfants (card, pill, field-label...) lisent ces
-  // mêmes variables : les redéfinir ici suffit à les adapter en cascade.
-  const darkPalette: React.CSSProperties = {
-    ['--aube' as string]: '#241925',
-    ['--brume' as string]: '#2E2030',
-    ['--nacre' as string]: '#2A1D2C',
-    ['--lever' as string]: '#EF9478',
-    ['--lever-profond' as string]: '#F5AB8F',
-    ['--ambre' as string]: '#D9A860',
-    ['--encre' as string]: '#F3E7DE',
-    ['--encre-doux' as string]: '#E8D8C8',
-    ['--ombre' as string]: '#D8C4B4',
-    ['--sourdine' as string]: '#A9907C',
-    ['--trait' as string]: 'rgba(243, 231, 222, 0.14)',
-    ['--prune' as string]: '#C093AF',
-    ['--sauge' as string]: '#8FB48A',
-    ['--focus' as string]: '#F5AB8F',
-    background: 'var(--aube)',
-  };
-
   return (
-    <main className="container-narrow" style={{ ...darkPalette, paddingTop: 48, paddingBottom: 96, position: 'relative', overflow: 'hidden' }}>
-      <img
-        src="/images/bg-connexion.png"
-        alt=""
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          inset: 0,
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          opacity: 0.35,
-          zIndex: 0,
-        }}
-      />
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background: 'radial-gradient(ellipse at top, transparent 0%, var(--aube) 78%)',
-          zIndex: 0,
-        }}
-      />
+    <main className="container-narrow" style={{ paddingTop: 48, paddingBottom: 96 }}>
+      <div className="photo-frame" style={{ height: 160, marginBottom: 28 }}>
+        <img
+          src="/images/bg-resultat-lecture.png"
+          alt="Un sextant tenu face au couchant — l'art de lire les signes."
+          loading="lazy"
+        />
+      </div>
 
-      <div style={{ position: 'relative', zIndex: 1 }}>
-        <div style={{ marginBottom: 30 }}>
-          <a href="/app" style={{ fontSize: '0.82rem', color: 'var(--ombre)', textDecoration: 'none' }}>
-            ← Mon espace
-          </a>
-          <h1 style={{ fontSize: '1.6rem', marginTop: 10 }}>Historique</h1>
-          <p style={{ color: 'var(--ombre)', fontSize: '0.9rem' }}>Vos lectures passées, les plus récentes en premier — exactement comme le jour où vous les avez générées.</p>
+      <div style={{ marginBottom: 30 }}>
+        <a href="/app" style={{ fontSize: '0.82rem', color: 'var(--ombre)', textDecoration: 'none' }}>
+          ← Mon espace
+        </a>
+        <h1 style={{ fontSize: '1.6rem', marginTop: 10 }}>Historique</h1>
+        <p style={{ color: 'var(--ombre)', fontSize: '0.9rem' }}>Vos lectures passées, les plus récentes en premier — exactement comme le jour où vous les avez générées.</p>
+      </div>
+
+      {error && (
+        <div className="card" style={{ padding: '14px 18px', marginBottom: 20, borderColor: 'var(--lever)', color: 'var(--lever-profond)', fontSize: '0.86rem' }}>
+          {error}
         </div>
+      )}
 
-        {error && (
-          <div className="card" style={{ padding: '14px 18px', marginBottom: 20, borderColor: 'var(--lever)', color: 'var(--lever-profond)', fontSize: '0.86rem' }}>
-            {error}
-          </div>
-        )}
+      {!error && entries.length === 0 && (
+        <div className="card" style={{ padding: '36px 24px', textAlign: 'center', color: 'var(--sourdine)' }}>
+          <EmptyStateIllustration size={72} />
+          <p style={{ margin: '14px 0 0' }}>Aucune lecture pour l'instant. Vos horoscopes générés apparaîtront ici.</p>
+        </div>
+      )}
 
-        {!error && entries.length === 0 && (
-          <div className="card" style={{ padding: '36px 24px', textAlign: 'center', color: 'var(--sourdine)' }}>
-            <EmptyStateIllustration size={72} />
-            <p style={{ margin: '14px 0 0' }}>Aucune lecture pour l'instant. Vos horoscopes générés apparaîtront ici.</p>
-          </div>
-        )}
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-          {entries.map((entry) => {
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+        {entries.map((entry) => {
           const sign = entry.sign ? findSign(entry.sign) : null;
           const meta = FEATURE_LABELS[entry.feature as FeatureKey] as { nom: string } | undefined;
 
@@ -179,8 +138,7 @@ export default async function HistoriquePage() {
               </p>
             </div>
           );
-          })}
-        </div>
+        })}
       </div>
     </main>
   );
