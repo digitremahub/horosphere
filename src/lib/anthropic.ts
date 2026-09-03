@@ -1,5 +1,17 @@
 import { Sign } from './zodiac';
-import { fallbackHoroscope, fallbackAstralChart, fallbackSentiment, fallbackCompatibility, fallbackGrandeAnalyse } from './fallback-generator';
+import { currentPlanetPositions, zodiacSignAt } from './planets';
+import { moonPhaseInfo } from '../components/MoonPhase';
+import { THEMES, type ThemeKey } from './themes';
+import {
+  fallbackHoroscope,
+  fallbackAstralChart,
+  fallbackSentiment,
+  fallbackCompatibility,
+  fallbackGrandeAnalyse,
+  fallbackThematic,
+  fallbackLunarCycle,
+  fallbackTransits,
+} from './fallback-generator';
 
 export type HoroscopeReading = {
   headline: string;
@@ -334,6 +346,146 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
     scoreFinances: clampScore(parsed.scoreFinances),
     conseilPrincipal: String(parsed.conseilPrincipal ?? ''),
     periodeCle: String(parsed.periodeCle ?? 'les prochaines semaines'),
+    mode: 'ia',
+  };
+}
+
+export type ThematicReading = {
+  titre: string;
+  texte: string;
+  pointAttention: string;
+  conseil: string;
+  score: number;
+  mode: 'ia' | 'demo';
+};
+
+/** Les 6 lectures thématiques "simples" (voir lib/themes.ts) partagent un
+ * seul générateur, paramétré par thème, plutôt que 6 fonctions quasi
+ * identiques. */
+export async function generateThematic(opts: { theme: ThemeKey; sign: Sign; seedKey: string }): Promise<ThematicReading> {
+  const meta = THEMES[opts.theme];
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return { titre: meta.titreCard, ...fallbackThematic(opts.theme, opts.sign.key, opts.seedKey), mode: 'demo' };
+  }
+  const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
+  const prompt = `Tu écris une lecture astrologique thématique pour l'application Horosphère, en français, pour le signe ${opts.sign.nom} (élément ${opts.sign.element}, planète maîtresse ${opts.sign.planete}). Thème : ${meta.axe}. Portée : ${meta.portee}.
+${meta.consigne}
+Ton : chaleureux, concret, bienveillant, jamais culpabilisant ni anxiogène.
+Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
+{
+  "titre": "titre court de 3 à 7 mots",
+  "texte": "2 à 4 phrases sur cet axe précis",
+  "pointAttention": "1 phrase sur un point à surveiller ou à ne pas négliger",
+  "conseil": "une phrase impérative courte, actionnable",
+  "score": nombre entier entre 30 et 98
+}`;
+  const parsed = await callClaude(apiKey, model, prompt, 500);
+  return {
+    titre: String(parsed.titre ?? meta.titreCard),
+    texte: String(parsed.texte ?? ''),
+    pointAttention: String(parsed.pointAttention ?? ''),
+    conseil: String(parsed.conseil ?? ''),
+    score: clampScore(parsed.score),
+    mode: 'ia',
+  };
+}
+
+export type LunarCycleReading = {
+  titre: string;
+  interpretation: string;
+  conseil: string;
+  phase: number;
+  phaseLabel: string;
+  illumination: number;
+  mode: 'ia' | 'demo';
+};
+
+/** Lecture calée sur la phase lunaire réelle du jour (même calcul que la
+ * section "Lune du jour" de la page d'accueil), interprétée pour le signe
+ * de l'utilisateur. `phase` (0-1) est conservée pour pouvoir redessiner la
+ * même silhouette de lune dans l'historique, plutôt que la phase du jour. */
+export async function generateLunarCycle(opts: { sign: Sign }): Promise<LunarCycleReading> {
+  const moon = moonPhaseInfo();
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return { titre: 'Cycle lunaire', ...fallbackLunarCycle(opts.sign.key, moon.label), phase: moon.phase, phaseLabel: moon.label, illumination: moon.illumination, mode: 'demo' };
+  }
+  const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
+  const prompt = `Tu écris une lecture "cycle lunaire" pour l'application Horosphère, en français, pour le signe ${opts.sign.nom} (élément ${opts.sign.element}).
+Phase lunaire réelle du jour : ${moon.label}, illuminée à ${moon.illumination}%. N'invente pas d'autre phase que celle-ci.
+Ton : chaleureux, contemplatif, concret.
+Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
+{
+  "titre": "titre court de 3 à 6 mots",
+  "interpretation": "2 à 3 phrases reliant cette phase lunaire réelle au signe de l'utilisateur",
+  "conseil": "une phrase impérative courte, actionnable, en lien avec cette phase"
+}`;
+  const parsed = await callClaude(apiKey, model, prompt, 400);
+  return {
+    titre: String(parsed.titre ?? 'Cycle lunaire'),
+    interpretation: String(parsed.interpretation ?? ''),
+    conseil: String(parsed.conseil ?? ''),
+    phase: moon.phase,
+    phaseLabel: moon.label,
+    illumination: moon.illumination,
+    mode: 'ia',
+  };
+}
+
+export type TransitsReading = {
+  titre: string;
+  interpretation: string;
+  conseil: string;
+  planetesEnFocus: { nom: string; glyphe: string; signe: string }[];
+  mode: 'ia' | 'demo';
+};
+
+const RULER_TO_PLANET_KEY: Record<string, string> = {
+  Soleil: 'soleil',
+  Lune: 'lune',
+  Mercure: 'mercure',
+  Vénus: 'venus',
+  Mars: 'mars',
+  Jupiter: 'jupiter',
+  Saturne: 'saturne',
+};
+
+/** Lecture basée sur les positions planétaires réelles du jour (même calcul
+ * que la roue de la page d'accueil, voir lib/planets.ts) : met en avant le
+ * Soleil, la Lune, et la planète maîtresse du signe de l'utilisateur. */
+export async function generateTransits(opts: { sign: Sign }): Promise<TransitsReading> {
+  const positions = currentPlanetPositions();
+  const byKey = new Map(positions.map((p) => [p.key, p]));
+  const rulerKey = RULER_TO_PLANET_KEY[opts.sign.planete];
+  const focusKeys = Array.from(new Set(['soleil', 'lune', rulerKey && byKey.has(rulerKey) ? rulerKey : 'mercure']));
+  const planetesEnFocus = focusKeys
+    .map((key) => byKey.get(key))
+    .filter((p): p is NonNullable<typeof p> => Boolean(p))
+    .map((p) => ({ nom: p.nom, glyphe: p.glyphe, signe: zodiacSignAt(p.longitude).nom }));
+
+  const contexte = planetesEnFocus.map((p) => `${p.nom} est actuellement en ${p.signe}`).join(', ') + '.';
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return { titre: 'Transits planétaires', ...fallbackTransits(opts.sign.key, contexte), planetesEnFocus, mode: 'demo' };
+  }
+  const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
+  const prompt = `Tu écris une lecture "transits planétaires" pour l'application Horosphère, en français, pour le signe ${opts.sign.nom} (élément ${opts.sign.element}, planète maîtresse ${opts.sign.planete}).
+Position réelle actuelle des planètes : ${contexte} N'invente aucune autre position planétaire que celles données.
+Ton : concret, jamais fataliste, évite le jargon technique (pas d'aspects en degrés).
+Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
+{
+  "titre": "titre court de 3 à 6 mots",
+  "interpretation": "2 à 3 phrases reliant ces positions réelles au signe de l'utilisateur",
+  "conseil": "une phrase impérative courte, actionnable"
+}`;
+  const parsed = await callClaude(apiKey, model, prompt, 450);
+  return {
+    titre: String(parsed.titre ?? 'Transits planétaires'),
+    interpretation: String(parsed.interpretation ?? ''),
+    conseil: String(parsed.conseil ?? ''),
+    planetesEnFocus,
     mode: 'ia',
   };
 }

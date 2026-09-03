@@ -116,7 +116,14 @@ export default async function TarifsPage() {
             }}
           >
             <div>
-              <div style={{ fontWeight: 600, fontSize: '0.94rem' }}>{FEATURE_LABELS[key].nom}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontWeight: 600, fontSize: '0.94rem' }}>{FEATURE_LABELS[key].nom}</span>
+                {FEATURE_LABELS[key].subscriptionOnly && (
+                  <span className="pill" style={{ padding: '2px 8px', fontSize: '0.62rem', borderColor: 'var(--ambre)', color: 'var(--ambre)' }}>
+                    🔒 Abonnement requis
+                  </span>
+                )}
+              </div>
               <div style={{ fontSize: '0.8rem', color: 'var(--sourdine)' }}>
                 {FEATURE_LABELS[key].description}
                 {!FEATURE_LABELS[key].disponible && ' — bientôt disponible'}

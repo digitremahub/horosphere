@@ -67,8 +67,10 @@ function illuminatedPath(phase: number, r: number): string {
   return `M 0 ${-r} A ${r} ${r} 0 0 ${sweep1} 0 ${r} A ${rx} ${r} 0 0 ${sweep2} 0 ${-r} Z`;
 }
 
-export default function MoonPhase({ size = 20 }: { size?: number }) {
-  const phase = currentMoonPhase();
+export default function MoonPhase({ size = 20, phase: phaseOverride }: { size?: number; phase?: number }) {
+  // `phase` permet de rejouer une phase passée (historique d'une lecture
+  // "cycle lunaire") plutôt que de toujours afficher la phase du jour.
+  const phase = phaseOverride ?? currentMoonPhase();
   const r = size / 2 - 1;
   const label = phaseLabel(phase);
 

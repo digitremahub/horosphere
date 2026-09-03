@@ -7,6 +7,23 @@ export class InsufficientCreditsError extends Error {
   }
 }
 
+/** Certaines lectures (voir pricing.ts, `subscriptionOnly`) ne sont pas
+ * ouvertes au paiement à la carte : il faut un abonnement actif, quel que
+ * soit le solde de crédits. `current_period_end` peut être dans le passé de
+ * quelques minutes juste avant que le webhook de renouvellement n'arrive :
+ * on tolère une marge d'un jour pour ne pas couper l'accès trop tôt. */
+export async function hasActiveSubscription(userId: number): Promise<boolean> {
+  const sql = requireDb();
+  const rows = await sql<{ id: string }[]>`
+    SELECT id FROM subscriptions
+    WHERE user_id = ${userId}
+      AND status IN ('active', 'trialing')
+      AND (current_period_end IS NULL OR current_period_end > now() - interval '1 day')
+    LIMIT 1
+  `;
+  return rows.length > 0;
+}
+
 export async function getBalance(userId: number): Promise<number> {
   const sql = requireDb();
   const rows = await sql<{ total: string | null }[]>`

@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
-import { getBalance } from '@/lib/credits';
+import { getBalance, hasActiveSubscription } from '@/lib/credits';
 import { getProfile } from '@/lib/profile';
 import { dbConfigured } from '@/lib/db';
 import { signFromBirthdate } from '@/lib/zodiac';
@@ -37,12 +37,18 @@ export default async function AppPage() {
 
   let balance = 0;
   let balanceError: string | null = null;
+  let hasSubscription = false;
 
   if (dbConfigured) {
     try {
       balance = await getBalance(userId);
     } catch (err) {
       balanceError = 'Impossible de lire le solde de crédits pour le moment.';
+    }
+    try {
+      hasSubscription = await hasActiveSubscription(userId);
+    } catch {
+      hasSubscription = false; // erreur de lecture transitoire : traiter comme non-abonné plutôt que bloquer l'affichage
     }
   } else {
     balanceError = "La base de données n'est pas encore connectée — les crédits ne peuvent pas être suivis.";
@@ -63,6 +69,7 @@ export default async function AppPage() {
         userSign={userSign}
         initialBalance={balance}
         balanceError={balanceError}
+        hasSubscription={hasSubscription}
       />
     </main>
   );

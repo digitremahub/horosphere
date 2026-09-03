@@ -4,14 +4,20 @@ import { getHistory } from '@/lib/credits';
 import { getProfile } from '@/lib/profile';
 import { dbConfigured } from '@/lib/db';
 import { FEATURE_LABELS, FeatureKey } from '@/lib/pricing';
+import { THEMES } from '@/lib/themes';
 import { findSign } from '@/lib/zodiac';
 import ReadingCard, { type Reading } from '@/components/ReadingCard';
 import AstralChartCard, { type AstralChart } from '@/components/AstralChartCard';
 import SentimentCard from '@/components/SentimentCard';
 import CompatibilityCard from '@/components/CompatibilityCard';
 import GrandeAnalyseCard from '@/components/GrandeAnalyseCard';
+import ThematicCard from '@/components/ThematicCard';
+import LunarCycleCard from '@/components/LunarCycleCard';
+import TransitsCard from '@/components/TransitsCard';
 import EmptyStateIllustration from '@/components/EmptyStateIllustration';
-import type { SentimentReading, CompatibilityReading, GrandeAnalyse } from '@/lib/anthropic';
+import type { SentimentReading, CompatibilityReading, GrandeAnalyse, ThematicReading, LunarCycleReading, TransitsReading } from '@/lib/anthropic';
+
+const THEME_KEYS = new Set(Object.keys(THEMES));
 
 export default async function HistoriquePage() {
   const session = await auth();
@@ -149,6 +155,46 @@ export default async function HistoriquePage() {
                   key={entry.id}
                   reading={grande}
                   signInfo={signInfo}
+                  dateLabel={dateLabel}
+                  creditsSpent={entry.credits_spent}
+                />
+              );
+            }
+          } else if (entry.feature === 'cycle_lunaire') {
+            const lunar = rawReading as LunarCycleReading | null;
+            if (lunar?.interpretation) {
+              return (
+                <LunarCycleCard
+                  key={entry.id}
+                  reading={lunar}
+                  signInfo={signInfo}
+                  dateLabel={dateLabel}
+                  creditsSpent={entry.credits_spent}
+                />
+              );
+            }
+          } else if (entry.feature === 'transits_planetaires') {
+            const transits = rawReading as TransitsReading | null;
+            if (transits?.interpretation) {
+              return (
+                <TransitsCard
+                  key={entry.id}
+                  reading={transits}
+                  signInfo={signInfo}
+                  dateLabel={dateLabel}
+                  creditsSpent={entry.credits_spent}
+                />
+              );
+            }
+          } else if (THEME_KEYS.has(entry.feature)) {
+            const thematic = rawReading as ThematicReading | null;
+            if (thematic?.texte) {
+              return (
+                <ThematicCard
+                  key={entry.id}
+                  reading={thematic}
+                  signInfo={signInfo}
+                  featureNom={meta?.nom ?? 'Lecture'}
                   dateLabel={dateLabel}
                   creditsSpent={entry.credits_spent}
                 />

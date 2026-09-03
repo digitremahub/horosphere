@@ -1,18 +1,27 @@
 'use client';
 
 import { useState } from 'react';
-import { FEATURE_COSTS, FEATURE_LABELS, FeatureKey } from '@/lib/pricing';
+import { FEATURE_COSTS, FEATURE_LABELS, FEATURE_CATEGORIES, FeatureCategory, FeatureKey } from '@/lib/pricing';
+import { THEMES, type ThemeKey } from '@/lib/themes';
 import { SIGNS } from '@/lib/zodiac';
 import ReadingCard, { type Reading } from '@/components/ReadingCard';
 import AstralChartCard, { type AstralChart } from '@/components/AstralChartCard';
 import SentimentCard from '@/components/SentimentCard';
 import CompatibilityCard from '@/components/CompatibilityCard';
 import GrandeAnalyseCard from '@/components/GrandeAnalyseCard';
+import ThematicCard from '@/components/ThematicCard';
+import LunarCycleCard from '@/components/LunarCycleCard';
+import TransitsCard from '@/components/TransitsCard';
 import EmptyStateIllustration from '@/components/EmptyStateIllustration';
 import { SignCircle } from '@/components/CardParts';
-import type { SentimentReading, CompatibilityReading, GrandeAnalyse } from '@/lib/anthropic';
+import type { SentimentReading, CompatibilityReading, GrandeAnalyse, ThematicReading, LunarCycleReading, TransitsReading } from '@/lib/anthropic';
 
 const FEATURE_ORDER = Object.keys(FEATURE_COSTS) as FeatureKey[];
+const CATEGORY_ORDER: FeatureCategory[] = ['lectures', 'guidance'];
+const THEME_KEYS = new Set(Object.keys(THEMES));
+function isThemeKey(f: FeatureKey): f is FeatureKey & ThemeKey {
+  return THEME_KEYS.has(f);
+}
 
 type UserSign = { key: string; nom: string; symbole: string; dates: string };
 type ResultSignInfo = { nom: string; symbole: string; dates: string; element?: string; planete?: string };
@@ -23,11 +32,13 @@ export default function Dashboard({
   userSign,
   initialBalance,
   balanceError,
+  hasSubscription,
 }: {
   userName: string;
   userSign: UserSign;
   initialBalance: number;
   balanceError: string | null;
+  hasSubscription: boolean;
 }) {
   const [feature, setFeature] = useState<FeatureKey>('horoscope_quotidien');
   const [balance, setBalance] = useState(initialBalance);
@@ -36,6 +47,9 @@ export default function Dashboard({
   const [sentiment, setSentiment] = useState<SentimentReading | null>(null);
   const [compat, setCompat] = useState<CompatReading | null>(null);
   const [grandeAnalyse, setGrandeAnalyse] = useState<GrandeAnalyse | null>(null);
+  const [thematic, setThematic] = useState<ThematicReading | null>(null);
+  const [lunar, setLunar] = useState<LunarCycleReading | null>(null);
+  const [transits, setTransits] = useState<TransitsReading | null>(null);
   const [signInfo, setSignInfo] = useState<ResultSignInfo | null>(null);
   const [autreSigneKey, setAutreSigneKey] = useState('');
   const [loading, setLoading] = useState(false);
@@ -44,6 +58,7 @@ export default function Dashboard({
   const cost = FEATURE_COSTS[feature];
   const needsAutreSigne = feature === 'compatibilite_amoureuse';
   const canGenerate = !needsAutreSigne || Boolean(autreSigneKey);
+  const featureLocked = Boolean(FEATURE_LABELS[feature].subscriptionOnly) && !hasSubscription;
 
   async function generate() {
     setLoading(true);
@@ -65,10 +80,16 @@ export default function Dashboard({
       setSentiment(null);
       setCompat(null);
       setGrandeAnalyse(null);
+      setThematic(null);
+      setLunar(null);
+      setTransits(null);
       if (feature === 'theme_astral_complet') setChart(data.reading);
       else if (feature === 'analyse_sentimentale') setSentiment(data.reading);
       else if (feature === 'compatibilite_amoureuse') setCompat(data.reading);
       else if (feature === 'grande_analyse') setGrandeAnalyse(data.reading);
+      else if (feature === 'cycle_lunaire') setLunar(data.reading);
+      else if (feature === 'transits_planetaires') setTransits(data.reading);
+      else if (isThemeKey(feature)) setThematic(data.reading);
       else setReading(data.reading);
       setSignInfo(data.sign);
       setBalance(data.balance);
@@ -79,7 +100,7 @@ export default function Dashboard({
     }
   }
 
-  const hasResult = reading || chart || sentiment || compat || grandeAnalyse;
+  const hasResult = reading || chart || sentiment || compat || grandeAnalyse || thematic || lunar || transits;
 
   return (
     <div>
@@ -120,44 +141,56 @@ export default function Dashboard({
             </a>
           </div>
 
-          <h2 style={{ fontSize: '1.1rem', marginBottom: 14 }}>Type de lecture</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
-            {FEATURE_ORDER.map((key) => {
-              const meta = FEATURE_LABELS[key];
-              const active = key === feature;
-              return (
-                <button
-                  key={key}
-                  disabled={!meta.disponible}
-                  onClick={() => setFeature(key)}
-                  aria-pressed={active}
-                  className="card pick-btn"
-                  style={{
-                    textAlign: 'left',
-                    padding: '14px 16px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    gap: 12,
-                    cursor: meta.disponible ? 'pointer' : 'not-allowed',
-                    opacity: meta.disponible ? 1 : 0.5,
-                    borderColor: active ? 'var(--lever)' : 'var(--trait)',
-                    boxShadow: 'none',
-                  }}
-                >
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: '0.92rem' }}>{meta.nom}</div>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--sourdine)' }}>
-                      {meta.disponible ? meta.description : `${meta.description} — bientôt disponible`}
-                    </div>
-                  </div>
-                  <span className="mono" style={{ fontSize: '0.82rem', color: 'var(--lever-profond)', whiteSpace: 'nowrap' }}>
-                    {FEATURE_COSTS[key]} cr.
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+          {CATEGORY_ORDER.map((cat) => (
+            <div key={cat}>
+              <h2 style={{ fontSize: '1.1rem', marginBottom: 14 }}>{FEATURE_CATEGORIES[cat].titre}</h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
+                {FEATURE_ORDER.filter((key) => FEATURE_LABELS[key].categorie === cat).map((key) => {
+                  const meta = FEATURE_LABELS[key];
+                  const active = key === feature;
+                  const locked = Boolean(meta.subscriptionOnly) && !hasSubscription;
+                  return (
+                    <button
+                      key={key}
+                      disabled={!meta.disponible}
+                      onClick={() => setFeature(key)}
+                      aria-pressed={active}
+                      className="card pick-btn"
+                      style={{
+                        textAlign: 'left',
+                        padding: '14px 16px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: 12,
+                        cursor: meta.disponible ? 'pointer' : 'not-allowed',
+                        opacity: meta.disponible ? 1 : 0.5,
+                        borderColor: active ? 'var(--lever)' : 'var(--trait)',
+                        boxShadow: 'none',
+                      }}
+                    >
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontWeight: 600, fontSize: '0.92rem' }}>{meta.nom}</span>
+                          {locked && (
+                            <span className="pill" style={{ padding: '2px 8px', fontSize: '0.62rem', borderColor: 'var(--ambre)', color: 'var(--ambre)' }}>
+                              🔒 Forfait requis
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--sourdine)' }}>
+                          {meta.disponible ? meta.description : `${meta.description} — bientôt disponible`}
+                        </div>
+                      </div>
+                      <span className="mono" style={{ fontSize: '0.82rem', color: 'var(--lever-profond)', whiteSpace: 'nowrap' }}>
+                        {FEATURE_COSTS[key]} cr.
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
 
           {feature === 'horoscope_personnalise' && (
             <div className="card" style={{ padding: '12px 16px', marginBottom: 24, boxShadow: 'none', fontSize: '0.84rem', color: 'var(--ombre)' }}>
@@ -183,7 +216,22 @@ export default function Dashboard({
             </div>
           )}
 
-          {needsAutreSigne && (
+          {(feature === 'cycle_lunaire' || feature === 'transits_planetaires') && (
+            <div className="card" style={{ padding: '12px 16px', marginBottom: 24, boxShadow: 'none', fontSize: '0.84rem', color: 'var(--ombre)' }}>
+              Basée sur la position réelle {feature === 'cycle_lunaire' ? 'de la lune' : 'des planètes'} aujourd'hui, pas sur une estimation.
+            </div>
+          )}
+
+          {featureLocked && (
+            <div className="card" style={{ padding: '14px 16px', marginBottom: 24, boxShadow: 'none', borderColor: 'var(--ambre)' }}>
+              <p style={{ margin: '0 0 10px', fontSize: '0.86rem', color: 'var(--ombre)' }}>
+                Cette lecture est réservée aux abonnés — les crédits seuls ne suffisent pas ici.
+              </p>
+              <a href="/tarifs" className="btn btn-primary" style={{ padding: '9px 18px', fontSize: '0.82rem' }}>Voir les abonnements</a>
+            </div>
+          )}
+
+          {needsAutreSigne && !featureLocked && (
             <div className="card" style={{ padding: '14px 16px', marginBottom: 24, boxShadow: 'none' }}>
               <div className="field-label" style={{ marginBottom: 10 }}>Comparer votre signe à</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
@@ -215,23 +263,25 @@ export default function Dashboard({
             </div>
           )}
 
-          <button
-            onClick={generate}
-            disabled={loading || balance < cost || !canGenerate}
-            className={`btn btn-primary${loading ? ' btn-loading' : ''}`}
-            style={{ width: '100%' }}
-          >
-            {loading
-              ? 'Lecture en cours…'
-              : balance < cost
-              ? `Crédits insuffisants (${balance}/${cost})`
-              : !canGenerate
-              ? 'Choisissez un second signe'
-              : `Générer (${cost} crédit${cost > 1 ? 's' : ''})`}
-          </button>
+          {!featureLocked && (
+            <button
+              onClick={generate}
+              disabled={loading || balance < cost || !canGenerate}
+              className={`btn btn-primary${loading ? ' btn-loading' : ''}`}
+              style={{ width: '100%' }}
+            >
+              {loading
+                ? 'Lecture en cours…'
+                : balance < cost
+                ? `Crédits insuffisants (${balance}/${cost})`
+                : !canGenerate
+                ? 'Choisissez un second signe'
+                : `Générer (${cost} crédit${cost > 1 ? 's' : ''})`}
+            </button>
+          )}
           {error && (
             <p style={{ fontSize: '0.84rem', color: 'var(--lever-profond)', marginTop: 10 }}>
-              {error} {error.toLowerCase().includes('crédit') && <a href="/tarifs" style={{ textDecoration: 'underline' }}>Voir les forfaits</a>}
+              {error} {(error.toLowerCase().includes('crédit') || error.toLowerCase().includes('abonnement')) && <a href="/tarifs" style={{ textDecoration: 'underline' }}>Voir les forfaits</a>}
             </p>
           )}
         </div>
@@ -249,6 +299,9 @@ export default function Dashboard({
           {sentiment && signInfo && <SentimentCard reading={sentiment} signInfo={signInfo} />}
           {compat && signInfo && <CompatibilityCard reading={compat} signInfo={signInfo} autreSigne={compat.autreSigne} />}
           {grandeAnalyse && signInfo && <GrandeAnalyseCard reading={grandeAnalyse} signInfo={signInfo} />}
+          {thematic && signInfo && isThemeKey(feature) && <ThematicCard reading={thematic} signInfo={signInfo} featureNom={FEATURE_LABELS[feature].nom} />}
+          {lunar && signInfo && <LunarCycleCard reading={lunar} signInfo={signInfo} />}
+          {transits && signInfo && <TransitsCard reading={transits} signInfo={signInfo} />}
         </div>
       </div>
 

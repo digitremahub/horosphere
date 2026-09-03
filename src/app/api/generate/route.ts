@@ -1,11 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { signFromBirthdate, findSign, SIGNS } from '@/lib/zodiac';
-import { generateHoroscope, generateAstralChart, generateSentiment, generateCompatibility, generateGrandeAnalyse } from '@/lib/anthropic';
-import { consumeCredits, getBalance, InsufficientCreditsError } from '@/lib/credits';
+import {
+  generateHoroscope,
+  generateAstralChart,
+  generateSentiment,
+  generateCompatibility,
+  generateGrandeAnalyse,
+  generateThematic,
+  generateLunarCycle,
+  generateTransits,
+} from '@/lib/anthropic';
+import { consumeCredits, getBalance, hasActiveSubscription, InsufficientCreditsError } from '@/lib/credits';
 import { getProfile } from '@/lib/profile';
 import { FEATURE_COSTS, FEATURE_LABELS, FeatureKey } from '@/lib/pricing';
+import { THEMES, type ThemeKey } from '@/lib/themes';
 import { dbConfigured } from '@/lib/db';
+
+const THEME_KEYS = new Set(Object.keys(THEMES));
+function isThemeKey(feature: FeatureKey): feature is FeatureKey & ThemeKey {
+  return THEME_KEYS.has(feature);
+}
 
 /** Clé de semaine ISO (ex: "2026-S36") — donne une portée stable pour toute
  * la semaine à l'analyse sentimentale, plutôt qu'une régénération par jour. */
@@ -57,6 +72,25 @@ export async function POST(req: NextRequest) {
 
   const uid = Number(userId);
 
+  // Certaines lectures (voir pricing.ts, subscriptionOnly) ne sont pas
+  // ouvertes au paiement à la carte : il faut un abonnement actif, quel
+  // que soit le solde de crédits.
+  if (FEATURE_LABELS[feature].subscriptionOnly) {
+    let subscribed = false;
+    try {
+      subscribed = await hasActiveSubscription(uid);
+    } catch (err) {
+      console.error('hasActiveSubscription failed', err);
+      return NextResponse.json({ error: 'Impossible de vérifier votre abonnement pour le moment.' }, { status: 500 });
+    }
+    if (!subscribed) {
+      return NextResponse.json(
+        { error: 'Cette lecture nécessite un abonnement actif.', code: 'SUBSCRIPTION_REQUIRED' },
+        { status: 402 }
+      );
+    }
+  }
+
   let profile;
   try {
     profile = await getProfile(uid);
@@ -96,25 +130,35 @@ export async function POST(req: NextRequest) {
 
   let reading;
   try {
-    switch (feature) {
-      case 'theme_astral_complet':
-        reading = await generateAstralChart({ sign, naissance: naissance! });
-        break;
-      case 'analyse_sentimentale':
-        reading = await generateSentiment({ sign, weekKey: isoWeekKey(new Date()) });
-        break;
-      case 'compatibilite_amoureuse': {
-        const compat = await generateCompatibility({ sign, autreSign: autreSign!, seedKey: dateISO.slice(0, 7) });
-        // Le second signe est stocké avec la lecture : indispensable pour
-        // pouvoir la réafficher à l'identique dans l'historique plus tard.
-        reading = { ...compat, autreSigne: { key: autreSign!.key, nom: autreSign!.nom, symbole: autreSign!.symbole } };
-        break;
+    if (isThemeKey(feature)) {
+      reading = await generateThematic({ theme: feature, sign, seedKey: dateISO });
+    } else {
+      switch (feature) {
+        case 'theme_astral_complet':
+          reading = await generateAstralChart({ sign, naissance: naissance! });
+          break;
+        case 'analyse_sentimentale':
+          reading = await generateSentiment({ sign, weekKey: isoWeekKey(new Date()) });
+          break;
+        case 'compatibilite_amoureuse': {
+          const compat = await generateCompatibility({ sign, autreSign: autreSign!, seedKey: dateISO.slice(0, 7) });
+          // Le second signe est stocké avec la lecture : indispensable pour
+          // pouvoir la réafficher à l'identique dans l'historique plus tard.
+          reading = { ...compat, autreSigne: { key: autreSign!.key, nom: autreSign!.nom, symbole: autreSign!.symbole } };
+          break;
+        }
+        case 'grande_analyse':
+          reading = await generateGrandeAnalyse({ sign, naissance: naissance! });
+          break;
+        case 'cycle_lunaire':
+          reading = await generateLunarCycle({ sign });
+          break;
+        case 'transits_planetaires':
+          reading = await generateTransits({ sign });
+          break;
+        default:
+          reading = await generateHoroscope({ feature, sign, dateISO, naissance });
       }
-      case 'grande_analyse':
-        reading = await generateGrandeAnalyse({ sign, naissance: naissance! });
-        break;
-      default:
-        reading = await generateHoroscope({ feature, sign, dateISO, naissance });
     }
   } catch (err) {
     console.error('generation failed', err);

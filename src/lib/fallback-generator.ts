@@ -3,6 +3,8 @@
 // place du backend IA. Même principe que le tout premier MVP : un hash de
 // (date + signe) sélectionne des phrases dans des banques de texte FR.
 
+import type { ThemeKey } from './themes';
+
 const HEADLINES = [
   'Le ciel vous ouvre une porte discrète.',
   'Une journée à avancer à votre rythme.',
@@ -231,6 +233,111 @@ const GA_FAMILLE = ["Du côté de la famille, une clarification de rôle apaise 
 const GA_EVOLUTION = ["Sur le plan personnel, vous gagnez à consolider plutôt qu'à multiplier les chantiers.", "Une prise de recul volontaire ouvre une clarté que l'agitation empêchait de voir."];
 const GA_CONSEIL = ["Le conseil central de cette période : choisissez un axe et allez-y jusqu'au bout avant d'en ouvrir un autre.", "Le conseil central : ce qui est simple est souvent ce qui est juste — méfiez-vous des solutions trop compliquées."];
 const GA_PERIODES = ['les quatre prochaines semaines', 'ce trimestre', 'les prochaines semaines', 'la période à venir'];
+
+// ===== Lectures thématiques simples (voir lib/themes.ts) =====
+
+const THEMATIC_TEXTE: Record<ThemeKey, string[]> = {
+  vision_hebdomadaire: [
+    "La semaine s'annonce plus fluide qu'elle n'y paraît au premier abord.",
+    "Un événement attendu se précise dans les prochains jours.",
+    "Le rythme est irrégulier, mais l'ensemble converge vers du positif.",
+  ],
+  snapshot_natal: [
+    "Votre thème natal révèle une nature qui apprend en avançant, plus qu'en planifiant.",
+    "Le trait dominant de ce thème : une constance qui rassure sans jamais rien figer.",
+    "Ce signe combine une énergie d'initiative et un besoin réel de sécurité affective.",
+  ],
+  horoscope_carriere: [
+    "Une opportunité professionnelle se dessine, encore discrète mais réelle.",
+    "La reconnaissance de vos efforts arrive, par un chemin détourné.",
+    "Le moment est bon pour clarifier une attente avec un collègue ou un supérieur.",
+  ],
+  horoscope_amoureux: [
+    "En amour, la sincérité prime sur la stratégie ces prochains jours.",
+    "Une rencontre ou un message pourrait changer la tonalité de la période.",
+    "Le cœur a besoin d'un peu d'espace : ne forcez rien inutilement.",
+  ],
+  aide_decision: [
+    "La décision que vous repoussez a besoin de moins d'informations que de courage.",
+    "Un avis extérieur peut éclairer ce choix, sans pour autant le remplacer.",
+    "Le bon moment pour trancher se rapproche — la clarté vient en avançant, pas en attendant.",
+  ],
+  guidance_spirituelle: [
+    "Un ralentissement volontaire ouvre une clarté que l'agitation empêchait de voir.",
+    "Les rituels simples — un carnet, une marche, un silence choisi — vous ancrent plus qu'une quête compliquée.",
+    "Ce cheminement avance par l'expérience concrète plus que par la théorie.",
+  ],
+};
+
+const THEMATIC_ATTENTION: Record<ThemeKey, string[]> = {
+  vision_hebdomadaire: ["Un imprévu de dernière minute demande de la souplesse.", "Ne laissez pas un détail administratif traîner trop longtemps."],
+  snapshot_natal: ["Le principal défi : ne pas laisser le doute retarder des décisions déjà mûres.", "La patience envers le rythme des autres demande un effort conscient."],
+  horoscope_carriere: ["Une seconde vérification évite un contretemps évitable.", "Ne surchargez pas votre semaine par excès d'enthousiasme."],
+  horoscope_amoureux: ["Un non-dit ancien mérite d'être clarifié avant qu'il ne pèse davantage.", "Évitez de comparer cette relation à une autre, passée ou imaginée."],
+  aide_decision: ["Méfiez-vous d'une solution qui semble trop simple pour être honnête.", "N'attendez pas la certitude totale : elle ne viendra pas avant d'agir."],
+  guidance_spirituelle: ["Une quête trop intense peut devenir une fuite si elle empêche le repos.", "Ne confondez pas isolement et ressourcement."],
+};
+
+const THEMATIC_CONSEIL: Record<ThemeKey, string[]> = {
+  vision_hebdomadaire: ['Choisissez une seule priorité pour cette semaine, pas cinq.', 'Bloquez un moment sans obligation, même court.'],
+  snapshot_natal: ["Faites confiance au rythme qui est le vôtre.", "Un thème n'est pas un destin figé : c'est une carte, pas un itinéraire imposé."],
+  horoscope_carriere: ['Formulez à voix haute une idée que vous portez depuis un moment.', 'Découpez la tâche en attente en petites étapes.'],
+  horoscope_amoureux: ['Dites ce qui compte, sans détour.', "Accordez-vous le droit d'être disponible, même imparfaitement."],
+  aide_decision: ['Écrivez les deux options et ce que chacune vous coûte réellement.', 'Fixez-vous une date limite raisonnable pour trancher.'],
+  guidance_spirituelle: ['Offrez-vous un moment de silence aujourd\'hui.', 'Notez une intention simple avant de vous coucher.'],
+};
+
+export function fallbackThematic(theme: ThemeKey, signKey: string, seedKey: string) {
+  const rng = mulberry32(hashStr('thematic::' + theme + '::' + signKey + '::' + seedKey));
+  return {
+    texte: pick(rng, THEMATIC_TEXTE[theme]),
+    pointAttention: pick(rng, THEMATIC_ATTENTION[theme]),
+    conseil: pick(rng, THEMATIC_CONSEIL[theme]),
+    score: range(rng, 35, 96),
+  };
+}
+
+// ===== Cycle lunaire (basé sur la phase réelle du jour) =====
+
+const LUNAR_INTERPRETATIONS = [
+  "Cette phase invite à ajuster votre énergie plutôt qu'à la forcer.",
+  "La lune actuelle éclaire ce que vous hésitiez à regarder en face.",
+  "Un cycle se referme doucement, laissant place à autre chose.",
+];
+const LUNAR_CONSEILS = [
+  "Accordez-vous un rituel simple ce soir, même de deux minutes.",
+  "Notez ce que cette phase vous inspire, sans chercher à l'analyser tout de suite.",
+  "Laissez le rythme de la lune ralentir le vôtre, juste un instant.",
+];
+
+export function fallbackLunarCycle(signKey: string, phaseLabel: string) {
+  const rng = mulberry32(hashStr('lunar::' + signKey + '::' + phaseLabel));
+  return {
+    interpretation: pick(rng, LUNAR_INTERPRETATIONS),
+    conseil: pick(rng, LUNAR_CONSEILS),
+  };
+}
+
+// ===== Transits planétaires (basé sur les positions réelles du jour) =====
+
+const TRANSIT_INTERPRETATIONS = [
+  "Ces positions favorisent une période d'ajustement plus que de grands bouleversements.",
+  "L'influence du moment se ressent surtout dans les détails du quotidien.",
+  "Une tension discrète entre deux domaines de votre vie s'apaise progressivement.",
+];
+const TRANSIT_CONSEILS = [
+  "Observez ce qui se répète cette semaine : c'est souvent le signal le plus fiable.",
+  "Avancez par petits ajustements plutôt que par grand geste.",
+  "Le moment favorise l'observation avant l'action.",
+];
+
+export function fallbackTransits(signKey: string, contexte: string) {
+  const rng = mulberry32(hashStr('transits::' + signKey + '::' + contexte));
+  return {
+    interpretation: pick(rng, TRANSIT_INTERPRETATIONS),
+    conseil: pick(rng, TRANSIT_CONSEILS),
+  };
+}
 
 export function fallbackGrandeAnalyse(signKey: string, seedKey: string) {
   const rng = mulberry32(hashStr('grande::' + signKey + '::' + seedKey));
