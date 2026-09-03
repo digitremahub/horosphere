@@ -4,6 +4,8 @@ import AstrolabeIllustration from '@/components/AstrolabeIllustration';
 import ZodiacWheelIllustration from '@/components/ZodiacWheelIllustration';
 import ScrollReveal from '@/components/ScrollReveal';
 import MoonOfTheDay from '@/components/MoonOfTheDay';
+import SkyCountdown from '@/components/SkyCountdown';
+import { getUpcomingSkyEvents } from '@/lib/skyEvents';
 
 // Photo réelle du rituel quotidien — voir la bannière tarifs et la
 // connexion pour les deux autres.
@@ -24,6 +26,8 @@ function SectionDivider() {
 }
 
 export default function HomePage() {
+  const skyEvents = getUpcomingSkyEvents();
+
   return (
     <main>
       {/* 1. La lune du jour, à moitié de l'aperçu gratuit */}
@@ -61,10 +65,21 @@ export default function HomePage() {
 
       <SectionDivider />
 
-      {/* 3. Illustration */}
-      <section className="container" style={{ padding: '8px 24px 48px', display: 'flex', justifyContent: 'center' }}>
-        <ScrollReveal>
+      {/* 3. Illustration — position réelle des planètes, en direct */}
+      <section className="container" style={{ padding: '8px 24px 40px', textAlign: 'center' }}>
+        <ScrollReveal style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div className="pill" style={{ marginBottom: 16 }}>En direct</div>
           <AstrolabeIllustration size={300} />
+          <p style={{ color: 'var(--ombre)', fontSize: '0.88rem', maxWidth: 440, margin: '16px auto 0' }}>
+            La position réelle des sept planètes traditionnelles sur le zodiaque, telle qu'observée depuis la Terre à l'instant présent.
+          </p>
+        </ScrollReveal>
+
+        <ScrollReveal delay={120} style={{ marginTop: 36 }}>
+          <p style={{ color: 'var(--sourdine)', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16 }}>
+            Prochains événements du ciel
+          </p>
+          <SkyCountdown events={skyEvents} />
         </ScrollReveal>
       </section>
 

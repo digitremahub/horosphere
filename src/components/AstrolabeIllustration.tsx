@@ -1,19 +1,18 @@
-// Illustration décorative "instrument" — un astrolabe stylisé en ligne fine,
-// dans le même langage graphique que DegreeArc/MoonPhase (aucune image
-// bitmap). L'anneau extérieur tourne très lentement pour suggérer un
+// Illustration "instrument" — un astrolabe stylisé en ligne fine, dans le
+// même langage graphique que DegreeArc/MoonPhase (aucune image bitmap).
+// Les points sur l'anneau intérieur sont les 7 planètes traditionnelles,
+// placées à leur véritable longitude écliptique géocentrique du moment
+// (voir lib/planets.ts, calculée via astronomy-engine — aucun appel
+// réseau). L'anneau extérieur tourne très lentement pour suggérer un
 // instrument vivant sans jamais distraire ; le croissant central reste fixe
-// (le point d'ancrage, "aujourd'hui"). Désactivée par
-// prefers-reduced-motion via la règle globale de globals.css.
+// (le point d'ancrage, "aujourd'hui"). La rotation, purement décorative, ne
+// change pas la position relative des planètes entre elles ni par rapport
+// aux graduations du zodiaque. Désactivée par prefers-reduced-motion via la
+// règle globale de globals.css.
+
+import { currentPlanetPositions, zodiacSignAt } from '@/lib/planets';
 
 const TICKS = Array.from({ length: 12 }, (_, i) => i * 30);
-const STARS = [
-  { angle: 15, r: 78, size: 2.2 },
-  { angle: 95, r: 84, size: 1.6 },
-  { angle: 160, r: 76, size: 1.8 },
-  { angle: 230, r: 86, size: 1.4 },
-  { angle: 290, r: 80, size: 2 },
-  { angle: 340, r: 74, size: 1.6 },
-];
 
 function toXY(angle: number, r: number, cx = 100, cy = 100) {
   const rad = ((angle - 90) * Math.PI) / 180;
@@ -22,9 +21,16 @@ function toXY(angle: number, r: number, cx = 100, cy = 100) {
 
 export default function AstrolabeIllustration({ size = 320 }: { size?: number }) {
   const armTip = toXY(38, 88);
+  const planets = currentPlanetPositions();
+  const ariaLabel = `Position actuelle des planètes sur le zodiaque : ${planets
+    .map((p) => {
+      const sign = zodiacSignAt(p.longitude);
+      return `${p.nom} en ${sign.nom}`;
+    })
+    .join(', ')}.`;
 
   return (
-    <svg width={size} height={size} viewBox="0 0 200 200" aria-hidden="true">
+    <svg width={size} height={size} viewBox="0 0 200 200" role="img" aria-label={ariaLabel}>
       <g className="astrolabe-spin" style={{ transformOrigin: '100px 100px' }}>
         <circle cx="100" cy="100" r="90" fill="none" stroke="var(--ambre)" strokeWidth="1" opacity="0.55" />
         {TICKS.map((angle) => {
@@ -43,9 +49,16 @@ export default function AstrolabeIllustration({ size = 320 }: { size?: number })
             />
           );
         })}
-        {STARS.map((s, i) => {
-          const { x, y } = toXY(s.angle, s.r);
-          return <circle key={i} cx={x} cy={y} r={s.size} fill="var(--lever)" opacity="0.6" />;
+        {planets.map((p) => {
+          const { x, y } = toXY(p.longitude, 72);
+          const sign = zodiacSignAt(p.longitude);
+          const degInSign = Math.floor(p.longitude % 30);
+          return (
+            <g key={p.key}>
+              <circle cx={x} cy={y} r={2.8} fill={p.couleur} />
+              <title>{`${p.nom} — ${degInSign}° ${sign.nom}`}</title>
+            </g>
+          );
         })}
         <circle cx="100" cy="100" r="60" fill="none" stroke="var(--lever)" strokeWidth="1" opacity="0.35" />
         <line
