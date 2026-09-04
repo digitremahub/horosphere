@@ -33,30 +33,27 @@ export default function HomePage() {
         />
       </div>
 
-      {/* 1. Aperçu gratuit — la lune du jour a rejoint la page Actualités,
-         pour ne plus être dupliquée à deux endroits. */}
-      <section className="container" style={{ paddingTop: 64, paddingBottom: 48, display: 'flex', justifyContent: 'center' }}>
-        <ScrollReveal>
+      {/* 1. Aperçu gratuit + présentation, côte à côte — la lune du jour a
+         rejoint la page Actualités, pour ne plus être dupliquée à deux
+         endroits. */}
+      <section className="container hero-grid" style={{ paddingTop: 64, paddingBottom: 48, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'center' }}>
+        <ScrollReveal style={{ display: 'flex', justifyContent: 'center' }}>
           <FreeTeaser />
         </ScrollReveal>
-      </section>
-
-      <SectionDivider />
-
-      {/* 2. Présentation, en bandeau */}
-      <section className="container" style={{ padding: '8px 24px 48px', textAlign: 'center' }}>
-        <div className="pill hero-in-1" style={{ marginBottom: 18 }}>Horoscope IA quotidien</div>
-        <h1 className="hero-in-2" style={{ fontSize: 'clamp(2.2rem, 4vw, 3.1rem)', marginBottom: 20, maxWidth: 720, margin: '0 auto 20px' }}>
-          Un instant de clarté, <em style={{ fontStyle: 'italic', color: 'var(--lever-profond)' }}>chaque jour</em>, sans pression.
-        </h1>
-        <p className="hero-in-3" style={{ color: 'var(--ombre)', fontSize: '1.05rem', maxWidth: 520, margin: '0 auto 28px' }}>
-          Horosphère écrit votre lecture du jour à partir de votre signe — et bientôt de votre thème complet.
-          Pensé pour devenir une habitude douce.
-        </p>
-        <div className="hero-in-4" style={{ display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center' }}>
-          <a href="/connexion" className="btn btn-primary">Commencer gratuitement</a>
-          <a href="/tarifs" className="btn btn-ghost">Voir les forfaits</a>
-        </div>
+        <ScrollReveal delay={120}>
+          <div className="pill hero-in-1" style={{ marginBottom: 18 }}>Horoscope IA quotidien</div>
+          <h1 className="hero-in-2" style={{ fontSize: 'clamp(2rem, 3.2vw, 2.9rem)', marginBottom: 20 }}>
+            Un instant de clarté, <em style={{ fontStyle: 'italic', color: 'var(--lever-profond)' }}>chaque jour</em>, sans pression.
+          </h1>
+          <p className="hero-in-3" style={{ color: 'var(--ombre)', fontSize: '1.02rem', marginBottom: 28 }}>
+            Horosphère écrit votre lecture du jour à partir de votre signe — et bientôt de votre thème complet.
+            Pensé pour devenir une habitude douce.
+          </p>
+          <div className="hero-in-4" style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+            <a href="/connexion" className="btn btn-primary">Commencer gratuitement</a>
+            <a href="/tarifs" className="btn btn-ghost">Voir les forfaits</a>
+          </div>
+        </ScrollReveal>
       </section>
 
       <SectionDivider />
@@ -145,8 +142,12 @@ export default function HomePage() {
         }
 
         .ritual-grid > *{ min-width: 0; }
+        .hero-grid > *{ min-width: 0; }
         @media (max-width: 860px){
           .ritual-grid{ grid-template-columns: 1fr !important; }
+          .hero-grid{ grid-template-columns: 1fr !important; gap: 36px !important; }
+          .hero-grid h1, .hero-grid p, .hero-grid .pill{ text-align: center; }
+          .hero-grid .hero-in-4{ justify-content: center; }
           #parcours{ grid-template-columns: 1fr !important; }
         }
         @media (max-width: 480px){
