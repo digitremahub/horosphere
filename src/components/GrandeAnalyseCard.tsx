@@ -62,6 +62,21 @@ export default function GrandeAnalyseCard({
         </div>
       )}
 
+      {(reading.ascendantSigne || reading.luneSigne) && (
+        <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap' }}>
+          {reading.ascendantSigne && (
+            <div className="pill" style={{ borderColor: 'var(--lever)', color: 'var(--lever-profond)' }}>
+              {reading.ascendantSigne.symbole} Ascendant {reading.ascendantSigne.nom}
+            </div>
+          )}
+          {reading.luneSigne && (
+            <div className="pill" style={{ borderColor: 'var(--sauge)', color: 'var(--sauge)' }}>
+              {reading.luneSigne.symbole} Lune natale en {reading.luneSigne.nom}
+            </div>
+          )}
+        </div>
+      )}
+
       <p style={{ margin: '0 0 18px', fontSize: '0.94rem', lineHeight: 1.6, color: 'var(--encre)' }}>{reading.synthese}</p>
 
       <Field label="Amour" color="var(--prune)" text={reading.amour} />

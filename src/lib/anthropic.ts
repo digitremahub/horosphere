@@ -26,6 +26,12 @@ export type HoroscopeReading = {
   couleur: string;
   chiffre: number;
   talisman: string;
+  // Présents uniquement pour l'horoscope personnalisé, quand l'heure et le
+  // lieu de naissance ont pu être résolus en thème natal réel (voir
+  // lib/natal.ts) — jamais approximés, et jamais pour l'horoscope
+  // quotidien générique (pas de profil de naissance associé).
+  ascendantSigne?: { nom: string; symbole: string };
+  luneSigne?: { nom: string; symbole: string };
   mode: 'ia' | 'demo';
 };
 
@@ -53,7 +59,7 @@ type Options = {
   feature: 'horoscope_quotidien' | 'horoscope_personnalise';
   sign: Sign;
   dateISO: string;
-  naissance?: { date: string; heure?: string; lieu?: string };
+  naissance?: { date: string; heure?: string; lieu?: string; latitude?: number | null; longitude?: number | null; timezone?: string | null };
 };
 
 type AstralOptions = {
@@ -96,18 +102,33 @@ export async function callClaude(apiKey: string, model: string, prompt: string, 
 }
 
 export async function generateHoroscope(opts: Options): Promise<HoroscopeReading> {
+  const naissance = opts.feature === 'horoscope_personnalise' ? opts.naissance : undefined;
+  const themeNatal =
+    naissance?.heure && naissance.latitude != null && naissance.longitude != null && naissance.timezone
+      ? calculerThemeNatal(naissance.date, naissance.heure, naissance.timezone, naissance.latitude, naissance.longitude)
+      : null;
+  const natalExtra = themeNatal
+    ? {
+        ascendantSigne: { nom: themeNatal.ascendant.signe.nom, symbole: themeNatal.ascendant.signe.symbole },
+        luneSigne: { nom: themeNatal.luneSigne.nom, symbole: themeNatal.luneSigne.symbole },
+      }
+    : {};
+
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     // Mode démo : pas de clé configurée, on utilise le générateur local déterministe.
-    return { ...fallbackHoroscope(opts.sign.key, opts.dateISO), mode: 'demo' };
+    return { ...fallbackHoroscope(opts.sign.key, opts.dateISO), ...natalExtra, mode: 'demo' };
   }
   const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
+  const natalTxt = themeNatal
+    ? ` Thème natal réel, calculé (à utiliser factuellement, n'en invente aucun autre élément) : ascendant ${themeNatal.ascendant.signe.nom}, lune natale en ${themeNatal.luneSigne.nom}.`
+    : '';
   const contexte =
-    opts.feature === 'horoscope_personnalise' && opts.naissance
-      ? `Informations de naissance fournies par l'utilisateur : date ${opts.naissance.date}` +
-        (opts.naissance.heure ? `, heure ${opts.naissance.heure}` : '') +
-        (opts.naissance.lieu ? `, lieu ${opts.naissance.lieu}` : '') +
-        `. Utilise-les pour personnaliser subtilement le ton, sans inventer de calculs astronomiques précis.`
+    opts.feature === 'horoscope_personnalise' && naissance
+      ? `Informations de naissance fournies par l'utilisateur : date ${naissance.date}` +
+        (naissance.heure ? `, heure ${naissance.heure}` : '') +
+        (naissance.lieu ? `, lieu ${naissance.lieu}` : '') +
+        `.${natalTxt} Utilise-les pour personnaliser subtilement le ton${themeNatal ? ' — tu peux mentionner l\'ascendant ou la lune natale ci-dessus, ce sont des éléments réels' : ', sans inventer de calculs astronomiques précis'}.`
       : `Horoscope général du jour pour ce signe (pas de données de naissance précises).`;
   const prompt = `Tu écris l'horoscope du jour pour l'application Horosphère, en français, pour le signe ${opts.sign.nom} (élément ${opts.sign.element}, planète maîtresse ${opts.sign.planete}). Date du jour : ${opts.dateISO}.
 ${contexte}
@@ -139,6 +160,7 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
     couleur: String(parsed.couleur ?? 'Or'),
     chiffre: Math.max(1, Math.min(49, Math.round(Number(parsed.chiffre) || 7))),
     talisman: String(parsed.talisman ?? 'une bougie'),
+    ...natalExtra,
     mode: 'ia',
   };
 }
@@ -357,25 +379,57 @@ export type GrandeAnalyse = {
   scoreFinances: number;
   conseilPrincipal: string;
   periodeCle: string;
+  // Présents uniquement quand l'heure et le lieu de naissance ont pu être
+  // résolus en thème natal réel (voir lib/natal.ts) — jamais approximés.
+  ascendantSigne?: { nom: string; symbole: string };
+  luneSigne?: { nom: string; symbole: string };
   mode: 'ia' | 'demo';
 };
 
 /** Grande analyse personnalisée — le bilan le plus complet, tous les axes
  * de vie (contrairement au thème astral, qui reste un portrait de fond, ou
- * à l'horoscope, limité au jour). Basée sur le profil de naissance. */
-export async function generateGrandeAnalyse(opts: { sign: Sign; naissance: { date: string; heure?: string; lieu?: string } }): Promise<GrandeAnalyse> {
+ * à l'horoscope, limité au jour). Basée sur le profil de naissance, et sur
+ * le thème natal réel (ascendant, lune, aspects) quand il est disponible —
+ * même logique que generateAstralChart. */
+export async function generateGrandeAnalyse(opts: {
+  sign: Sign;
+  naissance: { date: string; heure?: string; lieu?: string; latitude?: number | null; longitude?: number | null; timezone?: string | null };
+}): Promise<GrandeAnalyse> {
+  const { naissance } = opts;
+  const themeNatal =
+    naissance.heure && naissance.latitude != null && naissance.longitude != null && naissance.timezone
+      ? calculerThemeNatal(naissance.date, naissance.heure, naissance.timezone, naissance.latitude, naissance.longitude)
+      : null;
+  const natalExtra = themeNatal
+    ? {
+        ascendantSigne: { nom: themeNatal.ascendant.signe.nom, symbole: themeNatal.ascendant.signe.symbole },
+        luneSigne: { nom: themeNatal.luneSigne.nom, symbole: themeNatal.luneSigne.symbole },
+      }
+    : {};
+
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return { ...fallbackGrandeAnalyse(opts.sign.key, opts.naissance.date + opts.naissance.lieu), mode: 'demo' };
+    return { ...fallbackGrandeAnalyse(opts.sign.key, opts.naissance.date + opts.naissance.lieu), ...natalExtra, mode: 'demo' };
   }
   const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
   const contexteNaissance =
-    `Informations de naissance : date ${opts.naissance.date}` +
-    (opts.naissance.heure ? `, heure ${opts.naissance.heure}` : '') +
-    (opts.naissance.lieu ? `, lieu ${opts.naissance.lieu}` : '') +
+    `Informations de naissance : date ${naissance.date}` +
+    (naissance.heure ? `, heure ${naissance.heure}` : '') +
+    (naissance.lieu ? `, lieu ${naissance.lieu}` : '') +
     `.`;
+  const natalTxt = themeNatal
+    ? `Thème natal réel, calculé (à utiliser factuellement, n'en invente aucun autre élément) : ascendant ${themeNatal.ascendant.signe.nom}, lune natale en ${themeNatal.luneSigne.nom}` +
+      (themeNatal.aspects.length > 0
+        ? `, aspects natals principaux : ${themeNatal.aspects.slice(0, 5).map((a) => `${a.corps1}-${a.corps2} (${a.aspect})`).join(', ')}`
+        : '') +
+      '.'
+    : `Aucun thème natal précis disponible (heure ou lieu de naissance non résolus) — reste qualitatif, basé uniquement sur le signe solaire.`;
+  const consigneNatal = themeNatal
+    ? "Intègre l'ascendant et la lune natale ci-dessus (éléments réels et calculés) dans l'analyse, sans inventer de maison ou de transit non fournis."
+    : 'Ne prétends jamais calculer une position astronomique précise (pas d\'ascendant, de maison ou de transit inventés) — reste qualitatif, basé sur le signe solaire et les informations fournies.';
   const prompt = `Tu écris une grande analyse personnalisée pour l'application Horosphère, en français, pour le signe ${opts.sign.nom} (élément ${opts.sign.element}, planète maîtresse ${opts.sign.planete}). ${contexteNaissance}
-C'est le bilan le plus complet proposé par l'application : couvre tous les grands axes de vie (amour, carrière, finances, santé, famille, évolution personnelle), pas seulement un portrait de fond. Ne prétends jamais calculer une position astronomique précise (pas d'ascendant, de maison ou de transit inventés) — reste qualitatif, basé sur le signe solaire et les informations fournies.
+${natalTxt}
+C'est le bilan le plus complet proposé par l'application : couvre tous les grands axes de vie (amour, carrière, finances, santé, famille, évolution personnelle), pas seulement un portrait de fond. ${consigneNatal}
 Ton : dense, structuré, valorisant sans flatterie vide, jamais anxiogène.
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
 {
@@ -408,6 +462,7 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
     scoreFinances: clampScore(parsed.scoreFinances),
     conseilPrincipal: String(parsed.conseilPrincipal ?? ''),
     periodeCle: String(parsed.periodeCle ?? 'les prochaines semaines'),
+    ...natalExtra,
     mode: 'ia',
   };
 }

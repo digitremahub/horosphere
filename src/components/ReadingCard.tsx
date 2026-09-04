@@ -13,6 +13,11 @@ export type Reading = {
   couleur: string;
   chiffre: number;
   talisman: string;
+  // Présents uniquement pour l'horoscope personnalisé, quand l'heure et le
+  // lieu de naissance ont pu être résolus en thème natal réel (voir
+  // lib/natal.ts) — jamais approximés.
+  ascendantSigne?: { nom: string; symbole: string };
+  luneSigne?: { nom: string; symbole: string };
   mode: 'ia' | 'demo';
 };
 
@@ -71,6 +76,21 @@ export default function ReadingCard({
             <div style={{ fontWeight: 700 }}>{signInfo.nom}</div>
             <div className="mono" style={{ fontSize: '0.72rem', color: 'var(--sourdine)' }}>{signInfo.dates}</div>
           </div>
+        </div>
+      )}
+
+      {(reading.ascendantSigne || reading.luneSigne) && (
+        <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap' }}>
+          {reading.ascendantSigne && (
+            <div className="pill" style={{ borderColor: 'var(--lever)', color: 'var(--lever-profond)' }}>
+              {reading.ascendantSigne.symbole} Ascendant {reading.ascendantSigne.nom}
+            </div>
+          )}
+          {reading.luneSigne && (
+            <div className="pill" style={{ borderColor: 'var(--sauge)', color: 'var(--sauge)' }}>
+              {reading.luneSigne.symbole} Lune natale en {reading.luneSigne.nom}
+            </div>
+          )}
         </div>
       )}
 
