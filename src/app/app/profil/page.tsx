@@ -78,8 +78,8 @@ export default async function ProfilPage() {
 
       <div className="photo-frame" style={{ height: 160, marginBottom: 28, position: 'relative', zIndex: 1 }}>
         <img
-          src="/images/bg-formulaire-naissance.png"
-          alt="Une carte du ciel étoilé, en fond du formulaire de naissance."
+          src="/images/profil-astrolabe.webp"
+          alt="Une silhouette contemplant le ciel étoilé à travers un astrolabe, en fond du formulaire de naissance."
           loading="lazy"
         />
       </div>
