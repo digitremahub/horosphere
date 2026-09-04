@@ -24,6 +24,15 @@ function SectionDivider() {
 export default function HomePage() {
   return (
     <main>
+      {/* 0. Bandeau d'ouverture, plein écran en largeur */}
+      <div className="accueil-bandeau">
+        <img
+          src="/images/accueil-bandeau-astrolabe.webp"
+          alt="Un astrolabe sur un balcon face à la mer, sous un ciel étoilé où la lune et les planètes tracent leur trajectoire au crépuscule."
+          loading="eager"
+        />
+      </div>
+
       {/* 1. Aperçu gratuit — la lune du jour a rejoint la page Actualités,
          pour ne plus être dupliquée à deux endroits. */}
       <section className="container" style={{ paddingTop: 64, paddingBottom: 48, display: 'flex', justifyContent: 'center' }}>
@@ -127,6 +136,14 @@ export default function HomePage() {
       </section>
 
       <style>{`
+        .accueil-bandeau{ position: relative; width: 100%; height: clamp(150px, 26vw, 320px); overflow: hidden; }
+        .accueil-bandeau img{ width: 100%; height: 100%; object-fit: cover; display: block; }
+        .accueil-bandeau::after{
+          content: ''; position: absolute; inset: 0;
+          background: linear-gradient(180deg, rgba(0,0,0,0) 60%, var(--aube) 100%);
+          pointer-events: none;
+        }
+
         .ritual-grid > *{ min-width: 0; }
         @media (max-width: 860px){
           .ritual-grid{ grid-template-columns: 1fr !important; }
