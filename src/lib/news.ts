@@ -54,6 +54,39 @@ export async function getRecentPublishedNews(days = 7): Promise<NewsItem[]> {
   `;
 }
 
+const SIGNES_HEADING = 'Signes les plus concernés cette semaine :';
+
+export type SigneConcerne = { symbole: string; texte: string };
+export type ArticleSections = { corps: string; signesConcernes: SigneConcerne[] };
+
+/** Sépare le corps de l'article de la section "Signes les plus concernés"
+ * (voir lib/skyNews.ts, qui écrit toujours ce même intitulé) pour pouvoir
+ * afficher cette dernière dans son propre encadré plutôt qu'en texte brut
+ * au fil du contenu. Les articles publiés avant l'ajout de cette section
+ * n'ont simplement pas de `signesConcernes`. */
+export function splitArticleSections(contenu: string): ArticleSections {
+  const idx = contenu.indexOf(SIGNES_HEADING);
+  if (idx === -1) return { corps: contenu, signesConcernes: [] };
+
+  const avant = contenu.slice(0, idx).trim();
+  const bloc = contenu.slice(idx + SIGNES_HEADING.length);
+  const signesConcernes: SigneConcerne[] = [];
+  // Une phrase de clôture suit parfois la liste (ex. "Comme toujours, ces
+  // repères ne prédisent rien...") — elle n'a pas sa place dans l'encadré
+  // des signes, donc on la récupère pour la remettre à la fin du corps de
+  // l'article plutôt que de la perdre.
+  const apres: string[] = [];
+  for (const ligne of bloc.split('\n')) {
+    const trimmed = ligne.trim();
+    if (!trimmed) continue;
+    const match = /^([♈♉♊♋♌♍♎♏♐♑♒♓])\s*(.+)$/.exec(trimmed);
+    if (match) signesConcernes.push({ symbole: match[1], texte: match[2] });
+    else apres.push(trimmed);
+  }
+  const corps = apres.length > 0 ? `${avant}\n\n${apres.join('\n\n')}` : avant;
+  return { corps, signesConcernes };
+}
+
 /** Publie (ou met à jour) une actualité depuis Airtable. Le slug est fourni
  * par Airtable s'il existe, sinon dérivé du titre. `publie_le` n'est posé
  * qu'à la première publication — une mise à jour de contenu ne change pas

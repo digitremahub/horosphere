@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { listPublishedNews } from '@/lib/news';
 import { dbConfigured } from '@/lib/db';
 import AstrolabeIllustration from '@/components/AstrolabeIllustration';
+import MoonOfTheDay from '@/components/MoonOfTheDay';
 import SkyCountdown from '@/components/SkyCountdown';
 import { getUpcomingSkyEvents } from '@/lib/skyEvents';
 
@@ -37,25 +38,35 @@ export default async function ActualitesPage() {
         </p>
       </div>
 
-      {/* En direct — déplacé depuis la page d'accueil : la position réelle des
-          planètes et le compte à rebours des prochains événements du ciel
-          n'ont plus besoin d'être dupliqués dans les articles ci-dessous. */}
-      <section className="container" style={{ padding: '32px 24px 8px', textAlign: 'center' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <div className="pill" style={{ marginBottom: 16 }}>En direct</div>
-          <AstrolabeIllustration size={280} />
-          <p style={{ color: 'var(--ombre)', fontSize: '0.88rem', maxWidth: 440, margin: '16px auto 0' }}>
-            La position réelle des sept planètes traditionnelles sur le zodiaque, telle qu'observée depuis
-            la Terre à l'instant présent.
-          </p>
+      {/* En direct — déplacé depuis la page d'accueil (astrolabe + lune du
+          jour) : plus besoin d'être dupliqué à deux endroits, et libre
+          d'accès comme le reste de cette page, sans connexion ni abonnement. */}
+      <section className="container" style={{ padding: '32px 24px 8px' }}>
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <div className="pill">En direct</div>
         </div>
 
-        <div style={{ marginTop: 36 }}>
-          <p style={{ color: 'var(--sourdine)', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16 }}>
+        <div className="actu-en-direct" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, alignItems: 'center' }}>
+          <div style={{ textAlign: 'center' }}>
+            <AstrolabeIllustration size={260} />
+            <p style={{ color: 'var(--ombre)', fontSize: '0.88rem', maxWidth: 400, margin: '16px auto 0' }}>
+              La position réelle des sept planètes traditionnelles sur le zodiaque, telle qu'observée
+              depuis la Terre à l'instant présent.
+            </p>
+          </div>
+          <MoonOfTheDay />
+        </div>
+
+        <div style={{ marginTop: 40 }}>
+          <p style={{ color: 'var(--sourdine)', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16, textAlign: 'center' }}>
             Prochains événements du ciel
           </p>
           <SkyCountdown events={skyEvents} />
         </div>
+
+        <style>{`
+          @media (max-width: 720px){ .actu-en-direct{ grid-template-columns: 1fr !important; } }
+        `}</style>
       </section>
 
       <div className="container-narrow" style={{ paddingTop: 48 }}>

@@ -98,8 +98,10 @@ function fallbackSkyNews(date: Date): SkyNewsDraft {
     prochainLabel ? `À surveiller : ${prochainLabel}.` : '',
     `Du côté des planètes, on retrouve actuellement ${planetesTxt}.`,
     retrogradesTxt(retrogrades),
-    impactesTxt(impactes),
     pick(rng, CLOTURES),
+    // Toujours en dernier : lib/news.ts (splitArticleSections) extrait ce
+    // bloc pour l'afficher dans son propre encadré sur la page article.
+    impactesTxt(impactes),
   ]
     .filter(Boolean)
     .join('\n\n');

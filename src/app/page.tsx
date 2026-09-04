@@ -2,7 +2,6 @@ import FreeTeaser from '@/components/FreeTeaser';
 import DegreeArc from '@/components/DegreeArc';
 import ZodiacWheelIllustration from '@/components/ZodiacWheelIllustration';
 import ScrollReveal from '@/components/ScrollReveal';
-import MoonOfTheDay from '@/components/MoonOfTheDay';
 
 // Photo réelle du rituel quotidien — voir la bannière tarifs et la
 // connexion pour les deux autres.
@@ -25,19 +24,12 @@ function SectionDivider() {
 export default function HomePage() {
   return (
     <main>
-      {/* 1. La lune du jour, à moitié de l'aperçu gratuit */}
-      <section className="container" style={{ paddingTop: 64, paddingBottom: 48 }}>
-        <div
-          className="top-grid"
-          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, alignItems: 'stretch' }}
-        >
-          <ScrollReveal>
-            <MoonOfTheDay />
-          </ScrollReveal>
-          <ScrollReveal delay={120}>
-            <FreeTeaser />
-          </ScrollReveal>
-        </div>
+      {/* 1. Aperçu gratuit — la lune du jour a rejoint la page Actualités,
+         pour ne plus être dupliquée à deux endroits. */}
+      <section className="container" style={{ paddingTop: 64, paddingBottom: 48, display: 'flex', justifyContent: 'center' }}>
+        <ScrollReveal>
+          <FreeTeaser />
+        </ScrollReveal>
       </section>
 
       <SectionDivider />
@@ -135,10 +127,8 @@ export default function HomePage() {
       </section>
 
       <style>{`
-        .top-grid > *{ min-width: 0; }
         .ritual-grid > *{ min-width: 0; }
         @media (max-width: 860px){
-          .top-grid{ grid-template-columns: 1fr !important; }
           .ritual-grid{ grid-template-columns: 1fr !important; }
           #parcours{ grid-template-columns: 1fr !important; }
         }
