@@ -228,7 +228,7 @@ export default async function ActualitesPage({ searchParams }: { searchParams: P
                   style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.66rem', color: 'var(--sourdine)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}
                 >
                   {it.source}
-                  {it.langue === 'en' && ' · en anglais'}
+                  {it.langue === 'en' && (it.traduit ? ' · traduit de l\'anglais' : ' · en anglais')}
                   <span aria-hidden="true" style={{ marginLeft: 'auto' }}>↗</span>
                 </div>
                 <h3 style={{ fontSize: '0.96rem', margin: '0 0 8px', lineHeight: 1.35 }}>{it.titre}</h3>

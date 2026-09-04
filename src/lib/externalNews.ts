@@ -16,6 +16,7 @@
 // qui ouvre l'article d'origine dans un nouvel onglet.
 
 import { XMLParser } from 'fast-xml-parser';
+import { callClaude } from './anthropic';
 
 export type ExternalItem = {
   titre: string;
@@ -25,6 +26,10 @@ export type ExternalItem = {
   extrait: string;
   publieLe: string | null;
   langue?: 'fr' | 'en';
+  // Vrai quand `titre`/`extrait` sont une traduction (voir traduireEnFrancais
+  // ci-dessous) — sert à afficher "traduit de l'anglais" plutôt que
+  // "en anglais" sur la carte.
+  traduit?: boolean;
 };
 
 /** Liens choisis à la main. Pour en ajouter un : titre, lien, source
@@ -35,8 +40,9 @@ export const CURATED_EXTERNAL_LINKS: ExternalItem[] = [];
 /** Flux RSS/Atom interrogés à chaque régénération de la page. NASA APOD est
  * l'un des flux RSS les plus anciens et stables du web (inchangé depuis
  * plus de vingt ans) — choisi comme premier flux pour cette raison, malgré
- * son contenu en anglais (indiqué comme tel sur la carte). D'autres flux
- * (astronomie ou astrologie francophones) peuvent être ajoutés ici dès
+ * son contenu en anglais, traduit en français (voir traduireEnFrancais)
+ * avant affichage. D'autres flux (astronomie ou astrologie francophones,
+ * qui n'auraient pas besoin de traduction) peuvent être ajoutés ici dès
  * qu'une URL de flux valide est connue. */
 const RSS_FEEDS: { nom: string; url: string; langue: 'fr' | 'en' }[] = [
   { nom: 'NASA', url: 'https://apod.nasa.gov/apod.rss', langue: 'en' },
@@ -44,16 +50,30 @@ const RSS_FEEDS: { nom: string; url: string; langue: 'fr' | 'en' }[] = [
 
 const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_', textNodeName: '#text' });
 
-function stripHtml(html: string): string {
-  return html
-    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
-    .replace(/<[^>]+>/g, ' ')
+/** Décode les entités HTML/XML, y compris numériques (&#60; / &#x3C;) — le
+ * flux NASA APOD notamment échappe deux fois le HTML de sa description
+ * (&amp;#60; dans le XML brut), donc au moins une couche d'entités
+ * numériques subsiste après le décodage XML déjà fait par fast-xml-parser. */
+function decodeEntities(texte: string): string {
+  return texte
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 10)))
     .replace(/&nbsp;/g, ' ')
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
-    .replace(/&#39;|&apos;/g, "'")
     .replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'");
+}
+
+function stripHtml(html: string): string {
+  // Deux passes : une balise peut n'apparaître qu'après décodage des
+  // entités (cas du double échappement ci-dessus), donc décoder avant de
+  // retirer les balises, puis nettoyer les entités résiduelles au cas où.
+  const decode = (s: string) => decodeEntities(decodeEntities(s));
+  return decode(decode(html))
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+    .replace(/<[^>]+>/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -133,6 +153,42 @@ async function fetchOneFeed(feed: { nom: string; url: string; langue: 'fr' | 'en
   }
 }
 
+/** Traduit titre + extrait en français via l'IA déjà utilisée ailleurs sur
+ * le site (voir lib/anthropic.ts) — le site est entièrement en français,
+ * un contenu externe en anglais (NASA notamment) n'a pas sa place tel
+ * quel. Mémorisée en mémoire par URL d'article (le contenu d'un article
+ * publié ne change plus) pour éviter de retraduire à chaque régénération
+ * de la page (revalidate = 300). Sans clé IA configurée, ou en cas
+ * d'échec, l'item est renvoyé tel quel — jamais bloquant, jamais un texte
+ * inventé à la place de la traduction. */
+const traductionsCache = new Map<string, { titre: string; extrait: string }>();
+
+async function traduireEnFrancais(item: ExternalItem): Promise<ExternalItem> {
+  if (item.langue !== 'en') return item;
+
+  const enCache = traductionsCache.get(item.lien);
+  if (enCache) return { ...item, ...enCache, traduit: true };
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return item;
+
+  try {
+    const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
+    const prompt = `Traduis fidèlement ce titre et cet extrait d'article en français courant — une traduction, pas un résumé ni une reformulation. Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
+{"titre": "...", "extrait": "..."}
+
+Titre : ${item.titre}
+Extrait : ${item.extrait}`;
+    const parsed = await callClaude(apiKey, model, prompt, 400);
+    const traduction = { titre: String(parsed.titre ?? item.titre), extrait: String(parsed.extrait ?? item.extrait) };
+    traductionsCache.set(item.lien, traduction);
+    return { ...item, ...traduction, traduit: true };
+  } catch (err) {
+    console.error(`traduireEnFrancais failed for ${item.lien}`, err);
+    return item;
+  }
+}
+
 /** Combine les flux RSS configurés (au mieux — un flux en échec est
  * simplement absent du résultat) et les trie du plus récent au plus
  * ancien. Ne lève jamais d'exception : cette section est un bonus, jamais
@@ -155,5 +211,6 @@ export async function getExternalNewsSection(limit = 8): Promise<ExternalItem[]>
   const placesRestantes = Math.max(0, limit - curated.length);
   const rss = placesRestantes > 0 ? await fetchExternalRssItems(placesRestantes) : [];
   const urlsConnues = new Set(curated.map((c) => c.lien));
-  return [...curated, ...rss.filter((r) => !urlsConnues.has(r.lien))].slice(0, limit);
+  const combines = [...curated, ...rss.filter((r) => !urlsConnues.has(r.lien))].slice(0, limit);
+  return Promise.all(combines.map(traduireEnFrancais));
 }
