@@ -116,3 +116,26 @@ CREATE TABLE IF NOT EXISTS profiles (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- ===== Promotion réseaux sociaux (équipe IA de contenu) =====
+-- Une ligne = un post proposé pour une plateforme et une date données.
+-- Cycle de vie : brouillon -> (approuvé | rejeté) -> publié.
+-- Générée automatiquement (voir lib/social.ts + /api/social/*), mais jamais
+-- publiée sans passage par le statut "approuve" — validation humaine requise.
+CREATE TABLE IF NOT EXISTS social_posts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  post_date DATE NOT NULL,
+  plateforme TEXT NOT NULL, -- 'instagram' | 'facebook' | 'tiktok'
+  statut TEXT NOT NULL DEFAULT 'brouillon', -- 'brouillon' | 'approuve' | 'rejete' | 'publie'
+  legende TEXT NOT NULL,
+  hashtags TEXT NOT NULL DEFAULT '',
+  image_url TEXT, -- visuel suggéré (asset existant du site), NULL pour TikTok
+  script_video TEXT, -- idée de script, TikTok uniquement (pas de génération vidéo)
+  mode TEXT NOT NULL DEFAULT 'ia', -- 'ia' | 'demo'
+  publie_le TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (post_date, plateforme)
+);
+
+CREATE INDEX IF NOT EXISTS idx_social_posts_statut ON social_posts (statut, post_date DESC);

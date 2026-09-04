@@ -62,7 +62,7 @@ const clampScore = (n: unknown) => Math.max(0, Math.min(100, Math.round(Number(n
 /** Appelle l'API Anthropic avec un prompt donné et renvoie l'objet JSON
  * qu'elle a répondu. Partagé par generateHoroscope et generateAstralChart
  * pour éviter de dupliquer la logique de fetch/parsing. */
-async function callClaude(apiKey: string, model: string, prompt: string, maxTokens: number): Promise<any> {
+export async function callClaude(apiKey: string, model: string, prompt: string, maxTokens: number): Promise<any> {
   const res = await fetch(ANTHROPIC_API_URL, {
     method: 'POST',
     headers: {

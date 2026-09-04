@@ -40,7 +40,9 @@ const CONSEILS = [
 const COULEURS = ['Or', 'Bleu nuit', 'Lilas', 'Corail', 'Vert sauge'];
 const TALISMANS = ['une clé', 'une bougie', 'une plume', 'une étoile', 'une boussole'];
 
-function hashStr(s: string): number {
+// Exportées : réutilisées par lib/social.ts pour le mode démo du contenu
+// réseaux sociaux, sur le même principe (hash déterministe -> choix stable).
+export function hashStr(s: string): number {
   let h = 2166136261;
   for (let i = 0; i < s.length; i++) {
     h ^= s.charCodeAt(i);
@@ -49,7 +51,7 @@ function hashStr(s: string): number {
   return h >>> 0;
 }
 
-function mulberry32(seed: number) {
+export function mulberry32(seed: number) {
   let a = seed;
   return function () {
     a |= 0;
@@ -60,11 +62,11 @@ function mulberry32(seed: number) {
   };
 }
 
-function pick<T>(rng: () => number, arr: T[]): T {
+export function pick<T>(rng: () => number, arr: T[]): T {
   return arr[Math.floor(rng() * arr.length)];
 }
 
-function range(rng: () => number, min: number, max: number): number {
+export function range(rng: () => number, min: number, max: number): number {
   return Math.round(min + rng() * (max - min));
 }
 
