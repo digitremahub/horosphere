@@ -24,11 +24,11 @@ export default async function ActualitesPage() {
 
   return (
     <main className="container-narrow" style={{ paddingTop: 56, paddingBottom: 96 }}>
-      <div className="pill" style={{ marginBottom: 16 }}>Actualités</div>
-      <h1 style={{ fontSize: '2rem', marginBottom: 14 }}>Ce qui se passe chez Horosphère</h1>
+      <div className="pill" style={{ marginBottom: 16 }}>Actualité du ciel</div>
+      <h1 style={{ fontSize: '2rem', marginBottom: 14 }}>Ce qui se passe dans le ciel</h1>
       <p style={{ color: 'var(--ombre)', marginBottom: 40 }}>
-        Nouveautés, coulisses et éclairages sur le ciel du moment — la même matière qui alimente notre
-        newsletter hebdomadaire.
+        Lune, événements astronomiques et mouvements planétaires de la semaine — la même matière qui
+        alimente notre newsletter hebdomadaire.
       </p>
 
       {error && (

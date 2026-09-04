@@ -1,6 +1,9 @@
-// Actualités Horosphère — éditées par le community manager dans Airtable,
-// publiées ici via /api/news/publish (appelé par un scénario Make.com).
-// Sert la page publique /actualites et alimente la newsletter hebdomadaire.
+// Actualités du ciel — articles centrés sur ce qui se passe réellement dans
+// le ciel (lune, événements astronomiques, planètes), générés
+// automatiquement chaque semaine (voir lib/skyNews.ts) puis édités/publiés
+// par le community manager dans Airtable, via /api/news/publish (appelé
+// par un scénario Make.com). Sert la page publique /actualites et
+// alimente la newsletter hebdomadaire.
 
 import { requireDb } from './db';
 

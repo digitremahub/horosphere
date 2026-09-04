@@ -65,10 +65,19 @@ Variable d'environnement à définir dans Vercel :
 
 ## Actualités & newsletter
 
+`/actualites` est centrée sur **ce qui se passe dans le ciel** (lune,
+événements astronomiques, positions planétaires réelles) — pas sur des
+annonces d'entreprise. Le contenu est généré automatiquement chaque
+semaine (`lib/skyNews.ts`, mêmes données réelles qu'ailleurs dans l'app :
+`astronomy-engine`, aucune invention), puis relu et publié par le community
+manager dans Airtable, exactement comme les réseaux sociaux.
+
+- `POST /api/news/generate` (appelé chaque semaine par Make) — génère
+  l'article du ciel de la semaine ; Make crée le brouillon dans la table
+  Airtable "Actualités".
 - `news` (voir `db/schema.sql`) est la table publique affichée sur
-  `/actualites` — alimentée depuis Airtable (table "Actualités"), publiée
-  via `POST /api/news/publish` (appelé par Make quand une ligne Airtable
-  passe à "✅ Publier"), sur le même principe que les réseaux sociaux.
+  `/actualites` — remplie via `POST /api/news/publish` (appelé par Make
+  quand une ligne Airtable passe à "✅ Publier").
 - **Newsletter hebdomadaire** (`POST /api/newsletter/send-weekly`, appelé
   une fois par semaine par Make) — envoie un résumé des actualités publiées
   dans les 7 derniers jours à tous les utilisateurs inscrits (email requis
@@ -98,7 +107,9 @@ Les scénarios Make.com associés (déjà créés dans le compte Make relié) :
 - **Horosphère — Publication réseaux sociaux** — surveille les lignes
   "✅ Publier" dans Airtable, publie sur Facebook/Instagram (connexions à
   finaliser dans Make), repasse le statut à "Publié".
-- **Horosphère — Publication actualités** — même principe pour la table
-  Actualités, vers `/api/news/publish`.
+- **Horosphère — Génération actualité du ciel** — chaque semaine, appelle
+  `/api/news/generate` puis crée le brouillon dans Airtable.
+- **Horosphère — Publication actualités** — surveille les lignes
+  "✅ Publier" de la table Actualités, vers `/api/news/publish`.
 - **Horosphère — Newsletter hebdomadaire** — une fois par semaine, appelle
   `/api/newsletter/send-weekly`.
