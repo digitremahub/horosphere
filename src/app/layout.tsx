@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import SiteHeader from '@/components/SiteHeader';
+import ScrollToTopButton from '@/components/ScrollToTopButton';
 
 export const metadata: Metadata = {
   title: 'Horosphère — votre rituel du jour',
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </span>
           </div>
         </footer>
+        <ScrollToTopButton />
       </body>
     </html>
   );

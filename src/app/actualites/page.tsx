@@ -119,6 +119,7 @@ export default async function ActualitesPage({ searchParams }: { searchParams: P
                   <Link
                     key={item.id}
                     href={`/actualites?a=${item.slug}`}
+                    scroll={false}
                     className="card actu-liste-item"
                     style={{
                       padding: '16px 18px',
