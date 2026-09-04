@@ -43,7 +43,9 @@ const VISUELS = [
   '/images/bg-connexion.png',
 ];
 
-function visuelDuJour(dateISO: string): string {
+// Exportée : réutilisée par lib/skyNews.ts pour illustrer les articles
+// d'actualité du ciel avec la même logique de rotation.
+export function visuelDuJour(dateISO: string): string {
   const rng = mulberry32(hashStr('visuel::' + dateISO));
   return siteUrl() + pick(rng, VISUELS);
 }
