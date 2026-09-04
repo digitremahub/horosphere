@@ -140,34 +140,6 @@ export default async function HomePage() {
 
       <SectionDivider />
 
-      {/* 4bis. Qui sommes-nous */}
-      <section className="container" style={{ padding: '56px 24px' }}>
-        <div
-          className="ritual-grid team-grid"
-          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'center' }}
-        >
-          <ScrollReveal>
-            <div className="pill" style={{ marginBottom: 16 }}>Qui sommes-nous</div>
-            <h2 style={{ fontSize: '1.6rem', marginBottom: 14 }}>Une petite équipe, un projet sincère</h2>
-            <p style={{ color: 'var(--ombre)', fontSize: '0.98rem' }}>
-              Horosphère est pensé et développé par une petite équipe qui croit qu'un instant d'astrologie,
-              sans jargon ni promesse absolue, peut vraiment faire du bien au quotidien.
-            </p>
-          </ScrollReveal>
-          <ScrollReveal delay={120}>
-            <div className="photo-frame" style={{ aspectRatio: '4 / 3' }}>
-              <img
-                src="/images/equipe-horosphere.webp"
-                alt="Les deux personnes derrière Horosphère."
-                loading="lazy"
-              />
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
-
-      <SectionDivider />
-
       {/* 5. Forfaits */}
       <section className="container" style={{ padding: '56px 24px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
         <div
