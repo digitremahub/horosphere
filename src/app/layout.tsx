@@ -20,6 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <span style={{ display: 'flex', gap: 18 }}>
               <a href="/mentions-legales" style={{ color: 'var(--sourdine)' }}>Mentions légales</a>
               <a href="/cgv" style={{ color: 'var(--sourdine)' }}>CGV</a>
+              <a href="/politique-de-confidentialite" style={{ color: 'var(--sourdine)' }}>Confidentialité</a>
             </span>
           </div>
         </footer>

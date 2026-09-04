@@ -77,9 +77,9 @@ export default function MentionsLegalesPage() {
         <h2 style={{ fontSize: '1.1rem', marginBottom: 14 }}>Données personnelles</h2>
         <p style={{ margin: 0, fontSize: '0.92rem' }}>
           Le traitement des données personnelles collectées via Horosphère (adresse e-mail, date, heure et
-          lieu de naissance, historique des lectures) est nécessaire à la fourniture du service. Pour toute
-          question relative à vos données ou pour exercer vos droits d'accès, de rectification ou de
-          suppression, contactez <a href="mailto:contact@horosphere.fr" style={{ color: 'var(--lever-profond)' }}>contact@horosphere.fr</a>.
+          lieu de naissance, historique des lectures) est nécessaire à la fourniture du service. Le détail
+          des données collectées, leur durée de conservation, les destinataires et vos droits sont décrits
+          dans notre <a href="/politique-de-confidentialite" style={{ color: 'var(--lever-profond)' }}>politique de confidentialité</a>.
         </p>
       </div>
     </main>
