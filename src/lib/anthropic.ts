@@ -252,18 +252,43 @@ export type SentimentReading = {
   scoreClarte: number;
   scoreIntensite: number;
   motCle: string;
+  // Présents uniquement quand l'heure et le lieu de naissance ont pu être
+  // résolus en thème natal réel (voir lib/natal.ts) — jamais approximés.
+  ascendantSigne?: { nom: string; symbole: string };
+  luneSigne?: { nom: string; symbole: string };
   mode: 'ia' | 'demo';
 };
 
 /** Analyse sentimentale hebdomadaire — portée d'une semaine (pas du jour),
- * régénérée de façon stable pour la semaine ISO en cours. */
-export async function generateSentiment(opts: { sign: Sign; weekKey: string }): Promise<SentimentReading> {
+ * régénérée de façon stable pour la semaine ISO en cours. Le thème natal
+ * réel (ascendant, lune), quand il est disponible, vient nuancer le ton sans
+ * jamais être inventé — même logique que generateAstralChart. */
+export async function generateSentiment(opts: {
+  sign: Sign;
+  weekKey: string;
+  naissance?: { date: string; heure?: string; lieu?: string; latitude?: number | null; longitude?: number | null; timezone?: string | null };
+}): Promise<SentimentReading> {
+  const { naissance } = opts;
+  const themeNatal =
+    naissance?.heure && naissance.latitude != null && naissance.longitude != null && naissance.timezone
+      ? calculerThemeNatal(naissance.date, naissance.heure, naissance.timezone, naissance.latitude, naissance.longitude)
+      : null;
+  const natalExtra = themeNatal
+    ? {
+        ascendantSigne: { nom: themeNatal.ascendant.signe.nom, symbole: themeNatal.ascendant.signe.symbole },
+        luneSigne: { nom: themeNatal.luneSigne.nom, symbole: themeNatal.luneSigne.symbole },
+      }
+    : {};
+
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return { ...fallbackSentiment(opts.sign.key, opts.weekKey), mode: 'demo' };
+    return { ...fallbackSentiment(opts.sign.key, opts.weekKey), ...natalExtra, mode: 'demo' };
   }
   const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
-  const prompt = `Tu écris une analyse sentimentale hebdomadaire pour l'application Horosphère, en français, pour le signe ${opts.sign.nom} (élément ${opts.sign.element}). Portée : la semaine en cours (semaine ${opts.weekKey}), pas la journée.
+  const natalTxt = themeNatal
+    ? ` Thème natal réel, calculé (à utiliser factuellement, n'en invente aucun autre élément) : ascendant ${themeNatal.ascendant.signe.nom}, lune natale en ${themeNatal.luneSigne.nom} — tu peux t'appuyer dessus, notamment pour la dimension émotionnelle (la lune natale).`
+    : '';
+  const prompt = `Tu écris une analyse sentimentale hebdomadaire pour l'application Horosphère, en français, pour le signe ${opts.sign.nom} (élément ${opts.sign.element}). Portée : la semaine en cours (semaine ${opts.weekKey}), pas la journée.${natalTxt}
 Ton : chaleureux, introspectif, jamais culpabilisant ni fataliste. Une seule idée par phrase.
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
 {
@@ -286,6 +311,7 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
     scoreClarte: clampScore(parsed.scoreClarte),
     scoreIntensite: clampScore(parsed.scoreIntensite),
     motCle: String(parsed.motCle ?? 'Clarté'),
+    ...natalExtra,
     mode: 'ia',
   };
 }
@@ -298,19 +324,26 @@ export type CompatibilityReading = {
   amour: string;
   communication: string;
   conseil: string;
+  // Ascendant/lune natale de l'utilisateur uniquement (jamais de la seconde
+  // personne, dont on ne connaît que la date de naissance, pas l'heure ni le
+  // lieu) — présents uniquement quand ils ont pu être résolus (lib/natal.ts).
+  ascendantSigne?: { nom: string; symbole: string };
+  luneSigne?: { nom: string; symbole: string };
   mode: 'ia' | 'demo';
 };
 
 /** Compatibilité amoureuse entre l'utilisateur et une seconde personne
  * choisie librement — la seule lecture qui compare à un profil qui n'est
  * pas le sien. Affinée avec le prénom et la date de naissance exacte des
- * deux personnes (décan, en plus du seul signe solaire), jamais avec des
- * positions astronomiques inventées (pas d'ascendant, de maison ou de
- * transit calculé). */
+ * deux personnes (décan, en plus du seul signe solaire). Le thème natal réel
+ * (ascendant, lune) n'est calculé et utilisé que pour l'utilisateur — la
+ * seconde personne n'a jamais fourni d'heure ni de lieu de naissance, donc
+ * jamais de positions astronomiques inventées pour elle. */
 export async function generateCompatibility(opts: {
   prenom: string;
   sign: Sign;
   dateNaissance: string;
+  naissance?: { date: string; heure?: string; lieu?: string; latitude?: number | null; longitude?: number | null; timezone?: string | null };
   autrePrenom: string;
   autreSign: Sign;
   autreDateNaissance: string;
@@ -320,6 +353,18 @@ export async function generateCompatibility(opts: {
   const [, m2, d2] = opts.autreDateNaissance.split('-').map(Number);
   const decan1 = decanOf(opts.sign, m1, d1);
   const decan2 = decanOf(opts.autreSign, m2, d2);
+
+  const { naissance } = opts;
+  const themeNatal =
+    naissance?.heure && naissance.latitude != null && naissance.longitude != null && naissance.timezone
+      ? calculerThemeNatal(naissance.date, naissance.heure, naissance.timezone, naissance.latitude, naissance.longitude)
+      : null;
+  const natalExtra = themeNatal
+    ? {
+        ascendantSigne: { nom: themeNatal.ascendant.signe.nom, symbole: themeNatal.ascendant.signe.symbole },
+        luneSigne: { nom: themeNatal.luneSigne.nom, symbole: themeNatal.luneSigne.symbole },
+      }
+    : {};
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -333,14 +378,18 @@ export async function generateCompatibility(opts: {
         autreDecan: decan2,
         seedKey: opts.seedKey,
       }),
+      ...natalExtra,
       mode: 'demo',
     };
   }
   const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
+  const natalTxt = themeNatal
+    ? ` Thème natal réel de ${opts.prenom}, calculé (à utiliser factuellement) : ascendant ${themeNatal.ascendant.signe.nom}, lune natale en ${themeNatal.luneSigne.nom} — tu peux t'en servir pour nuancer la dynamique du duo, mais uniquement du côté de ${opts.prenom} (aucune position astronomique connue pour ${opts.autrePrenom}, dont on n'a que la date de naissance).`
+    : '';
   const prompt = `Tu écris une analyse de compatibilité amoureuse pour l'application Horosphère, en français, entre deux personnes :
 - ${opts.prenom}, signe ${opts.sign.nom} (élément ${opts.sign.element}), ${decan1}e décan (né(e) le ${opts.dateNaissance})
 - ${opts.autrePrenom}, signe ${opts.autreSign.nom} (élément ${opts.autreSign.element}), ${decan2}e décan (né(e) le ${opts.autreDateNaissance})
-Utilise les deux prénoms directement dans le texte plutôt que de dire "l'un" et "l'autre". Le décan (tiers du signe selon la date exacte de naissance) doit nuancer l'analyse sans jamais prétendre calculer une position astronomique précise (pas d'ascendant, de maison ou de transit inventés).
+Utilise les deux prénoms directement dans le texte plutôt que de dire "l'un" et "l'autre". Le décan (tiers du signe selon la date exacte de naissance) doit nuancer l'analyse sans jamais prétendre calculer une position astronomique précise pour ${opts.autrePrenom} (pas d'ascendant, de maison ou de transit inventés pour cette personne).${natalTxt}
 Ton : nuancé, jamais binaire ("ça marche" / "ça marche pas"), valorise les deux personnes, reste concret. Pas de fatalisme.
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
 {
@@ -361,6 +410,7 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
     amour: String(parsed.amour ?? ''),
     communication: String(parsed.communication ?? ''),
     conseil: String(parsed.conseil ?? ''),
+    ...natalExtra,
     mode: 'ia',
   };
 }
@@ -473,21 +523,46 @@ export type ThematicReading = {
   pointAttention: string;
   conseil: string;
   score: number;
+  // Présents uniquement quand l'heure et le lieu de naissance ont pu être
+  // résolus en thème natal réel (voir lib/natal.ts) — jamais approximés.
+  ascendantSigne?: { nom: string; symbole: string };
+  luneSigne?: { nom: string; symbole: string };
   mode: 'ia' | 'demo';
 };
 
 /** Les 6 lectures thématiques "simples" (voir lib/themes.ts) partagent un
  * seul générateur, paramétré par thème, plutôt que 6 fonctions quasi
- * identiques. */
-export async function generateThematic(opts: { theme: ThemeKey; sign: Sign; seedKey: string }): Promise<ThematicReading> {
+ * identiques. Le thème natal réel (ascendant, lune), quand disponible, vient
+ * nuancer factuellement le texte — même logique que generateAstralChart. */
+export async function generateThematic(opts: {
+  theme: ThemeKey;
+  sign: Sign;
+  seedKey: string;
+  naissance?: { date: string; heure?: string; lieu?: string; latitude?: number | null; longitude?: number | null; timezone?: string | null };
+}): Promise<ThematicReading> {
   const meta = THEMES[opts.theme];
+  const { naissance } = opts;
+  const themeNatal =
+    naissance?.heure && naissance.latitude != null && naissance.longitude != null && naissance.timezone
+      ? calculerThemeNatal(naissance.date, naissance.heure, naissance.timezone, naissance.latitude, naissance.longitude)
+      : null;
+  const natalExtra = themeNatal
+    ? {
+        ascendantSigne: { nom: themeNatal.ascendant.signe.nom, symbole: themeNatal.ascendant.signe.symbole },
+        luneSigne: { nom: themeNatal.luneSigne.nom, symbole: themeNatal.luneSigne.symbole },
+      }
+    : {};
+
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return { titre: meta.titreCard, ...fallbackThematic(opts.theme, opts.sign.key, opts.seedKey), mode: 'demo' };
+    return { titre: meta.titreCard, ...fallbackThematic(opts.theme, opts.sign.key, opts.seedKey), ...natalExtra, mode: 'demo' };
   }
   const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
+  const natalTxt = themeNatal
+    ? ` Thème natal réel, calculé (à utiliser factuellement, n'en invente aucun autre élément) : ascendant ${themeNatal.ascendant.signe.nom}, lune natale en ${themeNatal.luneSigne.nom} — tu peux t'en servir s'il éclaire cet axe précis.`
+    : '';
   const prompt = `Tu écris une lecture astrologique thématique pour l'application Horosphère, en français, pour le signe ${opts.sign.nom} (élément ${opts.sign.element}, planète maîtresse ${opts.sign.planete}). Thème : ${meta.axe}. Portée : ${meta.portee}.
-${meta.consigne}
+${meta.consigne}${natalTxt}
 Ton : chaleureux, concret, bienveillant, jamais culpabilisant ni anxiogène.
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
 {
@@ -504,6 +579,7 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
     pointAttention: String(parsed.pointAttention ?? ''),
     conseil: String(parsed.conseil ?? ''),
     score: clampScore(parsed.score),
+    ...natalExtra,
     mode: 'ia',
   };
 }
@@ -515,22 +591,46 @@ export type LunarCycleReading = {
   phase: number;
   phaseLabel: string;
   illumination: number;
+  // Présents uniquement quand l'heure et le lieu de naissance ont pu être
+  // résolus en thème natal réel (voir lib/natal.ts) — jamais approximés.
+  ascendantSigne?: { nom: string; symbole: string };
+  luneSigne?: { nom: string; symbole: string };
   mode: 'ia' | 'demo';
 };
 
 /** Lecture calée sur la phase lunaire réelle du jour (même calcul que la
  * section "Lune du jour" de la page d'accueil), interprétée pour le signe
- * de l'utilisateur. `phase` (0-1) est conservée pour pouvoir redessiner la
- * même silhouette de lune dans l'historique, plutôt que la phase du jour. */
-export async function generateLunarCycle(opts: { sign: Sign }): Promise<LunarCycleReading> {
+ * de l'utilisateur — et, quand disponible, pour sa lune natale réelle
+ * (ligne du dialogue entre la lune du ciel et la lune de naissance).
+ * `phase` (0-1) est conservée pour pouvoir redessiner la même silhouette de
+ * lune dans l'historique, plutôt que la phase du jour. */
+export async function generateLunarCycle(opts: {
+  sign: Sign;
+  naissance?: { date: string; heure?: string; lieu?: string; latitude?: number | null; longitude?: number | null; timezone?: string | null };
+}): Promise<LunarCycleReading> {
   const moon = moonPhaseInfo();
+  const { naissance } = opts;
+  const themeNatal =
+    naissance?.heure && naissance.latitude != null && naissance.longitude != null && naissance.timezone
+      ? calculerThemeNatal(naissance.date, naissance.heure, naissance.timezone, naissance.latitude, naissance.longitude)
+      : null;
+  const natalExtra = themeNatal
+    ? {
+        ascendantSigne: { nom: themeNatal.ascendant.signe.nom, symbole: themeNatal.ascendant.signe.symbole },
+        luneSigne: { nom: themeNatal.luneSigne.nom, symbole: themeNatal.luneSigne.symbole },
+      }
+    : {};
+
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return { titre: 'Cycle lunaire', ...fallbackLunarCycle(opts.sign.key, moon.label), phase: moon.phase, phaseLabel: moon.label, illumination: moon.illumination, mode: 'demo' };
+    return { titre: 'Cycle lunaire', ...fallbackLunarCycle(opts.sign.key, moon.label), phase: moon.phase, phaseLabel: moon.label, illumination: moon.illumination, ...natalExtra, mode: 'demo' };
   }
   const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
+  const natalTxt = themeNatal
+    ? ` Lune natale réelle de l'utilisateur, calculée (à utiliser factuellement) : ${themeNatal.luneSigne.nom}. Tu peux mettre en dialogue la phase lunaire du jour et cette lune natale.`
+    : '';
   const prompt = `Tu écris une lecture "cycle lunaire" pour l'application Horosphère, en français, pour le signe ${opts.sign.nom} (élément ${opts.sign.element}).
-Phase lunaire réelle du jour : ${moon.label}, illuminée à ${moon.illumination}%. N'invente pas d'autre phase que celle-ci.
+Phase lunaire réelle du jour : ${moon.label}, illuminée à ${moon.illumination}%. N'invente pas d'autre phase que celle-ci.${natalTxt}
 Ton : chaleureux, contemplatif, concret.
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
 {
@@ -546,6 +646,7 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
     phase: moon.phase,
     phaseLabel: moon.label,
     illumination: moon.illumination,
+    ...natalExtra,
     mode: 'ia',
   };
 }
@@ -555,6 +656,10 @@ export type TransitsReading = {
   interpretation: string;
   conseil: string;
   planetesEnFocus: { nom: string; glyphe: string; signe: string }[];
+  // Présents uniquement quand l'heure et le lieu de naissance ont pu être
+  // résolus en thème natal réel (voir lib/natal.ts) — jamais approximés.
+  ascendantSigne?: { nom: string; symbole: string };
+  luneSigne?: { nom: string; symbole: string };
   mode: 'ia' | 'demo';
 };
 
@@ -570,8 +675,13 @@ const RULER_TO_PLANET_KEY: Record<string, string> = {
 
 /** Lecture basée sur les positions planétaires réelles du jour (même calcul
  * que la roue de la page d'accueil, voir lib/planets.ts) : met en avant le
- * Soleil, la Lune, et la planète maîtresse du signe de l'utilisateur. */
-export async function generateTransits(opts: { sign: Sign }): Promise<TransitsReading> {
+ * Soleil, la Lune, et la planète maîtresse du signe de l'utilisateur — mise
+ * en regard, quand disponible, de l'ascendant et la lune natale réels
+ * (transit du jour vs thème de naissance). */
+export async function generateTransits(opts: {
+  sign: Sign;
+  naissance?: { date: string; heure?: string; lieu?: string; latitude?: number | null; longitude?: number | null; timezone?: string | null };
+}): Promise<TransitsReading> {
   const positions = currentPlanetPositions();
   const byKey = new Map(positions.map((p) => [p.key, p]));
   const rulerKey = RULER_TO_PLANET_KEY[opts.sign.planete];
@@ -583,13 +693,28 @@ export async function generateTransits(opts: { sign: Sign }): Promise<TransitsRe
 
   const contexte = planetesEnFocus.map((p) => `${p.nom} est actuellement en ${p.signe}`).join(', ') + '.';
 
+  const { naissance } = opts;
+  const themeNatal =
+    naissance?.heure && naissance.latitude != null && naissance.longitude != null && naissance.timezone
+      ? calculerThemeNatal(naissance.date, naissance.heure, naissance.timezone, naissance.latitude, naissance.longitude)
+      : null;
+  const natalExtra = themeNatal
+    ? {
+        ascendantSigne: { nom: themeNatal.ascendant.signe.nom, symbole: themeNatal.ascendant.signe.symbole },
+        luneSigne: { nom: themeNatal.luneSigne.nom, symbole: themeNatal.luneSigne.symbole },
+      }
+    : {};
+
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return { titre: 'Transits planétaires', ...fallbackTransits(opts.sign.key, contexte), planetesEnFocus, mode: 'demo' };
+    return { titre: 'Transits planétaires', ...fallbackTransits(opts.sign.key, contexte), planetesEnFocus, ...natalExtra, mode: 'demo' };
   }
   const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
+  const natalTxt = themeNatal
+    ? ` Thème natal réel de l'utilisateur, calculé (à utiliser factuellement) : ascendant ${themeNatal.ascendant.signe.nom}, lune natale en ${themeNatal.luneSigne.nom}. Tu peux relier les transits du jour à ce thème de naissance.`
+    : '';
   const prompt = `Tu écris une lecture "transits planétaires" pour l'application Horosphère, en français, pour le signe ${opts.sign.nom} (élément ${opts.sign.element}, planète maîtresse ${opts.sign.planete}).
-Position réelle actuelle des planètes : ${contexte} N'invente aucune autre position planétaire que celles données.
+Position réelle actuelle des planètes : ${contexte} N'invente aucune autre position planétaire que celles données.${natalTxt}
 Ton : concret, jamais fataliste, évite le jargon technique (pas d'aspects en degrés).
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
 {
@@ -603,6 +728,7 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
     interpretation: String(parsed.interpretation ?? ''),
     conseil: String(parsed.conseil ?? ''),
     planetesEnFocus,
+    ...natalExtra,
     mode: 'ia',
   };
 }

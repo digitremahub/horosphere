@@ -59,6 +59,21 @@ export default function SentimentCard({
         </div>
       )}
 
+      {(reading.ascendantSigne || reading.luneSigne) && (
+        <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap' }}>
+          {reading.ascendantSigne && (
+            <div className="pill" style={{ borderColor: 'var(--lever)', color: 'var(--lever-profond)' }}>
+              {reading.ascendantSigne.symbole} Ascendant {reading.ascendantSigne.nom}
+            </div>
+          )}
+          {reading.luneSigne && (
+            <div className="pill" style={{ borderColor: 'var(--sauge)', color: 'var(--sauge)' }}>
+              {reading.luneSigne.symbole} Lune natale en {reading.luneSigne.nom}
+            </div>
+          )}
+        </div>
+      )}
+
       <p className="display" style={{ fontStyle: 'italic', fontSize: '1.2rem', marginBottom: 16 }}>{reading.titre}</p>
 
       <Field label="Émotion dominante" color="var(--prune)" text={reading.dominante} />

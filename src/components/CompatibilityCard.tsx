@@ -63,6 +63,11 @@ export default function CompatibilityCard({
           {moiPrenom && signInfo?.nom && (
             <div className="mono" style={{ fontSize: '0.64rem', color: 'var(--sourdine)' }}>{signInfo.nom}</div>
           )}
+          {reading.ascendantSigne && (
+            <div className="mono" style={{ fontSize: '0.62rem', color: 'var(--lever-profond)', marginTop: 2 }}>
+              Asc. {reading.ascendantSigne.nom}
+            </div>
+          )}
         </div>
         <div className="display" style={{ fontStyle: 'italic', fontSize: '1.6rem', color: 'var(--lever-profond)' }}>+</div>
         <div style={{ textAlign: 'center' }}>

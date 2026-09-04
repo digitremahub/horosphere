@@ -111,17 +111,21 @@ export async function POST(req: NextRequest) {
 
   const [, m, d] = profile.date_naissance.split('-').map(Number);
   const sign = signFromBirthdate(m, d);
-  const naissance =
-    feature === 'horoscope_personnalise' || feature === 'theme_astral_complet' || feature === 'grande_analyse'
-      ? {
-          date: profile.date_naissance,
-          heure: profile.heure_naissance ? profile.heure_naissance.slice(0, 5) : undefined,
-          lieu: profile.lieu_naissance,
-          latitude: profile.lieu_latitude,
-          longitude: profile.lieu_longitude,
-          timezone: profile.lieu_timezone,
-        }
-      : undefined;
+  // Les informations de naissance du profil (et, quand résolu, le thème
+  // natal réel qui en découle — voir lib/natal.ts) sont désormais fournies à
+  // toutes les lectures basées sur le profil de l'utilisateur, pas
+  // seulement aux trois historiques (thème astral, grande analyse,
+  // horoscope personnalisé) : chaque générateur décide lui-même s'il en a
+  // l'usage, et n'affiche/n'utilise l'ascendant et la lune natale que
+  // lorsqu'ils ont pu être réellement calculés.
+  const naissance = {
+    date: profile.date_naissance,
+    heure: profile.heure_naissance ? profile.heure_naissance.slice(0, 5) : undefined,
+    lieu: profile.lieu_naissance,
+    latitude: profile.lieu_latitude,
+    longitude: profile.lieu_longitude,
+    timezone: profile.lieu_timezone,
+  };
 
   const cost = FEATURE_COSTS[feature];
 
@@ -138,20 +142,21 @@ export async function POST(req: NextRequest) {
   let reading;
   try {
     if (isThemeKey(feature)) {
-      reading = await generateThematic({ theme: feature, sign, seedKey: dateISO });
+      reading = await generateThematic({ theme: feature, sign, seedKey: dateISO, naissance });
     } else {
       switch (feature) {
         case 'theme_astral_complet':
-          reading = await generateAstralChart({ sign, naissance: naissance! });
+          reading = await generateAstralChart({ sign, naissance });
           break;
         case 'analyse_sentimentale':
-          reading = await generateSentiment({ sign, weekKey: isoWeekKey(new Date()) });
+          reading = await generateSentiment({ sign, weekKey: isoWeekKey(new Date()), naissance });
           break;
         case 'compatibilite_amoureuse': {
           const compat = await generateCompatibility({
             prenom: profile.prenom,
             sign,
             dateNaissance: profile.date_naissance,
+            naissance,
             autrePrenom,
             autreSign: autreSign!,
             autreDateNaissance: autreDate,
@@ -168,13 +173,13 @@ export async function POST(req: NextRequest) {
           break;
         }
         case 'grande_analyse':
-          reading = await generateGrandeAnalyse({ sign, naissance: naissance! });
+          reading = await generateGrandeAnalyse({ sign, naissance });
           break;
         case 'cycle_lunaire':
-          reading = await generateLunarCycle({ sign });
+          reading = await generateLunarCycle({ sign, naissance });
           break;
         case 'transits_planetaires':
-          reading = await generateTransits({ sign });
+          reading = await generateTransits({ sign, naissance });
           break;
         default:
           reading = await generateHoroscope({ feature, sign, dateISO, naissance });
