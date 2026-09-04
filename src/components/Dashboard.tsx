@@ -29,12 +29,14 @@ type CompatReading = CompatibilityReading & { autreSigne: { key: string; nom: st
 export default function Dashboard({
   userName,
   userSign,
+  ascendant,
   initialBalance,
   balanceError,
   hasSubscription,
 }: {
   userName: string;
   userSign: UserSign;
+  ascendant?: { nom: string; symbole: string } | null;
   initialBalance: number;
   balanceError: string | null;
   hasSubscription: boolean;
@@ -136,10 +138,24 @@ export default function Dashboard({
               <div style={{ fontWeight: 600, fontSize: '0.92rem' }}>{userSign.nom}</div>
               <div className="mono" style={{ fontSize: '0.72rem', color: 'var(--sourdine)' }}>{userSign.dates}</div>
             </div>
+            {ascendant && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 12, marginLeft: 4, borderLeft: '1px solid var(--trait)' }}>
+                <span style={{ fontSize: '1.3rem' }}>{ascendant.symbole}</span>
+                <div>
+                  <div className="mono" style={{ fontSize: '0.62rem', color: 'var(--sourdine)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Ascendant</div>
+                  <div style={{ fontWeight: 600, fontSize: '0.86rem' }}>{ascendant.nom}</div>
+                </div>
+              </div>
+            )}
             <a href="/app/profil" style={{ marginLeft: 'auto', fontSize: '0.78rem', color: 'var(--ombre)', textDecoration: 'underline', whiteSpace: 'nowrap' }}>
               Modifier
             </a>
           </div>
+          {!ascendant && (
+            <p style={{ fontSize: '0.78rem', color: 'var(--sourdine)', marginTop: -16, marginBottom: 24 }}>
+              Ajoutez votre heure de naissance à <a href="/app/profil" style={{ color: 'var(--lever-profond)' }}>votre profil</a> pour afficher votre ascendant, gratuitement.
+            </p>
+          )}
 
           {CATEGORY_ORDER.map((cat) => (
             <div key={cat}>

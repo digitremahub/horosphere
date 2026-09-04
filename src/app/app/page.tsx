@@ -4,6 +4,7 @@ import { getBalance, hasActiveSubscription } from '@/lib/credits';
 import { getProfile } from '@/lib/profile';
 import { dbConfigured } from '@/lib/db';
 import { signFromBirthdate } from '@/lib/zodiac';
+import { calculerThemeNatal } from '@/lib/natal';
 import Dashboard from '@/components/Dashboard';
 
 export default async function AppPage() {
@@ -34,6 +35,21 @@ export default async function AppPage() {
         return signFromBirthdate(m, d);
       })()
     : { key: 'belier', nom: 'Bélier', symbole: '♈', dates: '21 mars – 19 avril' };
+
+  // Ascendant : gratuit, jamais payant — un simple fait calculé (voir
+  // lib/natal.ts), pas une lecture générée. Disponible dès que l'heure de
+  // naissance et le lieu (géocodé à l'enregistrement du profil) sont là ;
+  // `null` sinon, jamais approximé.
+  const ascendant =
+    profile?.heure_naissance && profile.lieu_latitude != null && profile.lieu_longitude != null && profile.lieu_timezone
+      ? calculerThemeNatal(
+          profile.date_naissance,
+          profile.heure_naissance.slice(0, 5),
+          profile.lieu_timezone,
+          profile.lieu_latitude,
+          profile.lieu_longitude
+        )?.ascendant.signe ?? null
+      : null;
 
   let balance = 0;
   let balanceError: string | null = null;
@@ -68,6 +84,7 @@ export default async function AppPage() {
         <Dashboard
           userName={session!.user!.name || session!.user!.email || 'vous'}
           userSign={userSign}
+          ascendant={ascendant ? { nom: ascendant.nom, symbole: ascendant.symbole } : null}
           initialBalance={balance}
           balanceError={balanceError}
           hasSubscription={hasSubscription}
