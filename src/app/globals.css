@@ -278,6 +278,29 @@ input:focus-visible, textarea:focus-visible, select:focus-visible{
   pointer-events: none;
 }
 
+/* Bandeau plein écran en haut d'une page — casse la largeur du container
+   parent (image pleine largeur, jusqu'aux bords de l'écran) plutôt qu'un
+   .photo-frame contenu dans la marge de page. Un dégradé se fond dans le
+   fond de page en bas, pour ne pas trancher net avec le contenu qui suit.
+   Voir page.tsx (accueil, variante --hero) et chaque page interne. */
+.page-bandeau{
+  position: relative;
+  width: 100%;
+  height: clamp(140px, 20vw, 260px);
+  overflow: hidden;
+  margin-bottom: 32px;
+}
+.page-bandeau img{ width: 100%; height: 100%; object-fit: cover; display: block; }
+.page-bandeau::after{
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0) 60%, var(--aube) 100%);
+  pointer-events: none;
+}
+.page-bandeau--hero{ height: clamp(150px, 26vw, 320px); margin-bottom: 0; }
+@media (max-width: 480px){ .page-bandeau{ height: 140px !important; } }
+
 @media (prefers-reduced-motion: reduce){
   *{ animation: none !important; transition: none !important; }
 }

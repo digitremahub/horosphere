@@ -25,7 +25,7 @@ export default function HomePage() {
   return (
     <main>
       {/* 0. Bandeau d'ouverture, plein écran en largeur */}
-      <div className="accueil-bandeau">
+      <div className="page-bandeau page-bandeau--hero">
         <img
           src="/images/accueil-bandeau-astrolabe.webp"
           alt="Un astrolabe sur un balcon face à la mer, sous un ciel étoilé où la lune et les planètes tracent leur trajectoire au crépuscule."
@@ -133,14 +133,6 @@ export default function HomePage() {
       </section>
 
       <style>{`
-        .accueil-bandeau{ position: relative; width: 100%; height: clamp(150px, 26vw, 320px); overflow: hidden; }
-        .accueil-bandeau img{ width: 100%; height: 100%; object-fit: cover; display: block; }
-        .accueil-bandeau::after{
-          content: ''; position: absolute; inset: 0;
-          background: linear-gradient(180deg, rgba(0,0,0,0) 60%, var(--aube) 100%);
-          pointer-events: none;
-        }
-
         .ritual-grid > *{ min-width: 0; }
         .hero-grid > *{ min-width: 0; }
         @media (max-width: 860px){

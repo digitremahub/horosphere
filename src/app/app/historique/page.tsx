@@ -54,8 +54,8 @@ export default async function HistoriquePage() {
   }
 
   return (
-    <main className="container-narrow" style={{ paddingTop: 48, paddingBottom: 96 }}>
-      <div className="photo-frame" style={{ height: 160, marginBottom: 28 }}>
+    <main style={{ paddingBottom: 96 }}>
+      <div className="page-bandeau">
         <img
           src="/images/bg-resultat-lecture.png"
           alt="Un sextant tenu face au couchant — l'art de lire les signes."
@@ -63,6 +63,7 @@ export default async function HistoriquePage() {
         />
       </div>
 
+      <div className="container-narrow">
       <div style={{ marginBottom: 30 }}>
         <a href="/app" style={{ fontSize: '0.82rem', color: 'var(--ombre)', textDecoration: 'none' }}>
           ← Mon espace
@@ -230,6 +231,7 @@ export default async function HistoriquePage() {
             </div>
           );
         })}
+      </div>
       </div>
     </main>
   );

@@ -12,8 +12,15 @@ CREATE TABLE IF NOT EXISTS users (
   name VARCHAR(255),
   email VARCHAR(255) UNIQUE,
   "emailVerified" TIMESTAMPTZ,
-  image TEXT
+  image TEXT,
+  password_hash TEXT
 );
+
+-- Connexion par mot de passe (en plus du lien magique par e-mail) — ajoutée
+-- après la création initiale de la table : CREATE TABLE IF NOT EXISTS ne
+-- rajoute pas la colonne sur une base déjà existante, d'où cet ALTER
+-- idempotent (voir lib/auth.ts et /inscription).
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
 
 CREATE TABLE IF NOT EXISTS accounts (
   id SERIAL PRIMARY KEY,

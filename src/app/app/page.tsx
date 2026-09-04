@@ -55,8 +55,8 @@ export default async function AppPage() {
   }
 
   return (
-    <main className="container" style={{ paddingTop: 48, paddingBottom: 96 }}>
-      <div className="photo-frame" style={{ height: 150, marginBottom: 28 }}>
+    <main style={{ paddingBottom: 96 }}>
+      <div className="page-bandeau">
         <img
           src="/images/bg-dashboard.png"
           alt="Les rouages dorés d'un astrolabe — le mécanisme derrière votre tableau de bord."
@@ -64,13 +64,15 @@ export default async function AppPage() {
         />
       </div>
 
-      <Dashboard
-        userName={session!.user!.name || session!.user!.email || 'vous'}
-        userSign={userSign}
-        initialBalance={balance}
-        balanceError={balanceError}
-        hasSubscription={hasSubscription}
-      />
+      <div className="container">
+        <Dashboard
+          userName={session!.user!.name || session!.user!.email || 'vous'}
+          userSign={userSign}
+          initialBalance={balance}
+          balanceError={balanceError}
+          hasSubscription={hasSubscription}
+        />
+      </div>
     </main>
   );
 }

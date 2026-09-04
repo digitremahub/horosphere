@@ -12,23 +12,22 @@ export default async function TarifsPage() {
   const loggedIn = Boolean(session?.user);
 
   return (
-    <main className="container" style={{ paddingTop: 56, paddingBottom: 96 }}>
-      <ScrollReveal>
-        <div className="photo-frame" style={{ height: 220, marginBottom: 40 }}>
-          <img
-            src={PHOTO_BANNIERE}
-            alt="Gros plan sur les graduations dorées d'un astrolabe."
-            loading="lazy"
-          />
-          <div style={{ position: 'absolute', left: 0, bottom: 0, zIndex: 2, padding: '20px 28px', color: 'var(--aube)' }}>
-            <div className="mono" style={{ fontSize: '0.72rem', letterSpacing: '0.1em', textTransform: 'uppercase', opacity: 0.9 }}>
-              Horosphère
-            </div>
-            <div className="display" style={{ fontSize: '1.3rem', fontStyle: 'italic' }}>Choisissez votre rythme</div>
+    <main style={{ paddingBottom: 96 }}>
+      <div className="page-bandeau">
+        <img
+          src={PHOTO_BANNIERE}
+          alt="Gros plan sur les graduations dorées d'un astrolabe."
+          loading="lazy"
+        />
+        <div style={{ position: 'absolute', left: 0, bottom: 0, zIndex: 2, padding: '20px 28px', color: 'var(--aube)' }}>
+          <div className="mono" style={{ fontSize: '0.72rem', letterSpacing: '0.1em', textTransform: 'uppercase', opacity: 0.9 }}>
+            Horosphère
           </div>
+          <div className="display" style={{ fontSize: '1.3rem', fontStyle: 'italic' }}>Choisissez votre rythme</div>
         </div>
-      </ScrollReveal>
+      </div>
 
+      <div className="container">
       <div style={{ textAlign: 'center', maxWidth: 620, margin: '0 auto 48px' }}>
         <div className="pill" style={{ marginBottom: 16 }}>Tarifs</div>
         <h1 style={{ fontSize: '2.1rem', marginBottom: 14 }}>Payez ce que vous lisez, gardez ce que vous achetez</h1>
@@ -135,10 +134,7 @@ export default async function TarifsPage() {
           </div>
         ))}
       </div>
-
-      <style>{`
-        @media (max-width: 480px){ .photo-frame{ height: 160px !important; } }
-      `}</style>
+      </div>
     </main>
   );
 }
