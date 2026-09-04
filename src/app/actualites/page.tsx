@@ -5,7 +5,6 @@ import AstrolabeIllustration from '@/components/AstrolabeIllustration';
 import MoonOfTheDay from '@/components/MoonOfTheDay';
 import SkyCountdown from '@/components/SkyCountdown';
 import { getUpcomingSkyEvents } from '@/lib/skyEvents';
-import { getExternalNewsSection } from '@/lib/externalNews';
 
 export const metadata = {
   title: 'Actualités — Horosphère',
@@ -36,10 +35,6 @@ export default async function ActualitesPage({ searchParams }: { searchParams: P
   const skyEvents = getUpcomingSkyEvents();
   let items: Awaited<ReturnType<typeof listPublishedNews>> = [];
   let error: string | null = null;
-  // Contenu externe (liens choisis + flux RSS) — voir lib/externalNews.ts.
-  // N'échoue jamais (chaque flux est protégé individuellement) : une liste
-  // vide se traduit juste par l'absence de cette section, pas une erreur.
-  const externalItems = await getExternalNewsSection(8);
 
   if (dbConfigured) {
     try {
@@ -193,55 +188,7 @@ export default async function ActualitesPage({ searchParams }: { searchParams: P
         )}
       </div>
 
-      {/* Contenu externe (liens choisis à la main + flux RSS, voir
-          lib/externalNews.ts) — toujours clairement distingué de nos
-          propres articles : source affichée, ouverture dans un nouvel
-          onglet, jamais le contenu intégral de l'article d'origine. */}
-      {externalItems.length > 0 && (
-        <div className="container" style={{ paddingTop: 56 }}>
-          <div style={{ textAlign: 'center', marginBottom: 28 }}>
-            <div className="pill">Ailleurs sur le web</div>
-            <h2 style={{ fontSize: '1.4rem', margin: '14px 0 8px' }}>À lire aussi</h2>
-            <p style={{ color: 'var(--sourdine)', fontSize: '0.86rem', maxWidth: 480, margin: '0 auto' }}>
-              Une sélection d'articles externes sur l'astronomie et l'astrologie — en dehors de notre
-              propre édition.
-            </p>
-          </div>
-
-          <div className="actu-externes-grid">
-            {externalItems.map((it, i) => (
-              <a
-                key={`${it.lien}-${i}`}
-                href={it.lien}
-                target="_blank"
-                rel="noopener noreferrer nofollow"
-                className="card"
-                style={{ padding: '16px 18px', display: 'block', textDecoration: 'none', color: 'inherit' }}
-              >
-                {it.image && (
-                  <div className="photo-frame" style={{ height: 130, marginBottom: 12 }}>
-                    <img src={it.image} alt="" loading="lazy" />
-                  </div>
-                )}
-                <div
-                  className="mono"
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.66rem', color: 'var(--sourdine)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}
-                >
-                  {it.source}
-                  {it.langue === 'en' && (it.traduit ? ' · traduit de l\'anglais' : ' · en anglais')}
-                  <span aria-hidden="true" style={{ marginLeft: 'auto' }}>↗</span>
-                </div>
-                <h3 style={{ fontSize: '0.96rem', margin: '0 0 8px', lineHeight: 1.35 }}>{it.titre}</h3>
-                {it.extrait && <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--ombre)', lineHeight: 1.5 }}>{it.extrait}</p>}
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
-
       <style>{`
-        .actu-externes-grid{ display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
-
         @media (max-width: 720px){ .actu-en-direct{ grid-template-columns: 1fr !important; } }
 
         .actu-split{ display: grid; grid-template-columns: 280px 1px 1fr; gap: 36px; align-items: start; }
