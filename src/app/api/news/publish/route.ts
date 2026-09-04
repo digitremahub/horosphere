@@ -15,7 +15,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "La base de données n'est pas configurée." }, { status: 503 });
   }
 
-  const body = await req.json().catch(() => ({}));
+  // Accepte JSON ou x-www-form-urlencoded (Make envoie ce dernier pour
+  // éviter l'échappement JSON manuel sur des champs Airtable en texte libre).
+  const contentType = req.headers.get('content-type') || '';
+  let body: Record<string, unknown> = {};
+  if (contentType.includes('application/json')) {
+    body = await req.json().catch(() => ({}));
+  } else {
+    const form = await req.formData().catch(() => null);
+    if (form) body = Object.fromEntries(form.entries());
+  }
   const titre = String(body.titre || '').trim();
   const contenu = String(body.contenu || '').trim();
   if (!titre || !contenu) {
