@@ -113,29 +113,38 @@ CREATE TABLE IF NOT EXISTS profiles (
   heure_naissance TIME,
   lieu_naissance TEXT NOT NULL,
   telephone TEXT,
+  newsletter_opt_in BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- ===== Promotion réseaux sociaux (équipe IA de contenu) =====
--- Une ligne = un post proposé pour une plateforme et une date données.
--- Cycle de vie : brouillon -> (approuvé | rejeté) -> publié.
--- Générée automatiquement (voir lib/social.ts + /api/social/*), mais jamais
--- publiée sans passage par le statut "approuve" — validation humaine requise.
-CREATE TABLE IF NOT EXISTS social_posts (
+-- La table `profiles` existait déjà en production avant l'ajout de cette
+-- colonne : CREATE TABLE IF NOT EXISTS ne la rajoute pas sur une table
+-- existante, d'où cet ALTER idempotent.
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS newsletter_opt_in BOOLEAN NOT NULL DEFAULT true;
+
+-- ===== Promotion réseaux sociaux =====
+-- La validation et l'édition du contenu se font désormais dans une base
+-- Airtable (déléguable à un community manager, sans toucher au code) —
+-- voir /api/social/generate pour la génération, consommée par un scénario
+-- Make.com qui écrit dans Airtable. L'app ne stocke plus ces brouillons.
+
+-- ===== Actualités (page publique + source de la newsletter) =====
+-- Éditées dans Airtable par le community manager ; publiées ici via
+-- /api/news/publish (appelé par Make quand le statut Airtable passe à
+-- "Publier"). C'est la table que /actualites affiche et que la newsletter
+-- hebdomadaire résume.
+CREATE TABLE IF NOT EXISTS news (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  post_date DATE NOT NULL,
-  plateforme TEXT NOT NULL, -- 'instagram' | 'facebook' | 'tiktok'
-  statut TEXT NOT NULL DEFAULT 'brouillon', -- 'brouillon' | 'approuve' | 'rejete' | 'publie'
-  legende TEXT NOT NULL,
-  hashtags TEXT NOT NULL DEFAULT '',
-  image_url TEXT, -- visuel suggéré (asset existant du site), NULL pour TikTok
-  script_video TEXT, -- idée de script, TikTok uniquement (pas de génération vidéo)
-  mode TEXT NOT NULL DEFAULT 'ia', -- 'ia' | 'demo'
+  slug TEXT NOT NULL UNIQUE,
+  titre TEXT NOT NULL,
+  resume TEXT NOT NULL DEFAULT '',
+  contenu TEXT NOT NULL,
+  image_url TEXT,
+  publie BOOLEAN NOT NULL DEFAULT false,
   publie_le TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (post_date, plateforme)
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS idx_social_posts_statut ON social_posts (statut, post_date DESC);
+CREATE INDEX IF NOT EXISTS idx_news_publie ON news (publie, publie_le DESC);

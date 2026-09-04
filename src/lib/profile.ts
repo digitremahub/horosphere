@@ -8,6 +8,7 @@ export type Profile = {
   heure_naissance: string | null; // 'HH:MM:SS' ou null
   lieu_naissance: string;
   telephone: string | null;
+  newsletter_opt_in: boolean;
 };
 
 /** Profil de naissance de l'utilisateur — obligatoire dès l'inscription
@@ -25,7 +26,8 @@ export async function getProfile(userId: number): Promise<Profile | null> {
       date_naissance::text AS date_naissance,
       heure_naissance::text AS heure_naissance,
       lieu_naissance,
-      telephone
+      telephone,
+      newsletter_opt_in
     FROM profiles
     WHERE user_id = ${userId}
   `;
@@ -41,11 +43,13 @@ export async function saveProfile(
     heureNaissance?: string | null;
     lieuNaissance: string;
     telephone?: string | null;
+    newsletterOptIn?: boolean;
   }
 ) {
   const sql = requireDb();
+  const newsletterOptIn = data.newsletterOptIn ?? true;
   await sql`
-    INSERT INTO profiles (user_id, prenom, nom, date_naissance, heure_naissance, lieu_naissance, telephone)
+    INSERT INTO profiles (user_id, prenom, nom, date_naissance, heure_naissance, lieu_naissance, telephone, newsletter_opt_in)
     VALUES (
       ${userId},
       ${data.prenom},
@@ -53,7 +57,8 @@ export async function saveProfile(
       ${data.dateNaissance},
       ${data.heureNaissance || null},
       ${data.lieuNaissance},
-      ${data.telephone || null}
+      ${data.telephone || null},
+      ${newsletterOptIn}
     )
     ON CONFLICT (user_id) DO UPDATE SET
       prenom = EXCLUDED.prenom,
@@ -62,6 +67,7 @@ export async function saveProfile(
       heure_naissance = EXCLUDED.heure_naissance,
       lieu_naissance = EXCLUDED.lieu_naissance,
       telephone = EXCLUDED.telephone,
+      newsletter_opt_in = ${newsletterOptIn},
       updated_at = now()
   `;
 }

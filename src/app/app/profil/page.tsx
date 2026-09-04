@@ -48,6 +48,7 @@ export default async function ProfilPage() {
     const heureNaissance = String(formData.get('heure_naissance') || '').trim();
     const lieuNaissance = String(formData.get('lieu_naissance') || '').trim();
     const telephone = String(formData.get('telephone') || '').trim();
+    const newsletterOptIn = formData.get('newsletter_opt_in') === 'on';
 
     if (!prenom || !nom || !dateNaissance || !lieuNaissance) {
       redirect('/app/profil');
@@ -60,6 +61,7 @@ export default async function ProfilPage() {
       heureNaissance: heureNaissance || null,
       lieuNaissance,
       telephone: telephone || null,
+      newsletterOptIn,
     });
 
     redirect('/app');
@@ -167,6 +169,20 @@ export default async function ProfilPage() {
             Pour recevoir votre horoscope chaque matin — bientôt disponible.
           </p>
         </div>
+
+        <label htmlFor="newsletter_opt_in" style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: '0.86rem', cursor: 'pointer' }}>
+          <input
+            id="newsletter_opt_in"
+            name="newsletter_opt_in"
+            type="checkbox"
+            defaultChecked={profile ? profile.newsletter_opt_in : true}
+            style={{ marginTop: 3 }}
+          />
+          <span>
+            Recevoir la newsletter hebdomadaire (actualités Horosphère) — désinscription possible à tout moment
+            depuis chaque e-mail.
+          </span>
+        </label>
 
         <button type="submit" className="btn btn-primary" style={{ marginTop: 8 }}>
           {mandatory ? 'Créer mon profil' : 'Enregistrer'}

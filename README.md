@@ -17,10 +17,11 @@ npm run dev
 - `src/app/connexion`, `src/app/tarifs`, `src/app/app/*` — connexion,
   tarifs, tableau de bord membre, profil/formulaire de naissance,
   historique des lectures.
-- `src/app/admin/social` — validation humaine du contenu réseaux sociaux
-  généré chaque jour (voir "Promotion réseaux sociaux" plus bas).
+- `src/app/actualites` — page publique d'actualités (voir "Actualités &
+  newsletter" plus bas).
 - `src/lib/` — logique métier (zodiaque, planètes en temps réel,
-  événements du ciel, crédits, Stripe, auth, IA, contenu réseaux sociaux).
+  événements du ciel, crédits, Stripe, auth, IA, contenu réseaux sociaux,
+  actualités, newsletter).
 - `public/images/` — images du site (logo, bannières photo).
 
 ## Déploiement
@@ -34,34 +35,70 @@ définis dans les variables d'environnement Vercel).
 
 ## Promotion réseaux sociaux (équipe IA de contenu)
 
-Pipeline de création + publication automatisée pour Instagram, Facebook et
-TikTok, orchestré par des scénarios Make.com qui appellent l'API de
-l'application. Rien n'est jamais publié sans validation humaine.
+Pipeline de création + publication pour Instagram, Facebook et TikTok.
+L'édition et la validation se font entièrement dans une base **Airtable**
+(déléguable à un community manager sans toucher au code) — l'app ne fait
+que générer le texte et exposer une API que Make.com appelle.
 
-1. **Génération** (`POST /api/social/generate`, appelé chaque matin par
-   Make) — écrit le contenu du jour (légende, hashtags, visuel suggéré ;
-   script à filmer pour TikTok) en base, au statut `brouillon`. Réutilise la
-   phase lunaire réelle et les prochains événements du ciel déjà calculés
-   par l'app (`lib/skyEvents.ts`) ; retombe sur un contenu démo déterministe
-   si `ANTHROPIC_API_KEY` n'est pas configurée.
-2. **Validation** — sur `/admin/social` (réservé aux adresses listées dans
-   `ADMIN_EMAILS`), approuver ou rejeter chaque brouillon.
-3. **Publication** (`GET /api/social/ready` puis `POST
-   /api/social/[id]/publish`, appelés par Make) — Make récupère les posts
-   approuvés, les publie sur Facebook/Instagram, puis confirme la
-   publication. TikTok n'a pas de publication automatique (aucun outil de
-   génération vidéo dans ce pipeline) : le script proposé est à filmer et
-   publier à la main.
+1. **Génération** (`POST /api/social/generate`, appelé chaque matin par le
+   scénario Make "Génération quotidienne") — renvoie le contenu du jour
+   (légende, hashtags, visuel suggéré ; script à filmer pour TikTok) pour
+   les 3 plateformes. Réutilise la phase lunaire réelle et les prochains
+   événements du ciel déjà calculés par l'app (`lib/skyEvents.ts`) ; retombe
+   sur un contenu démo déterministe si `ANTHROPIC_API_KEY` n'est pas
+   configurée. Make écrit directement le résultat dans la table "Réseaux
+   sociaux" de la base Airtable (statut "Brouillon").
+2. **Édition et validation** — dans Airtable : le community manager relit,
+   ajuste le texte si besoin, puis change le champ Statut sur
+   "✅ Publier" (un seul clic, pas de code).
+3. **Publication** — le scénario Make "Publication réseaux sociaux"
+   surveille la base Airtable ; dès qu'une ligne passe à "✅ Publier", il
+   publie sur Facebook/Instagram puis repasse le statut à "Publié". TikTok
+   n'a pas de publication automatique (aucun outil de génération vidéo
+   dans ce pipeline) : le script proposé est à filmer et publier à la main
+   (voir la conversation pour des pistes d'outils, ex. HeyGen).
 
-Variables d'environnement à définir dans Vercel :
+Variable d'environnement à définir dans Vercel :
 - `SOCIAL_AUTOMATION_SECRET` — secret partagé, vérifié sur les appels de
   Make (`x-automation-secret`). À générer une fois (ex. `openssl rand
   -hex 32`) et coller aussi dans Make.
-- `ADMIN_EMAILS` — adresses autorisées sur `/admin/social`, séparées par
-  des virgules (défaut : `digitrema@gmail.com`).
-- `NEXT_PUBLIC_SITE_URL` — domaine public du site, utilisé pour construire
-  l'URL absolue des visuels envoyés à Make (défaut :
-  `https://horosphere-live.vercel.app`).
 
-Schéma de base : table `social_posts` (voir `db/schema.sql`) — à exécuter
-une fois sur la base Neon si elle n'y est pas déjà.
+## Actualités & newsletter
+
+- `news` (voir `db/schema.sql`) est la table publique affichée sur
+  `/actualites` — alimentée depuis Airtable (table "Actualités"), publiée
+  via `POST /api/news/publish` (appelé par Make quand une ligne Airtable
+  passe à "✅ Publier"), sur le même principe que les réseaux sociaux.
+- **Newsletter hebdomadaire** (`POST /api/newsletter/send-weekly`, appelé
+  une fois par semaine par Make) — envoie un résumé des actualités publiées
+  dans les 7 derniers jours à tous les utilisateurs inscrits (email requis
+  pour tout compte), sauf ceux désinscrits (`profiles.newsletter_opt_in`,
+  modifiable depuis `/app/profil` ou via le lien de désabonnement présent
+  dans chaque e-mail). N'envoie rien si aucune actualité n'a été publiée
+  cette semaine. Envoyée via Resend (`AUTH_RESEND_KEY`/`RESEND_API_KEY`,
+  déjà configuré pour la connexion par e-mail).
+
+Schéma de base à exécuter sur Neon si pas déjà fait : table `news` et
+colonne `profiles.newsletter_opt_in` (voir `db/schema.sql`).
+
+## Base Airtable "Horosphère — Contenu"
+
+Deux tables, éditées par le community manager, aucune n'a besoin d'être
+touchée côté code :
+- **Réseaux sociaux** : Date, Plateforme (Instagram/Facebook/TikTok),
+  Statut (Brouillon/✅ Publier/Publié/Rejeté), Légende, Hashtags, Visuel
+  (URL), Script vidéo (TikTok).
+- **Actualités** : Titre, Slug, Résumé, Contenu, Image (URL), Statut
+  (Brouillon/✅ Publier/Publié).
+
+Les scénarios Make.com associés (déjà créés dans le compte Make relié) :
+- **Horosphère — Génération quotidienne (réseaux sociaux)** — tous les
+  jours, appelle `/api/social/generate` puis crée les brouillons dans
+  Airtable.
+- **Horosphère — Publication réseaux sociaux** — surveille les lignes
+  "✅ Publier" dans Airtable, publie sur Facebook/Instagram (connexions à
+  finaliser dans Make), repasse le statut à "Publié".
+- **Horosphère — Publication actualités** — même principe pour la table
+  Actualités, vers `/api/news/publish`.
+- **Horosphère — Newsletter hebdomadaire** — une fois par semaine, appelle
+  `/api/newsletter/send-weekly`.
