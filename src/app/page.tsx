@@ -2,6 +2,9 @@ import FreeTeaser from '@/components/FreeTeaser';
 import DegreeArc from '@/components/DegreeArc';
 import ZodiacWheelIllustration from '@/components/ZodiacWheelIllustration';
 import ScrollReveal from '@/components/ScrollReveal';
+import { auth } from '@/lib/auth';
+import { dbConfigured } from '@/lib/db';
+import { getBalance, hasActiveSubscription } from '@/lib/credits';
 
 // Photo réelle du rituel quotidien — voir la bannière tarifs et la
 // connexion pour les deux autres.
@@ -13,6 +16,35 @@ const ETAPES = [
   { titre: 'Vous restez, si ça vous fait du bien', texte: 'Un pack quand vous en avez besoin, un abonnement si Horosphère devient une habitude. Toujours résiliable.' },
 ];
 
+/** CTA principal de la page d'accueil : "Commencer gratuitement" n'a de
+ * sens que pour quelqu'un qui n'a pas encore de compte. Une personne déjà
+ * connectée doit atterrir sur son espace pour lancer une lecture (s'il lui
+ * reste du crédit) ou directement sur les forfaits pour en racheter —
+ * jamais renvoyée vers l'inscription/connexion qu'elle a déjà faite. */
+async function resolveMainCta(): Promise<{ href: string; label: string; teaserLabel: string }> {
+  const session = await auth();
+  if (!session?.user || !dbConfigured) {
+    return { href: '/connexion', label: 'Commencer gratuitement', teaserLabel: 'Recevoir ma lecture complète' };
+  }
+  const userId = Number((session.user as { id?: string }).id);
+  let balance = 0;
+  let abonne = false;
+  try {
+    balance = await getBalance(userId);
+  } catch {
+    balance = 0;
+  }
+  try {
+    abonne = await hasActiveSubscription(userId);
+  } catch {
+    abonne = false;
+  }
+  if (balance > 0 || abonne) {
+    return { href: '/app', label: 'Lancer une lecture', teaserLabel: 'Lancer une lecture' };
+  }
+  return { href: '/tarifs', label: 'Recharger mes crédits', teaserLabel: 'Recharger mes crédits' };
+}
+
 function SectionDivider() {
   return (
     <div style={{ display: 'flex', justifyContent: 'center', padding: '4px 0' }} aria-hidden="true">
@@ -21,7 +53,8 @@ function SectionDivider() {
   );
 }
 
-export default function HomePage() {
+export default async function HomePage() {
+  const cta = await resolveMainCta();
   return (
     <main>
       {/* 0. Bandeau d'ouverture, plein écran en largeur */}
@@ -38,7 +71,7 @@ export default function HomePage() {
          endroits. */}
       <section className="container hero-grid" style={{ paddingTop: 64, paddingBottom: 48, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'center' }}>
         <ScrollReveal style={{ display: 'flex', justifyContent: 'center' }}>
-          <FreeTeaser />
+          <FreeTeaser ctaHref={cta.href} ctaLabel={cta.teaserLabel} />
         </ScrollReveal>
         <ScrollReveal delay={120}>
           <div className="pill hero-in-1" style={{ marginBottom: 18 }}>Horoscope IA quotidien</div>
@@ -50,7 +83,7 @@ export default function HomePage() {
             Pensé pour devenir une habitude douce.
           </p>
           <div className="hero-in-4" style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
-            <a href="/connexion" className="btn btn-primary">Commencer gratuitement</a>
+            <a href={cta.href} className="btn btn-primary">{cta.label}</a>
             <a href="/tarifs" className="btn btn-ghost">Voir les forfaits</a>
           </div>
         </ScrollReveal>

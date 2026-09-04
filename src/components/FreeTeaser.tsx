@@ -6,7 +6,15 @@ import { fallbackHoroscope } from '@/lib/fallback-generator';
 import BrandMark from '@/components/BrandMark';
 import { SignCircle } from '@/components/CardParts';
 
-export default function FreeTeaser() {
+export default function FreeTeaser({
+  ctaHref = '/connexion',
+  ctaLabel = 'Recevoir ma lecture complète',
+}: {
+  // Résolus côté serveur par la page d'accueil selon l'état de connexion —
+  // ne jamais renvoyer quelqu'un de déjà connecté vers /connexion.
+  ctaHref?: string;
+  ctaLabel?: string;
+}) {
   const [signKey, setSignKey] = useState('belier');
   const sign = SIGNS.find((s) => s.key === signKey)!;
   const todayISO = useMemo(() => new Date().toISOString().slice(0, 10), []);
@@ -65,12 +73,14 @@ export default function FreeTeaser() {
         <p style={{ color: 'var(--ombre)', fontSize: '0.95rem', marginBottom: 20 }}>{reading.amour}</p>
       </div>
 
-      <a href="/connexion" className="btn btn-primary" style={{ width: '100%' }}>
-        Recevoir ma lecture complète
+      <a href={ctaHref} className="btn btn-primary" style={{ width: '100%' }}>
+        {ctaLabel}
       </a>
-      <p style={{ fontSize: '0.76rem', color: 'var(--sourdine)', textAlign: 'center', marginTop: 10 }}>
-        Gratuit à la connexion — sans carte bancaire.
-      </p>
+      {ctaHref === '/connexion' && (
+        <p style={{ fontSize: '0.76rem', color: 'var(--sourdine)', textAlign: 'center', marginTop: 10 }}>
+          Gratuit à la connexion — sans carte bancaire.
+        </p>
+      )}
     </div>
   );
 }
