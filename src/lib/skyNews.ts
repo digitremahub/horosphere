@@ -12,7 +12,7 @@ import { getUpcomingSkyEvents } from './skyEvents';
 import { currentPlanetPositions, zodiacSignAt } from './planets';
 import { signesLesPlusImpactes, ASPECT_LABEL, type ImpactedSign } from './aspects';
 import { callClaude } from './anthropic';
-import { visuelDuJour } from './social';
+import { visuelActuDuJour } from './social';
 import { mulberry32, hashStr, pick } from './fallback-generator';
 
 export type SkyNewsDraft = {
@@ -110,7 +110,7 @@ function fallbackSkyNews(date: Date): SkyNewsDraft {
     titre,
     resume: prochainLabel ? `Lune en ${moon.label.toLowerCase()}, et ${prochainLabel} à l'horizon.` : `Lune en ${moon.label.toLowerCase()} cette semaine.`,
     contenu,
-    imageUrl: visuelDuJour(dateISO),
+    imageUrl: visuelActuDuJour(dateISO),
     mode: 'demo',
   };
 }
@@ -155,7 +155,7 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
       titre: String(parsed.titre ?? ''),
       resume: String(parsed.resume ?? ''),
       contenu: String(parsed.contenu ?? ''),
-      imageUrl: visuelDuJour(dateISO),
+      imageUrl: visuelActuDuJour(dateISO),
       mode: 'ia',
     };
   } catch (err) {

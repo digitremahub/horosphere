@@ -43,11 +43,24 @@ const VISUELS = [
   '/images/bg-connexion.png',
 ];
 
-// Exportée : réutilisée par lib/skyNews.ts pour illustrer les articles
-// d'actualité du ciel avec la même logique de rotation.
 export function visuelDuJour(dateISO: string): string {
   const rng = mulberry32(hashStr('visuel::' + dateISO));
   return siteUrl() + pick(rng, VISUELS);
+}
+
+// Illustrations dédiées à la page Actualités (fournies par le community
+// manager) — distinctes des visuels des réseaux sociaux ci-dessus, pour ne
+// pas mélanger l'identité des deux usages. Utilisée par lib/skyNews.ts.
+const VISUELS_ACTUALITES = [
+  '/images/actualites/carte-du-ciel.webp',
+  '/images/actualites/alignement-planetes.webp',
+  '/images/actualites/sphere-armillaire.webp',
+  '/images/actualites/eclipse.webp',
+];
+
+export function visuelActuDuJour(dateISO: string): string {
+  const rng = mulberry32(hashStr('visuel-actu::' + dateISO));
+  return siteUrl() + pick(rng, VISUELS_ACTUALITES);
 }
 
 function nextEventLabel(dateISO: string): string {
