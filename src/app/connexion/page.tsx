@@ -5,10 +5,15 @@ import BrandMark from '@/components/BrandMark';
 
 const PHOTO_FOND = '/images/bg-connexion.png';
 
-export default async function ConnexionPage({ searchParams }: { searchParams: Promise<{ envoye?: string; erreur?: string }> }) {
+export default async function ConnexionPage({ searchParams }: { searchParams: Promise<{ envoye?: string; erreur?: string; error?: string }> }) {
   const params = await searchParams;
   const envoye = params?.envoye === '1';
-  const erreur = params?.erreur === '1';
+  const erreurMotDePasse = params?.erreur === 'motdepasse';
+  // "erreur" = nos propres redirections (mot de passe, échec attrapé du
+  // lien) ; "error" = celui qu'Auth.js ajoute lui-même quand il gère
+  // l'erreur avant même que notre code n'ait la main (ex. Resend qui
+  // refuse d'envoyer) — voir pages.error dans lib/auth.ts.
+  const erreurLien = params?.erreur === 'lien' || Boolean(params?.error);
 
   async function connexionParMotDePasse(formData: FormData) {
     'use server';
@@ -18,7 +23,20 @@ export default async function ConnexionPage({ searchParams }: { searchParams: Pr
       await signIn('password', { email, password, redirectTo: '/app' });
     } catch (err) {
       if (err instanceof AuthError) {
-        redirect('/connexion?erreur=1');
+        redirect('/connexion?erreur=motdepasse');
+      }
+      throw err;
+    }
+  }
+
+  async function connexionParLien(formData: FormData) {
+    'use server';
+    const email = String(formData.get('email') || '');
+    try {
+      await signIn('resend', { email, redirectTo: '/app' });
+    } catch (err) {
+      if (err instanceof AuthError) {
+        redirect('/connexion?erreur=lien');
       }
       throw err;
     }
@@ -46,9 +64,15 @@ export default async function ConnexionPage({ searchParams }: { searchParams: Pr
             </p>
           ) : (
             <>
-              {erreur && (
+              {erreurMotDePasse && (
                 <p style={{ fontSize: '0.86rem', color: 'var(--lever-profond)', marginBottom: 18 }}>
                   E-mail ou mot de passe incorrect.
+                </p>
+              )}
+              {erreurLien && (
+                <p style={{ fontSize: '0.86rem', color: 'var(--lever-profond)', marginBottom: 18 }}>
+                  La connexion a rencontré un problème. Réessayez dans un instant, ou contactez-nous si ça
+                  persiste.
                 </p>
               )}
 
@@ -109,13 +133,7 @@ export default async function ConnexionPage({ searchParams }: { searchParams: Pr
                 </p>
               )}
 
-              <form
-                action={async (formData: FormData) => {
-                  'use server';
-                  await signIn('resend', { email: formData.get('email'), redirectTo: '/app' });
-                }}
-                style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
-              >
+              <form action={connexionParLien} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <input
                   type="email"
                   name="email"

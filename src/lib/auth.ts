@@ -69,6 +69,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   pages: {
     signIn: '/connexion',
     verifyRequest: '/connexion?envoye=1',
+    // Sans ça, une erreur non prévue explicitement (ex. Resend qui refuse
+    // d'envoyer, mauvaise config) atterrit sur la page d'erreur générique
+    // d'Auth.js ("There was a problem with the server configuration"),
+    // hors de notre charte graphique — /connexion l'affiche à la place,
+    // via le paramètre ?error= qu'Auth.js ajoute lui-même.
+    error: '/connexion',
   },
   callbacks: {
     jwt({ token, user }) {
