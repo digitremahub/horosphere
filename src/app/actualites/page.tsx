@@ -53,6 +53,14 @@ export default async function ActualitesPage({ searchParams }: { searchParams: P
 
   return (
     <main style={{ paddingBottom: 96 }}>
+      <div className="page-bandeau">
+        <img
+          src="/images/actualites-bandeau.png"
+          alt="Un bureau d'astronome à l'ancienne (globe céleste, cartes, sextant) face à la Terre vue de l'espace, avec la lune et les planètes alignées dans le ciel."
+          loading="eager"
+        />
+      </div>
+
       <div className="container-narrow" style={{ paddingTop: 56 }}>
         <div className="pill" style={{ marginBottom: 16 }}>Actualité du ciel</div>
         <h1 style={{ fontSize: '2rem', marginBottom: 14 }}>Ce qui se passe dans le ciel</h1>
