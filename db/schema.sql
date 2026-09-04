@@ -119,16 +119,28 @@ CREATE TABLE IF NOT EXISTS profiles (
   date_naissance DATE NOT NULL,
   heure_naissance TIME,
   lieu_naissance TEXT NOT NULL,
+  lieu_latitude DOUBLE PRECISION,
+  lieu_longitude DOUBLE PRECISION,
+  lieu_timezone TEXT,
   telephone TEXT,
   newsletter_opt_in BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- La table `profiles` existait déjà en production avant l'ajout de cette
--- colonne : CREATE TABLE IF NOT EXISTS ne la rajoute pas sur une table
--- existante, d'où cet ALTER idempotent.
+-- La table `profiles` existait déjà en production avant l'ajout de ces
+-- colonnes : CREATE TABLE IF NOT EXISTS ne les rajoute pas sur une table
+-- existante, d'où ces ALTER idempotents.
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS newsletter_opt_in BOOLEAN NOT NULL DEFAULT true;
+
+-- Coordonnées + fuseau horaire du lieu de naissance, résolus par géocodage
+-- à l'enregistrement du profil (lib/geocode.ts) — nécessaires pour
+-- calculer un ascendant ou des maisons réels (lib/natal.ts). Absents pour
+-- les profils enregistrés avant cet ajout, ou si le géocodage échoue :
+-- ces lectures restent alors indisponibles plutôt que d'être approximées.
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS lieu_latitude DOUBLE PRECISION;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS lieu_longitude DOUBLE PRECISION;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS lieu_timezone TEXT;
 
 -- ===== Promotion réseaux sociaux =====
 -- La validation et l'édition du contenu se font désormais dans une base

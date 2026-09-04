@@ -117,6 +117,9 @@ export async function POST(req: NextRequest) {
           date: profile.date_naissance,
           heure: profile.heure_naissance ? profile.heure_naissance.slice(0, 5) : undefined,
           lieu: profile.lieu_naissance,
+          latitude: profile.lieu_latitude,
+          longitude: profile.lieu_longitude,
+          timezone: profile.lieu_timezone,
         }
       : undefined;
 

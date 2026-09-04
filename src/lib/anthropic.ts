@@ -1,5 +1,6 @@
 import { Sign, decanOf } from './zodiac';
 import { currentPlanetPositions, zodiacSignAt } from './planets';
+import { calculerThemeNatal } from './natal';
 import { moonPhaseInfo } from '../components/MoonPhase';
 import { THEMES, type ThemeKey } from './themes';
 import {
@@ -41,6 +42,10 @@ export type AstralChart = {
   conseilDeVie: string;
   pierrePorteBonheur: string;
   symboleCle: string;
+  // Présents uniquement quand l'heure et le lieu de naissance ont pu être
+  // résolus en un thème natal réel (voir lib/natal.ts) — jamais approximés.
+  ascendantSigne?: { nom: string; symbole: string };
+  luneSigne?: { nom: string; symbole: string };
   mode: 'ia' | 'demo';
 };
 
@@ -53,7 +58,7 @@ type Options = {
 
 type AstralOptions = {
   sign: Sign;
-  naissance: { date: string; heure?: string; lieu?: string };
+  naissance: { date: string; heure?: string; lieu?: string; latitude?: number | null; longitude?: number | null; timezone?: string | null };
 };
 
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
@@ -139,22 +144,48 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
 }
 
 /** Thème astral complet — portrait de fond basé sur le signe solaire et les
- * informations de naissance du profil. On ne prétend jamais calculer une
- * position astronomique précise (ascendant, lune) : contenu qualitatif. */
+ * informations de naissance du profil. Quand l'heure et le lieu de
+ * naissance ont pu être résolus en coordonnées + fuseau horaire (voir
+ * lib/profile.ts, lib/geocode.ts), un vrai thème natal est calculé
+ * (ascendant, lune natale, aspects — lib/natal.ts) et fourni tel quel à
+ * l'IA ; sinon on reste qualitatif, sans jamais inventer ces éléments. */
 export async function generateAstralChart(opts: AstralOptions): Promise<AstralChart> {
+  const { naissance } = opts;
+  const themeNatal =
+    naissance.heure && naissance.latitude != null && naissance.longitude != null && naissance.timezone
+      ? calculerThemeNatal(naissance.date, naissance.heure, naissance.timezone, naissance.latitude, naissance.longitude)
+      : null;
+  const natalExtra = themeNatal
+    ? {
+        ascendantSigne: { nom: themeNatal.ascendant.signe.nom, symbole: themeNatal.ascendant.signe.symbole },
+        luneSigne: { nom: themeNatal.luneSigne.nom, symbole: themeNatal.luneSigne.symbole },
+      }
+    : {};
+
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return { ...fallbackAstralChart(opts.sign.key, opts.naissance.date + opts.naissance.lieu), mode: 'demo' };
+    return { ...fallbackAstralChart(opts.sign.key, opts.naissance.date + opts.naissance.lieu), ...natalExtra, mode: 'demo' };
   }
   const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
   const contexteNaissance =
-    `Informations de naissance : date ${opts.naissance.date}` +
-    (opts.naissance.heure ? `, heure ${opts.naissance.heure}` : '') +
-    (opts.naissance.lieu ? `, lieu ${opts.naissance.lieu}` : '') +
+    `Informations de naissance : date ${naissance.date}` +
+    (naissance.heure ? `, heure ${naissance.heure}` : '') +
+    (naissance.lieu ? `, lieu ${naissance.lieu}` : '') +
     `.`;
+  const natalTxt = themeNatal
+    ? `Thème natal réel, calculé (à utiliser factuellement, n'en invente aucun autre élément) : ascendant ${themeNatal.ascendant.signe.nom}, lune natale en ${themeNatal.luneSigne.nom}` +
+      (themeNatal.aspects.length > 0
+        ? `, aspects natals principaux : ${themeNatal.aspects.slice(0, 5).map((a) => `${a.corps1}-${a.corps2} (${a.aspect})`).join(', ')}`
+        : '') +
+      '.'
+    : `Aucun thème natal précis disponible (heure ou lieu de naissance non résolus) — reste qualitatif, basé uniquement sur le signe solaire.`;
+  const consigneNatal = themeNatal
+    ? "Intègre l'ascendant et la lune natale ci-dessus dans le portrait (ce sont des éléments réels et calculés) — sans inventer de maison ou de transit non fournis."
+    : 'Ne prétends jamais calculer une position astronomique précise (pas d\'ascendant, de lune ou de maison inventés — reste qualitatif, basé sur le signe solaire).';
   const prompt = `Tu écris le thème astral complet d'un utilisateur de l'application Horosphère, en français, pour le signe solaire ${opts.sign.nom} (élément ${opts.sign.element}, planète maîtresse ${opts.sign.planete}).
 ${contexteNaissance}
-Utilise ces informations pour enrichir le ton, sans jamais prétendre calculer une position astronomique précise (pas d'ascendant, de lune ou de maison inventés — reste qualitatif, basé sur le signe solaire).
+${natalTxt}
+${consigneNatal}
 Ton : chaleureux, dense mais accessible, valorisant sans flatterie vide, jamais fataliste. Portrait de fond, pas une prédiction du jour.
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
 {
@@ -185,6 +216,7 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
     conseilDeVie: String(parsed.conseilDeVie ?? ''),
     pierrePorteBonheur: String(parsed.pierrePorteBonheur ?? 'Améthyste'),
     symboleCle: String(parsed.symboleCle ?? 'une clé ancienne'),
+    ...natalExtra,
     mode: 'ia',
   };
 }

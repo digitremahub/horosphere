@@ -16,6 +16,7 @@ export async function GET() {
     SELECT table_name, column_name FROM information_schema.columns
     WHERE (table_name = 'users' AND column_name = 'password_hash')
        OR (table_name = 'profiles' AND column_name = 'newsletter_opt_in')
+       OR (table_name = 'profiles' AND column_name = 'lieu_latitude')
        OR (table_name = 'news' AND column_name = 'slug')
   `;
   const has = (table: string, column: string) => rows.some((r) => r.table_name === table && r.column_name === column);
@@ -24,6 +25,7 @@ export async function GET() {
     dbConfigured: true,
     users_password_hash: has('users', 'password_hash'),
     profiles_newsletter_opt_in: has('profiles', 'newsletter_opt_in'),
+    profiles_lieu_latitude: has('profiles', 'lieu_latitude'),
     news_table: has('news', 'slug'),
   });
 }

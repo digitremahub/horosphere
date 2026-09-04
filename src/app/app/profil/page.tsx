@@ -172,6 +172,10 @@ export default async function ProfilPage({ searchParams }: { searchParams: Promi
               />
             </div>
           </div>
+          <p style={{ fontSize: '0.78rem', color: 'var(--sourdine)', marginTop: -8 }}>
+            Avec l'heure exacte, votre thème astral inclut votre véritable ascendant et votre lune natale
+            — sans elle, ces éléments restent indisponibles plutôt qu'approximés.
+          </p>
 
           <div>
             <label htmlFor="telephone" className="field-label">Téléphone (optionnel)</label>

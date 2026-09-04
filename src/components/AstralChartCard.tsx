@@ -14,6 +14,10 @@ export type AstralChart = {
   conseilDeVie: string;
   pierrePorteBonheur: string;
   symboleCle: string;
+  // Présents uniquement quand l'heure et le lieu de naissance ont pu être
+  // résolus en thème natal réel (voir lib/natal.ts) — jamais approximés.
+  ascendantSigne?: { nom: string; symbole: string };
+  luneSigne?: { nom: string; symbole: string };
   mode: 'ia' | 'demo';
 };
 
@@ -81,6 +85,21 @@ export default function AstralChartCard({
               {[signInfo.element, signInfo.planete].filter(Boolean).join(' · ') || signInfo.dates}
             </div>
           </div>
+        </div>
+      )}
+
+      {(chart.ascendantSigne || chart.luneSigne) && (
+        <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap' }}>
+          {chart.ascendantSigne && (
+            <div className="pill" style={{ borderColor: 'var(--lever)', color: 'var(--lever-profond)' }}>
+              {chart.ascendantSigne.symbole} Ascendant {chart.ascendantSigne.nom}
+            </div>
+          )}
+          {chart.luneSigne && (
+            <div className="pill" style={{ borderColor: 'var(--sauge)', color: 'var(--sauge)' }}>
+              {chart.luneSigne.symbole} Lune natale en {chart.luneSigne.nom}
+            </div>
+          )}
         </div>
       )}
 
