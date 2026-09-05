@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { signFromBirthdate } from '@/lib/zodiac';
+import { localizedSign } from '@/lib/zodiac-i18n';
 import {
   generateHoroscope,
   generateAstralChart,
@@ -10,6 +11,7 @@ import {
   generateThematic,
   generateLunarCycle,
   generateTransits,
+  type Langue,
 } from '@/lib/anthropic';
 import { consumeCredits, getBalance, hasActiveSubscription, InsufficientCreditsError } from '@/lib/credits';
 import { getProfile } from '@/lib/profile';
@@ -49,6 +51,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => ({}));
   const feature = body.feature as FeatureKey;
+  const langue: Langue = body.locale === 'en' ? 'en' : 'fr';
 
   if (!feature || !(feature in FEATURE_COSTS)) {
     return NextResponse.json({ error: 'Fonctionnalité inconnue.' }, { status: 400 });
@@ -142,14 +145,14 @@ export async function POST(req: NextRequest) {
   let reading;
   try {
     if (isThemeKey(feature)) {
-      reading = await generateThematic({ theme: feature, sign, seedKey: dateISO, naissance });
+      reading = await generateThematic({ theme: feature, sign, seedKey: dateISO, naissance, langue });
     } else {
       switch (feature) {
         case 'theme_astral_complet':
-          reading = await generateAstralChart({ sign, naissance });
+          reading = await generateAstralChart({ sign, naissance, langue });
           break;
         case 'analyse_sentimentale':
-          reading = await generateSentiment({ sign, weekKey: isoWeekKey(new Date()), naissance });
+          reading = await generateSentiment({ sign, weekKey: isoWeekKey(new Date()), naissance, langue });
           break;
         case 'compatibilite_amoureuse': {
           const compat = await generateCompatibility({
@@ -161,28 +164,30 @@ export async function POST(req: NextRequest) {
             autreSign: autreSign!,
             autreDateNaissance: autreDate,
             seedKey: dateISO.slice(0, 7),
+            langue,
           });
           // Les deux prénoms et le second signe sont stockés avec la
           // lecture : indispensable pour pouvoir la réafficher à
           // l'identique dans l'historique plus tard.
+          const autreSigneLocalise = localizedSign(autreSign!, langue);
           reading = {
             ...compat,
             moiPrenom: profile.prenom,
-            autreSigne: { key: autreSign!.key, nom: autreSign!.nom, symbole: autreSign!.symbole, prenom: autrePrenom },
+            autreSigne: { key: autreSigneLocalise.key, nom: autreSigneLocalise.nom, symbole: autreSigneLocalise.symbole, prenom: autrePrenom },
           };
           break;
         }
         case 'grande_analyse':
-          reading = await generateGrandeAnalyse({ sign, naissance });
+          reading = await generateGrandeAnalyse({ sign, naissance, langue });
           break;
         case 'cycle_lunaire':
-          reading = await generateLunarCycle({ sign, naissance });
+          reading = await generateLunarCycle({ sign, naissance, langue });
           break;
         case 'transits_planetaires':
-          reading = await generateTransits({ sign, naissance });
+          reading = await generateTransits({ sign, naissance, langue });
           break;
         default:
-          reading = await generateHoroscope({ feature, sign, dateISO, naissance });
+          reading = await generateHoroscope({ feature, sign, dateISO, naissance, langue });
       }
     }
   } catch (err) {
@@ -204,6 +209,11 @@ export async function POST(req: NextRequest) {
   }
 
   const newBalance = await getBalance(uid);
+  const signAffiche = localizedSign(sign, langue);
 
-  return NextResponse.json({ sign: { key: sign.key, nom: sign.nom, symbole: sign.symbole, dates: sign.dates, element: sign.element, planete: sign.planete }, reading, balance: newBalance });
+  return NextResponse.json({
+    sign: { key: signAffiche.key, nom: signAffiche.nom, symbole: signAffiche.symbole, dates: signAffiche.dates, element: signAffiche.element, planete: signAffiche.planete },
+    reading,
+    balance: newBalance,
+  });
 }

@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { useLocale } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import { FEATURE_COSTS, FEATURE_LABELS, FEATURE_CATEGORIES, FeatureCategory, FeatureKey } from '@/lib/pricing';
 import { THEMES, type ThemeKey } from '@/lib/themes';
 import ReadingCard, { type Reading } from '@/components/ReadingCard';
@@ -56,6 +58,7 @@ export default function Dashboard({
   const [autreDateNaissance, setAutreDateNaissance] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const locale = useLocale();
 
   const cost = FEATURE_COSTS[feature];
   const needsAutrePersonne = feature === 'compatibilite_amoureuse';
@@ -69,7 +72,7 @@ export default function Dashboard({
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(needsAutrePersonne ? { feature, autrePrenom, autreDateNaissance } : { feature }),
+        body: JSON.stringify(needsAutrePersonne ? { feature, autrePrenom, autreDateNaissance, locale } : { feature, locale }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -115,13 +118,13 @@ export default function Dashboard({
           <span style={{ fontSize: '0.8rem', color: 'var(--ombre)' }}>Solde</span>
           <span className="mono" style={{ fontSize: '1.2rem', fontWeight: 600, color: 'var(--lever-profond)' }}>{balance}</span>
           <span style={{ fontSize: '0.8rem', color: 'var(--ombre)' }}>crédits</span>
-          <a href="/tarifs" className="btn btn-ghost" style={{ padding: '7px 14px', fontSize: '0.78rem' }}>+ Ajouter</a>
+          <Link href="/tarifs" className="btn btn-ghost" style={{ padding: '7px 14px', fontSize: '0.78rem' }}>+ Ajouter</Link>
         </div>
       </div>
 
-      <a href="/app/historique" style={{ display: 'inline-block', fontSize: '0.82rem', color: 'var(--ombre)', textDecoration: 'underline', marginBottom: 24 }}>
+      <Link href="/app/historique" style={{ display: 'inline-block', fontSize: '0.82rem', color: 'var(--ombre)', textDecoration: 'underline', marginBottom: 24 }}>
         Voir l'historique de mes lectures
-      </a>
+      </Link>
 
       {balanceError && (
         <div className="card" style={{ padding: '14px 18px', marginBottom: 24, borderColor: 'var(--lever)', color: 'var(--lever-profond)', fontSize: '0.86rem' }}>
@@ -147,13 +150,13 @@ export default function Dashboard({
                 </div>
               </div>
             )}
-            <a href="/app/profil" style={{ marginLeft: 'auto', fontSize: '0.78rem', color: 'var(--ombre)', textDecoration: 'underline', whiteSpace: 'nowrap' }}>
+            <Link href="/app/profil" style={{ marginLeft: 'auto', fontSize: '0.78rem', color: 'var(--ombre)', textDecoration: 'underline', whiteSpace: 'nowrap' }}>
               Modifier
-            </a>
+            </Link>
           </div>
           {!ascendant && (
             <p style={{ fontSize: '0.78rem', color: 'var(--sourdine)', marginTop: -16, marginBottom: 24 }}>
-              Ajoutez votre heure de naissance à <a href="/app/profil" style={{ color: 'var(--lever-profond)' }}>votre profil</a> pour afficher votre ascendant, gratuitement.
+              Ajoutez votre heure de naissance à <Link href="/app/profil" style={{ color: 'var(--lever-profond)' }}>votre profil</Link> pour afficher votre ascendant, gratuitement.
             </p>
           )}
 
@@ -243,7 +246,7 @@ export default function Dashboard({
               <p style={{ margin: '0 0 10px', fontSize: '0.86rem', color: 'var(--ombre)' }}>
                 Cette lecture est réservée aux abonnés — les crédits seuls ne suffisent pas ici.
               </p>
-              <a href="/tarifs" className="btn btn-primary" style={{ padding: '9px 18px', fontSize: '0.82rem' }}>Voir les abonnements</a>
+              <Link href="/tarifs" className="btn btn-primary" style={{ padding: '9px 18px', fontSize: '0.82rem' }}>Voir les abonnements</Link>
             </div>
           )}
 
@@ -292,7 +295,7 @@ export default function Dashboard({
           )}
           {error && (
             <p style={{ fontSize: '0.84rem', color: 'var(--lever-profond)', marginTop: 10 }}>
-              {error} {(error.toLowerCase().includes('crédit') || error.toLowerCase().includes('abonnement')) && <a href="/tarifs" style={{ textDecoration: 'underline' }}>Voir les forfaits</a>}
+              {error} {(error.toLowerCase().includes('crédit') || error.toLowerCase().includes('abonnement')) && <Link href="/tarifs" style={{ textDecoration: 'underline' }}>Voir les forfaits</Link>}
             </p>
           )}
         </div>

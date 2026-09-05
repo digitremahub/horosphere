@@ -1,16 +1,19 @@
-import { redirect } from 'next/navigation';
+import { getLocale } from 'next-intl/server';
+import { redirect } from '@/i18n/navigation';
 import { auth } from '@/lib/auth';
 import { getBalance, hasActiveSubscription } from '@/lib/credits';
 import { getProfile } from '@/lib/profile';
 import { dbConfigured } from '@/lib/db';
 import { signFromBirthdate } from '@/lib/zodiac';
+import { localizedSign } from '@/lib/zodiac-i18n';
 import { calculerThemeNatal } from '@/lib/natal';
 import Dashboard from '@/components/Dashboard';
 
 export default async function AppPage() {
   const session = await auth();
+  const locale = await getLocale();
   if (!session?.user) {
-    redirect('/connexion');
+    redirect({ href: '/connexion', locale });
   }
 
   const userId = Number((session!.user as { id?: string }).id);
@@ -25,16 +28,19 @@ export default async function AppPage() {
       profile = null; // erreur de lecture transitoire : ne pas bloquer l'accès
     }
     if (!profile) {
-      redirect('/app/profil');
+      redirect({ href: '/app/profil', locale });
     }
   }
 
-  const userSign = profile
-    ? (() => {
-        const [, m, d] = profile.date_naissance.split('-').map(Number);
-        return signFromBirthdate(m, d);
-      })()
-    : { key: 'belier', nom: 'Bélier', symbole: '♈', dates: '21 mars – 19 avril' };
+  const userSign = localizedSign(
+    profile
+      ? (() => {
+          const [, m, d] = profile.date_naissance.split('-').map(Number);
+          return signFromBirthdate(m, d);
+        })()
+      : { key: 'belier', nom: 'Bélier', symbole: '♈', dates: '21 mars – 19 avril' },
+    locale
+  );
 
   // Ascendant : gratuit, jamais payant — un simple fait calculé (voir
   // lib/natal.ts), pas une lecture générée. Disponible dès que l'heure de
@@ -84,7 +90,7 @@ export default async function AppPage() {
         <Dashboard
           userName={session!.user!.name || session!.user!.email || 'vous'}
           userSign={userSign}
-          ascendant={ascendant ? { nom: ascendant.nom, symbole: ascendant.symbole } : null}
+          ascendant={ascendant ? { nom: localizedSign(ascendant, locale).nom, symbole: ascendant.symbole } : null}
           initialBalance={balance}
           balanceError={balanceError}
           hasSubscription={hasSubscription}

@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { listPublishedNews, splitArticleSections } from '@/lib/news';
 import { dbConfigured } from '@/lib/db';
 import AstrolabeIllustration from '@/components/AstrolabeIllustration';

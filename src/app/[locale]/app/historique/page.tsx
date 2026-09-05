@@ -1,4 +1,5 @@
-import { redirect } from 'next/navigation';
+import { getLocale } from 'next-intl/server';
+import { redirect, Link } from '@/i18n/navigation';
 import { auth } from '@/lib/auth';
 import { getHistory } from '@/lib/credits';
 import { getProfile } from '@/lib/profile';
@@ -21,8 +22,9 @@ const THEME_KEYS = new Set(Object.keys(THEMES));
 
 export default async function HistoriquePage() {
   const session = await auth();
+  const locale = await getLocale();
   if (!session?.user) {
-    redirect('/connexion');
+    redirect({ href: '/connexion', locale });
   }
 
   const userId = Number((session!.user as { id?: string }).id);
@@ -36,7 +38,7 @@ export default async function HistoriquePage() {
       hasProfile = true; // erreur de lecture transitoire : ne pas bloquer l'accès
     }
     if (!hasProfile) {
-      redirect('/app/profil');
+      redirect({ href: '/app/profil', locale });
     }
   }
 
@@ -65,9 +67,9 @@ export default async function HistoriquePage() {
 
       <div className="container-narrow">
       <div style={{ marginBottom: 30 }}>
-        <a href="/app" style={{ fontSize: '0.82rem', color: 'var(--ombre)', textDecoration: 'none' }}>
+        <Link href="/app" style={{ fontSize: '0.82rem', color: 'var(--ombre)', textDecoration: 'none' }}>
           ← Mon espace
-        </a>
+        </Link>
         <h1 style={{ fontSize: '1.6rem', marginTop: 10 }}>Historique</h1>
         <p style={{ color: 'var(--ombre)', fontSize: '0.9rem' }}>Vos lectures passées, les plus récentes en premier — exactement comme le jour où vous les avez générées.</p>
       </div>

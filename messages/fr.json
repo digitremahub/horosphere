@@ -21,5 +21,52 @@
   },
   "LanguageSwitcher": {
     "label": "Langue"
+  },
+  "Cta": {
+    "startFree": "Commencer gratuitement",
+    "startFreeTeaser": "Recevoir ma lecture complète",
+    "launchReading": "Lancer une lecture",
+    "rechargeCredits": "Recharger mes crédits"
+  },
+  "Home": {
+    "heroImageAlt": "Un astrolabe sur un balcon face à la mer, sous un ciel étoilé où la lune et les planètes tracent leur trajectoire au crépuscule.",
+    "heroPill": "Horoscope IA quotidien",
+    "heroTitle": "Un instant de clarté, <em>chaque jour</em>, sans pression.",
+    "heroSubtitle": "Horosphère écrit votre lecture du jour à partir de votre signe — et bientôt de votre thème complet. Pensé pour devenir une habitude douce.",
+    "seePackages": "Voir les forfaits",
+    "step1Title": "Vous arrivez, sans engagement",
+    "step1TextPromo": "Créez votre compte en un e-mail, aucune carte requise. 10 crédits offerts (au lieu de 3) — valables 7 jours, offre de lancement de septembre.",
+    "step1Text": "Créez votre compte en un e-mail, aucune carte requise. Vous recevez vos premiers crédits offerts.",
+    "step2Title": "Vous lisez, à votre rythme",
+    "step2Text": "Chaque lecture consomme quelques crédits. Vous ne payez que ce que vous utilisez.",
+    "step3Title": "Vous restez, si ça vous fait du bien",
+    "step3Text": "Un pack quand vous en avez besoin, un abonnement si Horosphère devient une habitude. Toujours résiliable.",
+    "ritualImageAlt": "Un moment d'écriture au calme, à la lumière d'une bougie — le rituel quotidien d'Horosphère.",
+    "ritualPill": "Un rituel",
+    "ritualTitle": "Deux minutes, chaque matin, rien que pour vous",
+    "ritualText1": "Pas de scroll infini, pas de notifications culpabilisantes. Horosphère tient en une lecture courte, pensée pour s'intégrer à votre matin — un café, un instant de clarté, et vous repartez.",
+    "ritualText2": "Le thème astral complet va plus loin, pour les jours où vous avez besoin de prendre du recul plutôt qu'une lecture rapide.",
+    "packagesTitle": "Des forfaits qui respectent votre budget",
+    "packagesText": "Des packs de crédits sans expiration précipitée (45 jours pour en profiter), ou un abonnement si Horosphère devient un rendez-vous régulier. Rien n'est imposé au premier jour.",
+    "discoverPackages": "Découvrir les forfaits",
+    "freePreviewPill": "Aperçu gratuit",
+    "freeAtLogin": "Gratuit à la connexion — sans carte bancaire."
+  },
+  "Connexion": {
+    "imageAlt": "Un ciel étoilé, en fond de la page de connexion.",
+    "checkEmailTitle": "Vérifiez votre boîte mail",
+    "welcomeTitle": "Bienvenue",
+    "emailSentText": "Un lien de connexion vient de vous être envoyé. Ouvrez-le depuis cet appareil pour accéder à votre espace.",
+    "wrongPassword": "E-mail ou mot de passe incorrect.",
+    "linkError": "La connexion a rencontré un problème. Réessayez dans un instant, ou contactez-nous si ça persiste.",
+    "withPasswordText": "Connectez-vous avec votre e-mail et votre mot de passe.",
+    "emailPlaceholder": "vous@exemple.com",
+    "passwordPlaceholder": "Mot de passe",
+    "login": "Se connecter",
+    "or": "ou",
+    "magicLinkText": "Un e-mail suffit — pas de mot de passe à retenir. Nous vous envoyons un lien de connexion valable quelques minutes.",
+    "magicLinkTextWithPassword": " Vous pourrez définir un mot de passe une fois connecté, depuis votre profil.",
+    "notConfigured": "La connexion par e-mail n'est pas encore activée sur cet environnement (base de données ou clé Resend manquante).",
+    "receiveLink": "Recevoir mon lien de connexion"
   }
 }

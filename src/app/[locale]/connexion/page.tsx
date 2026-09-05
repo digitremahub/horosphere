@@ -1,5 +1,6 @@
 import { AuthError } from 'next-auth';
-import { redirect } from 'next/navigation';
+import { getLocale, getTranslations } from 'next-intl/server';
+import { redirect, getPathname } from '@/i18n/navigation';
 import { signIn, authConfigured, passwordAuthConfigured } from '@/lib/auth';
 import BrandMark from '@/components/BrandMark';
 
@@ -7,6 +8,9 @@ const PHOTO_FOND = '/images/bg-connexion.png';
 
 export default async function ConnexionPage({ searchParams }: { searchParams: Promise<{ envoye?: string; erreur?: string; error?: string }> }) {
   const params = await searchParams;
+  const locale = await getLocale();
+  const t = await getTranslations('Connexion');
+  const appPath = getPathname({ href: '/app', locale });
   const envoye = params?.envoye === '1';
   const erreurMotDePasse = params?.erreur === 'motdepasse';
   // "erreur" = nos propres redirections (mot de passe, échec attrapé du
@@ -20,10 +24,10 @@ export default async function ConnexionPage({ searchParams }: { searchParams: Pr
     const email = String(formData.get('email') || '');
     const password = String(formData.get('password') || '');
     try {
-      await signIn('password', { email, password, redirectTo: '/app' });
+      await signIn('password', { email, password, redirectTo: appPath });
     } catch (err) {
       if (err instanceof AuthError) {
-        redirect('/connexion?erreur=motdepasse');
+        redirect({ href: { pathname: '/connexion', query: { erreur: 'motdepasse' } }, locale });
       }
       throw err;
     }
@@ -33,10 +37,10 @@ export default async function ConnexionPage({ searchParams }: { searchParams: Pr
     'use server';
     const email = String(formData.get('email') || '');
     try {
-      await signIn('resend', { email, redirectTo: '/app' });
+      await signIn('resend', { email, redirectTo: appPath });
     } catch (err) {
       if (err instanceof AuthError) {
-        redirect('/connexion?erreur=lien');
+        redirect({ href: { pathname: '/connexion', query: { erreur: 'lien' } }, locale });
       }
       throw err;
     }
@@ -45,7 +49,7 @@ export default async function ConnexionPage({ searchParams }: { searchParams: Pr
   return (
     <main style={{ paddingBottom: 96 }}>
       <div className="page-bandeau">
-        <img src={PHOTO_FOND} alt="Un ciel étoilé, en fond de la page de connexion." loading="eager" />
+        <img src={PHOTO_FOND} alt={t('imageAlt')} loading="eager" />
       </div>
 
       <div className="container-narrow" style={{ position: 'relative' }}>
@@ -55,36 +59,33 @@ export default async function ConnexionPage({ searchParams }: { searchParams: Pr
           </div>
 
           <h1 style={{ fontSize: '1.7rem', marginBottom: 10 }}>
-            {envoye ? 'Vérifiez votre boîte mail' : 'Bienvenue'}
+            {envoye ? t('checkEmailTitle') : t('welcomeTitle')}
           </h1>
 
           {envoye ? (
-            <p style={{ color: 'var(--ombre)' }}>
-              Un lien de connexion vient de vous être envoyé. Ouvrez-le depuis cet appareil pour accéder à votre espace.
-            </p>
+            <p style={{ color: 'var(--ombre)' }}>{t('emailSentText')}</p>
           ) : (
             <>
               {erreurMotDePasse && (
                 <p style={{ fontSize: '0.86rem', color: 'var(--lever-profond)', marginBottom: 18 }}>
-                  E-mail ou mot de passe incorrect.
+                  {t('wrongPassword')}
                 </p>
               )}
               {erreurLien && (
                 <p style={{ fontSize: '0.86rem', color: 'var(--lever-profond)', marginBottom: 18 }}>
-                  La connexion a rencontré un problème. Réessayez dans un instant, ou contactez-nous si ça
-                  persiste.
+                  {t('linkError')}
                 </p>
               )}
 
               {passwordAuthConfigured && (
                 <>
-                  <p style={{ color: 'var(--ombre)', marginBottom: 20 }}>Connectez-vous avec votre e-mail et votre mot de passe.</p>
+                  <p style={{ color: 'var(--ombre)', marginBottom: 20 }}>{t('withPasswordText')}</p>
                   <form action={connexionParMotDePasse} style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 28 }}>
                     <input
                       type="email"
                       name="email"
                       required
-                      placeholder="vous@exemple.com"
+                      placeholder={t('emailPlaceholder')}
                       autoComplete="email"
                       style={{
                         padding: '13px 16px',
@@ -99,7 +100,7 @@ export default async function ConnexionPage({ searchParams }: { searchParams: Pr
                       type="password"
                       name="password"
                       required
-                      placeholder="Mot de passe"
+                      placeholder={t('passwordPlaceholder')}
                       autoComplete="current-password"
                       style={{
                         padding: '13px 16px',
@@ -110,26 +111,25 @@ export default async function ConnexionPage({ searchParams }: { searchParams: Pr
                         fontSize: '0.95rem',
                       }}
                     />
-                    <button type="submit" className="btn btn-primary">Se connecter</button>
+                    <button type="submit" className="btn btn-primary">{t('login')}</button>
                   </form>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }} aria-hidden="true">
                     <div style={{ flex: 1, height: 1, background: 'var(--trait)' }} />
-                    <span className="mono" style={{ fontSize: '0.72rem', color: 'var(--sourdine)', textTransform: 'uppercase' }}>ou</span>
+                    <span className="mono" style={{ fontSize: '0.72rem', color: 'var(--sourdine)', textTransform: 'uppercase' }}>{t('or')}</span>
                     <div style={{ flex: 1, height: 1, background: 'var(--trait)' }} />
                   </div>
                 </>
               )}
 
               <p style={{ color: 'var(--ombre)', marginBottom: 26 }}>
-                Un e-mail suffit — pas de mot de passe à retenir. Nous vous envoyons un lien de connexion valable
-                quelques minutes.
-                {passwordAuthConfigured && ' Vous pourrez définir un mot de passe une fois connecté, depuis votre profil.'}
+                {t('magicLinkText')}
+                {passwordAuthConfigured && t('magicLinkTextWithPassword')}
               </p>
 
               {!authConfigured && (
                 <p style={{ fontSize: '0.82rem', color: 'var(--lever-profond)', marginBottom: 18 }}>
-                  La connexion par e-mail n'est pas encore activée sur cet environnement (base de données ou clé Resend manquante).
+                  {t('notConfigured')}
                 </p>
               )}
 
@@ -138,7 +138,7 @@ export default async function ConnexionPage({ searchParams }: { searchParams: Pr
                   type="email"
                   name="email"
                   required
-                  placeholder="vous@exemple.com"
+                  placeholder={t('emailPlaceholder')}
                   disabled={!authConfigured}
                   style={{
                     padding: '13px 16px',
@@ -150,7 +150,7 @@ export default async function ConnexionPage({ searchParams }: { searchParams: Pr
                   }}
                 />
                 <button type="submit" className="btn btn-ghost" disabled={!authConfigured}>
-                  Recevoir mon lien de connexion
+                  {t('receiveLink')}
                 </button>
               </form>
             </>

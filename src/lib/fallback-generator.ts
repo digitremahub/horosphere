@@ -12,7 +12,13 @@ import { SIGNS } from './zodiac';
 // banque (où le paradoxe des anniversaires rend les doublons visibles quasi
 // certains dès que plusieurs personnes comparent leur signe côte à côte,
 // ex: l'aperçu gratuit de la page d'accueil).
-const HEADLINES = [
+//
+// Seul fallbackHoroscope() est bilingue (FR/EN) : c'est le seul de ces
+// générateurs de secours utilisé inconditionnellement, même quand la clé
+// IA est configurée (aperçu gratuit public de la page d'accueil, jamais
+// authentifié). Les autres fallbacks de ce fichier ne servent qu'en mode
+// démo (clé IA absente) — leur traduction anglaise reste à faire.
+const HEADLINES_FR = [
   'Le ciel vous ouvre une porte discrète.',
   'Une journée à avancer à votre rythme.',
   'Les astres appellent à la patience.',
@@ -27,7 +33,7 @@ const HEADLINES = [
   "Les astres invitent à ralentir avant d'avancer.",
 ];
 
-const AMOUR = [
+const AMOUR_FR = [
   'En amour, vous attirez les échanges sincères si vous restez disponible.',
   "Côté cœur, une parole en suspens mérite d'être prononcée aujourd'hui.",
   'Une rencontre ou un message pourrait changer la tonalité de votre journée.',
@@ -42,7 +48,7 @@ const AMOUR = [
   'La patience en amour porte ses fruits plus vite que prévu.',
 ];
 
-const TRAVAIL = [
+const TRAVAIL_FR = [
   'Au travail, une idée que vous portez depuis un moment mérite d’être formulée à voix haute.',
   'La journée favorise la méthode plus que la précipitation.',
   'Une décision reportée peut enfin être prise.',
@@ -57,7 +63,7 @@ const TRAVAIL = [
   'Le travail de fond que vous menez discrètement commence à se voir.',
 ];
 
-const ENERGIE = [
+const ENERGIE_FR = [
   "Sur le plan physique, l'énergie est bonne si vous respectez vos limites.",
   "Une marche ou un moment au grand air fait plus de bien qu'un effort intense.",
   'Votre énergie est stable, idéale pour tenir un rythme régulier.',
@@ -72,7 +78,7 @@ const ENERGIE = [
   'Le corps suit si l’esprit est apaisé — commencez par calmer ce dernier.',
 ];
 
-const CONSEILS = [
+const CONSEILS_FR = [
   'Osez poser la question qui vous trotte en tête.',
   'Accordez-vous une heure sans écran.',
   'Prenez des nouvelles d’une personne que vous négligez.',
@@ -87,8 +93,86 @@ const CONSEILS = [
   'Écoutez ce que votre corps essaie de vous dire depuis un moment.',
 ];
 
-const COULEURS = ['Or', 'Bleu nuit', 'Lilas', 'Corail', 'Vert sauge', 'Bordeaux', 'Argent', 'Turquoise', 'Terracotta', 'Ivoire', 'Prune', 'Ambre'];
-const TALISMANS = ['une clé', 'une bougie', 'une plume', 'une étoile', 'une boussole', 'un galet', 'une coquille', 'un ruban', 'une pierre polie', 'un carnet', 'une lanterne', 'un fil rouge'];
+const COULEURS_FR = ['Or', 'Bleu nuit', 'Lilas', 'Corail', 'Vert sauge', 'Bordeaux', 'Argent', 'Turquoise', 'Terracotta', 'Ivoire', 'Prune', 'Ambre'];
+const TALISMANS_FR = ['une clé', 'une bougie', 'une plume', 'une étoile', 'une boussole', 'un galet', 'une coquille', 'un ruban', 'une pierre polie', 'un carnet', 'une lanterne', 'un fil rouge'];
+
+const HEADLINES_EN = [
+  'The sky opens a quiet door for you.',
+  'A day to move forward at your own pace.',
+  'The stars are calling for patience.',
+  'A fresh wind is blowing through your plans.',
+  'The moment is right to decide.',
+  'An unexpected clarity lights your path.',
+  'The present moment deserves your full attention.',
+  'A step sideways reveals a better view.',
+  'The day rewards those who trust their instinct.',
+  'A quiet click of the mind changes the tone of the day.',
+  'The ground is favorable for a sincere initiative.',
+  'The stars invite you to slow down before moving on.',
+];
+
+const AMOUR_EN = [
+  'In love, you attract sincere exchanges if you stay open.',
+  'On the heart front, an unspoken word deserves to be said today.',
+  'A meeting or a message could shift the tone of your day.',
+  'Tenderness lives in small gestures more than grand declarations.',
+  'An old misunderstanding can untangle itself if you dare bring it up calmly.',
+  "Emotional harmony today comes through listening more than words.",
+  'A rediscovered closeness warms a relationship that needed it.',
+  'The heart gains from staying open, even facing a passing hesitation.',
+  'An honest admission beats a careful silence today.',
+  'Your natural magnetism draws the right people, if you let it show.',
+  'A moment together, even brief, is enough to rekindle a connection.',
+  'Patience in love pays off faster than expected.',
+];
+
+const TRAVAIL_EN = [
+  'At work, an idea you have been carrying for a while deserves to be said out loud.',
+  'The day favors method over rushing.',
+  'A postponed decision can finally be made.',
+  'An unexpected collaboration opens a door you had not seen.',
+  'The seriousness of your recent efforts starts paying off.',
+  'A work hiccup resolves better with calm than insistence.',
+  'It is a good time to clear up a vague expectation with a colleague.',
+  'Your rigor is noticed, even without immediate feedback.',
+  "Today's small win deserves recognition, including from yourself.",
+  'Organization takes the lead over improvisation today, and that is a good thing.',
+  'A bold proposal has a good chance of being heard.',
+  'The groundwork you have been quietly laying starts to show.',
+];
+
+const ENERGIE_EN = [
+  'Physically, your energy is good if you respect your limits.',
+  'A walk or a moment outdoors does more good than an intense effort.',
+  'Your energy is stable, ideal for keeping a steady pace.',
+  'A restful night tonight changes the whole day.',
+  'The urge to move is there — follow it without forcing it.',
+  'A mindful pause beats an extra effort today.',
+  'Your body is asking for gentleness more than performance.',
+  'A burst of vitality arrives late in the day — save some of it.',
+  'The balance between rest and activity is your best ally today.',
+  'A deep breath is sometimes enough to restart the whole machine.',
+  'Your mental energy is sharper than usual — use it to decide.',
+  'The body follows once the mind is calm — start by calming the latter.',
+];
+
+const CONSEILS_EN = [
+  'Dare to ask the question on your mind.',
+  'Give yourself an hour without screens.',
+  'Check in on someone you have been neglecting.',
+  'Write down an idea before it slips away.',
+  'Say no to what no longer suits you.',
+  'Allow yourself a real pause, without guilt.',
+  'Settle today the small detail that has been dragging on too long.',
+  'Trust your first impression.',
+  'Give yourself the right to change your mind.',
+  'Celebrate a win, even a modest one.',
+  'Make a decision rather than keep weighing the pros and cons.',
+  'Listen to what your body has been trying to tell you for a while.',
+];
+
+const COULEURS_EN = ['Gold', 'Midnight blue', 'Lilac', 'Coral', 'Sage green', 'Burgundy', 'Silver', 'Turquoise', 'Terracotta', 'Ivory', 'Plum', 'Amber'];
+const TALISMANS_EN = ['a key', 'a candle', 'a feather', 'a star', 'a compass', 'a pebble', 'a seashell', 'a ribbon', 'a polished stone', 'a notebook', 'a lantern', 'a red thread'];
 
 // Exportées : réutilisées par lib/social.ts pour le mode démo du contenu
 // réseaux sociaux, sur le même principe (hash déterministe -> choix stable).
@@ -143,20 +227,24 @@ function pickDistinct<T>(varyKey: string, field: string, signKey: string, arr: T
   return arr[perm[signIndex === -1 ? 0 : signIndex] % arr.length];
 }
 
-export function fallbackHoroscope(signKey: string, dateISO: string) {
+export function fallbackHoroscope(signKey: string, dateISO: string, locale: 'fr' | 'en' = 'fr') {
   const rng = mulberry32(hashStr(dateISO + '::' + signKey));
+  const banks =
+    locale === 'en'
+      ? { headlines: HEADLINES_EN, amour: AMOUR_EN, travail: TRAVAIL_EN, energie: ENERGIE_EN, conseils: CONSEILS_EN, couleurs: COULEURS_EN, talismans: TALISMANS_EN }
+      : { headlines: HEADLINES_FR, amour: AMOUR_FR, travail: TRAVAIL_FR, energie: ENERGIE_FR, conseils: CONSEILS_FR, couleurs: COULEURS_FR, talismans: TALISMANS_FR };
   return {
-    headline: pickDistinct(dateISO, 'headline', signKey, HEADLINES),
-    amour: pickDistinct(dateISO, 'amour', signKey, AMOUR),
-    travail: pickDistinct(dateISO, 'travail', signKey, TRAVAIL),
-    energie: pickDistinct(dateISO, 'energie', signKey, ENERGIE),
-    conseil: pickDistinct(dateISO, 'conseil', signKey, CONSEILS),
+    headline: pickDistinct(dateISO, 'headline', signKey, banks.headlines),
+    amour: pickDistinct(dateISO, 'amour', signKey, banks.amour),
+    travail: pickDistinct(dateISO, 'travail', signKey, banks.travail),
+    energie: pickDistinct(dateISO, 'energie', signKey, banks.energie),
+    conseil: pickDistinct(dateISO, 'conseil', signKey, banks.conseils),
     scoreAmour: range(rng, 35, 97),
     scoreTravail: range(rng, 35, 97),
     scoreEnergie: range(rng, 35, 97),
-    couleur: pickDistinct(dateISO, 'couleur', signKey, COULEURS),
+    couleur: pickDistinct(dateISO, 'couleur', signKey, banks.couleurs),
     chiffre: range(rng, 1, 49),
-    talisman: pickDistinct(dateISO, 'talisman', signKey, TALISMANS),
+    talisman: pickDistinct(dateISO, 'talisman', signKey, banks.talismans),
   };
 }
 

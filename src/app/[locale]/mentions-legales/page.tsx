@@ -1,3 +1,5 @@
+import { Link } from '@/i18n/navigation';
+
 export const metadata = {
   title: 'Mentions légales — Horosphère',
 };
@@ -79,7 +81,7 @@ export default function MentionsLegalesPage() {
           Le traitement des données personnelles collectées via Horosphère (adresse e-mail, date, heure et
           lieu de naissance, historique des lectures) est nécessaire à la fourniture du service. Le détail
           des données collectées, leur durée de conservation, les destinataires et vos droits sont décrits
-          dans notre <a href="/politique-de-confidentialite" style={{ color: 'var(--lever-profond)' }}>politique de confidentialité</a>.
+          dans notre <Link href="/politique-de-confidentialite" style={{ color: 'var(--lever-profond)' }}>politique de confidentialité</Link>.
         </p>
       </div>
     </main>

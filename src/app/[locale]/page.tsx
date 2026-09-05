@@ -1,7 +1,9 @@
+import { getTranslations } from 'next-intl/server';
 import FreeTeaser from '@/components/FreeTeaser';
 import DegreeArc from '@/components/DegreeArc';
 import ZodiacWheelIllustration from '@/components/ZodiacWheelIllustration';
 import ScrollReveal from '@/components/ScrollReveal';
+import { Link } from '@/i18n/navigation';
 import { auth } from '@/lib/auth';
 import { dbConfigured } from '@/lib/db';
 import { getBalance, hasActiveSubscription } from '@/lib/credits';
@@ -11,16 +13,12 @@ import { promoSeptembre2026Active } from '@/lib/promotions';
 // connexion pour les deux autres.
 const PHOTO_RITUEL = '/images/hero-accueil.png';
 
-function etapes(promoActive: boolean) {
+async function etapes(promoActive: boolean) {
+  const t = await getTranslations('Home');
   return [
-    {
-      titre: 'Vous arrivez, sans engagement',
-      texte: promoActive
-        ? "Créez votre compte en un e-mail, aucune carte requise. 10 crédits offerts (au lieu de 3) — valables 7 jours, offre de lancement de septembre."
-        : "Créez votre compte en un e-mail, aucune carte requise. Vous recevez vos premiers crédits offerts.",
-    },
-    { titre: 'Vous lisez, à votre rythme', texte: 'Chaque lecture consomme quelques crédits. Vous ne payez que ce que vous utilisez.' },
-    { titre: 'Vous restez, si ça vous fait du bien', texte: 'Un pack quand vous en avez besoin, un abonnement si Horosphère devient une habitude. Toujours résiliable.' },
+    { titre: t('step1Title'), texte: promoActive ? t('step1TextPromo') : t('step1Text') },
+    { titre: t('step2Title'), texte: t('step2Text') },
+    { titre: t('step3Title'), texte: t('step3Text') },
   ];
 }
 
@@ -31,8 +29,9 @@ function etapes(promoActive: boolean) {
  * jamais renvoyée vers l'inscription/connexion qu'elle a déjà faite. */
 async function resolveMainCta(): Promise<{ href: string; label: string; teaserLabel: string }> {
   const session = await auth();
+  const t = await getTranslations('Cta');
   if (!session?.user || !dbConfigured) {
-    return { href: '/connexion', label: 'Commencer gratuitement', teaserLabel: 'Recevoir ma lecture complète' };
+    return { href: '/connexion', label: t('startFree'), teaserLabel: t('startFreeTeaser') };
   }
   const userId = Number((session.user as { id?: string }).id);
   let balance = 0;
@@ -48,9 +47,9 @@ async function resolveMainCta(): Promise<{ href: string; label: string; teaserLa
     abonne = false;
   }
   if (balance > 0 || abonne) {
-    return { href: '/app', label: 'Lancer une lecture', teaserLabel: 'Lancer une lecture' };
+    return { href: '/app', label: t('launchReading'), teaserLabel: t('launchReading') };
   }
-  return { href: '/tarifs', label: 'Recharger mes crédits', teaserLabel: 'Recharger mes crédits' };
+  return { href: '/tarifs', label: t('rechargeCredits'), teaserLabel: t('rechargeCredits') };
 }
 
 function SectionDivider() {
@@ -62,17 +61,12 @@ function SectionDivider() {
 }
 
 export default async function HomePage() {
-  const cta = await resolveMainCta();
-  const ETAPES = etapes(promoSeptembre2026Active());
+  const [cta, ETAPES, t] = await Promise.all([resolveMainCta(), etapes(promoSeptembre2026Active()), getTranslations('Home')]);
   return (
     <main>
       {/* 0. Bandeau d'ouverture, plein écran en largeur */}
       <div className="page-bandeau page-bandeau--hero">
-        <img
-          src="/images/accueil-bandeau-astrolabe.webp"
-          alt="Un astrolabe sur un balcon face à la mer, sous un ciel étoilé où la lune et les planètes tracent leur trajectoire au crépuscule."
-          loading="eager"
-        />
+        <img src="/images/accueil-bandeau-astrolabe.webp" alt={t('heroImageAlt')} loading="eager" />
       </div>
 
       {/* 1. Aperçu gratuit + présentation, côte à côte — la lune du jour a
@@ -83,17 +77,16 @@ export default async function HomePage() {
           <FreeTeaser ctaHref={cta.href} ctaLabel={cta.teaserLabel} />
         </ScrollReveal>
         <ScrollReveal delay={120}>
-          <div className="pill hero-in-1" style={{ marginBottom: 18 }}>Horoscope IA quotidien</div>
+          <div className="pill hero-in-1" style={{ marginBottom: 18 }}>{t('heroPill')}</div>
           <h1 className="hero-in-2" style={{ fontSize: 'clamp(2rem, 3.2vw, 2.9rem)', marginBottom: 20 }}>
-            Un instant de clarté, <em style={{ fontStyle: 'italic', color: 'var(--lever-profond)' }}>chaque jour</em>, sans pression.
+            {t.rich('heroTitle', { em: (chunks) => <em style={{ fontStyle: 'italic', color: 'var(--lever-profond)' }}>{chunks}</em> })}
           </h1>
           <p className="hero-in-3" style={{ color: 'var(--ombre)', fontSize: '1.02rem', marginBottom: 28 }}>
-            Horosphère écrit votre lecture du jour à partir de votre signe — et bientôt de votre thème complet.
-            Pensé pour devenir une habitude douce.
+            {t('heroSubtitle')}
           </p>
           <div className="hero-in-4" style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
-            <a href={cta.href} className="btn btn-primary">{cta.label}</a>
-            <a href="/tarifs" className="btn btn-ghost">Voir les forfaits</a>
+            <Link href={cta.href} className="btn btn-primary">{cta.label}</Link>
+            <Link href="/tarifs" className="btn btn-ghost">{t('seePackages')}</Link>
           </div>
         </ScrollReveal>
       </section>
@@ -123,26 +116,14 @@ export default async function HomePage() {
         >
           <ScrollReveal>
             <div className="photo-frame" style={{ aspectRatio: '4 / 3' }}>
-              <img
-                src={PHOTO_RITUEL}
-                alt="Un moment d'écriture au calme, à la lumière d'une bougie — le rituel quotidien d'Horosphère."
-                loading="lazy"
-              />
+              <img src={PHOTO_RITUEL} alt={t('ritualImageAlt')} loading="lazy" />
             </div>
           </ScrollReveal>
           <ScrollReveal delay={120}>
-            <div className="pill" style={{ marginBottom: 16 }}>Un rituel</div>
-            <h2 style={{ fontSize: '1.6rem', marginBottom: 14 }}>
-              Deux minutes, chaque matin, rien que pour vous
-            </h2>
-            <p style={{ color: 'var(--ombre)', fontSize: '0.98rem', marginBottom: 14 }}>
-              Pas de scroll infini, pas de notifications culpabilisantes. Horosphère tient en une lecture
-              courte, pensée pour s'intégrer à votre matin — un café, un instant de clarté, et vous repartez.
-            </p>
-            <p style={{ color: 'var(--ombre)', fontSize: '0.98rem' }}>
-              Le thème astral complet va plus loin, pour les jours où vous avez besoin de prendre du recul
-              plutôt qu'une lecture rapide.
-            </p>
+            <div className="pill" style={{ marginBottom: 16 }}>{t('ritualPill')}</div>
+            <h2 style={{ fontSize: '1.6rem', marginBottom: 14 }}>{t('ritualTitle')}</h2>
+            <p style={{ color: 'var(--ombre)', fontSize: '0.98rem', marginBottom: 14 }}>{t('ritualText1')}</p>
+            <p style={{ color: 'var(--ombre)', fontSize: '0.98rem' }}>{t('ritualText2')}</p>
           </ScrollReveal>
         </div>
       </section>
@@ -165,12 +146,9 @@ export default async function HomePage() {
           <ZodiacWheelIllustration size={480} opacity={0.12} />
         </div>
         <ScrollReveal style={{ position: 'relative', zIndex: 1 }}>
-          <h2 style={{ fontSize: '1.7rem', marginBottom: 14 }}>Des forfaits qui respectent votre budget</h2>
-          <p style={{ color: 'var(--ombre)', maxWidth: 520, margin: '0 auto 26px' }}>
-            Des packs de crédits sans expiration précipitée (45 jours pour en profiter), ou un abonnement
-            si Horosphère devient un rendez-vous régulier. Rien n'est imposé au premier jour.
-          </p>
-          <a href="/tarifs" className="btn btn-primary">Découvrir les forfaits</a>
+          <h2 style={{ fontSize: '1.7rem', marginBottom: 14 }}>{t('packagesTitle')}</h2>
+          <p style={{ color: 'var(--ombre)', maxWidth: 520, margin: '0 auto 26px' }}>{t('packagesText')}</p>
+          <Link href="/tarifs" className="btn btn-primary">{t('discoverPackages')}</Link>
         </ScrollReveal>
       </section>
 

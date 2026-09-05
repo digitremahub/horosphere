@@ -1,4 +1,5 @@
 import { CREDIT_EXPIRY_DAYS } from '@/lib/pricing';
+import { Link } from '@/i18n/navigation';
 
 export const metadata = {
   title: 'Politique de confidentialité — Horosphère',
@@ -30,7 +31,7 @@ export default function PolitiqueConfidentialitePage() {
       <div className="card" style={{ padding: '26px 24px', marginBottom: 24, marginTop: 36 }}>
         <h2 style={{ fontSize: '1.1rem', marginBottom: 14 }}>1. Qui traite vos données</h2>
         <p style={{ margin: 0, fontSize: '0.92rem' }}>
-          L'éditeur du site Horosphère (voir les <a href="/mentions-legales" style={{ color: 'var(--lever-profond)' }}>mentions légales</a>)
+          L'éditeur du site Horosphère (voir les <Link href="/mentions-legales" style={{ color: 'var(--lever-profond)' }}>mentions légales</Link>)
           est responsable du traitement de vos données personnelles. Au vu de la nature et du volume des
           données traitées, la désignation d'un délégué à la protection des données (DPO) n'est pas
           obligatoire ; toute question relative à vos données peut être adressée à{' '}
@@ -132,7 +133,7 @@ export default function PolitiqueConfidentialitePage() {
         <p style={{ margin: '0 0 10px', fontSize: '0.92rem' }}>
           Les données de votre compte, votre profil et votre historique sont conservées tant que votre
           compte est actif. Les packs de crédits achetés expirent après {CREDIT_EXPIRY_DAYS} jours (voir les{' '}
-          <a href="/cgv" style={{ color: 'var(--lever-profond)' }}>CGV</a>), sans que cela n'entraîne la
+          <Link href="/cgv" style={{ color: 'var(--lever-profond)' }}>CGV</Link>), sans que cela n'entraîne la
           suppression de votre compte.
         </p>
         <p style={{ margin: '0 0 10px', fontSize: '0.92rem' }}>
@@ -162,7 +163,7 @@ export default function PolitiqueConfidentialitePage() {
         <p style={{ margin: '0 0 10px', fontSize: '0.92rem' }}>
           Conformément aux articles 15 à 21 du RGPD, vous disposez d'un droit d'accès, de rectification,
           d'effacement, de limitation, d'opposition et de portabilité sur vos données. Vous pouvez modifier
-          votre profil et vos préférences de newsletter directement depuis <a href="/app/profil" style={{ color: 'var(--lever-profond)' }}>votre espace</a>{' '},
+          votre profil et vos préférences de newsletter directement depuis <Link href="/app/profil" style={{ color: 'var(--lever-profond)' }}>votre espace</Link>{' '},
           ou exercer l'un de ces droits — y compris la suppression complète de votre compte — en écrivant à{' '}
           <a href="mailto:contact@horosphere.fr" style={{ color: 'var(--lever-profond)' }}>contact@horosphere.fr</a>.
         </p>

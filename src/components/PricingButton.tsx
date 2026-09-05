@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from '@/i18n/navigation';
 
 export default function PricingButton({
   kind,
@@ -17,10 +18,11 @@ export default function PricingButton({
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   async function handleClick() {
     if (!loggedIn) {
-      window.location.href = '/connexion';
+      router.push('/connexion');
       return;
     }
     setLoading(true);

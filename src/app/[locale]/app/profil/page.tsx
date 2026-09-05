@@ -1,4 +1,5 @@
-import { redirect } from 'next/navigation';
+import { getLocale } from 'next-intl/server';
+import { redirect, Link } from '@/i18n/navigation';
 import { auth } from '@/lib/auth';
 import { getProfile, saveProfile } from '@/lib/profile';
 import { dbConfigured } from '@/lib/db';
@@ -16,8 +17,9 @@ const inputStyle: React.CSSProperties = {
 
 export default async function ProfilPage({ searchParams }: { searchParams: Promise<{ mdp?: string }> }) {
   const session = await auth();
+  const locale = await getLocale();
   if (!session?.user) {
-    redirect('/connexion');
+    redirect({ href: '/connexion', locale });
   }
 
   const { mdp } = await searchParams;
@@ -46,7 +48,7 @@ export default async function ProfilPage({ searchParams }: { searchParams: Promi
   async function submit(formData: FormData) {
     'use server';
     const session = await auth();
-    if (!session?.user) redirect('/connexion');
+    if (!session?.user) redirect({ href: '/connexion', locale });
     const uid = Number((session!.user as { id?: string }).id);
 
     const prenom = String(formData.get('prenom') || '').trim();
@@ -58,7 +60,7 @@ export default async function ProfilPage({ searchParams }: { searchParams: Promi
     const newsletterOptIn = formData.get('newsletter_opt_in') === 'on';
 
     if (!prenom || !nom || !dateNaissance || !lieuNaissance) {
-      redirect('/app/profil');
+      redirect({ href: '/app/profil', locale });
     }
 
     await saveProfile(uid, {
@@ -71,24 +73,24 @@ export default async function ProfilPage({ searchParams }: { searchParams: Promi
       newsletterOptIn,
     });
 
-    redirect('/app');
+    redirect({ href: '/app', locale });
   }
 
   async function submitPassword(formData: FormData) {
     'use server';
     const session = await auth();
-    if (!session?.user) redirect('/connexion');
+    if (!session?.user) redirect({ href: '/connexion', locale });
     const uid = Number((session!.user as { id?: string }).id);
 
     const password = String(formData.get('password') || '');
     const confirmation = String(formData.get('password_confirmation') || '');
 
     if (password !== confirmation || validatePassword(password)) {
-      redirect('/app/profil?mdp=erreur');
+      redirect({ href: { pathname: '/app/profil', query: { mdp: 'erreur' } }, locale });
     }
 
     await setUserPassword(uid, password);
-    redirect('/app/profil?mdp=ok');
+    redirect({ href: { pathname: '/app/profil', query: { mdp: 'ok' } }, locale });
   }
 
   return (
@@ -104,9 +106,9 @@ export default async function ProfilPage({ searchParams }: { searchParams: Promi
       <div className="container-narrow">
         <div style={{ marginBottom: 30 }}>
           {!mandatory && (
-            <a href="/app" style={{ fontSize: '0.82rem', color: 'var(--ombre)', textDecoration: 'none' }}>
+            <Link href="/app" style={{ fontSize: '0.82rem', color: 'var(--ombre)', textDecoration: 'none' }}>
               ← Mon espace
-            </a>
+            </Link>
           )}
           <h1 style={{ fontSize: '1.6rem', marginTop: mandatory ? 0 : 10 }}>
             {mandatory ? 'Bienvenue — complétez votre profil' : 'Mon profil'}

@@ -21,5 +21,52 @@
   },
   "LanguageSwitcher": {
     "label": "Language"
+  },
+  "Cta": {
+    "startFree": "Start for free",
+    "startFreeTeaser": "Get my full reading",
+    "launchReading": "Start a reading",
+    "rechargeCredits": "Top up my credits"
+  },
+  "Home": {
+    "heroImageAlt": "An astrolabe on a balcony overlooking the sea, under a starry sky where the moon and planets trace their path at dusk.",
+    "heroPill": "Daily AI horoscope",
+    "heroTitle": "A moment of clarity, <em>every day</em>, without the pressure.",
+    "heroSubtitle": "Horosphère writes your daily reading from your sign — and soon from your full birth chart. Built to become a gentle habit.",
+    "seePackages": "See packages",
+    "step1Title": "You arrive, no commitment",
+    "step1TextPromo": "Create your account with just an email, no card required. 10 free credits (instead of 3) — valid for 7 days, September launch offer.",
+    "step1Text": "Create your account with just an email, no card required. You receive your first credits for free.",
+    "step2Title": "You read, at your own pace",
+    "step2Text": "Each reading uses a few credits. You only pay for what you use.",
+    "step3Title": "You stay, if it feels good",
+    "step3Text": "A pack when you need one, a subscription if Horosphère becomes a habit. Cancel anytime.",
+    "ritualImageAlt": "A quiet moment of writing by candlelight — Horosphère's daily ritual.",
+    "ritualPill": "A ritual",
+    "ritualTitle": "Two minutes, every morning, just for you",
+    "ritualText1": "No infinite scroll, no guilt-tripping notifications. Horosphère fits into a short reading, built to slot into your morning — a coffee, a moment of clarity, and you're off.",
+    "ritualText2": "The full birth chart goes further, for the days when you need perspective rather than a quick reading.",
+    "packagesTitle": "Packages that respect your budget",
+    "packagesText": "Credit packs with no rushed expiration (45 days to use them), or a subscription if Horosphère becomes a regular appointment. Nothing is forced on day one.",
+    "discoverPackages": "Discover the packages",
+    "freePreviewPill": "Free preview",
+    "freeAtLogin": "Free at sign-up — no card required."
+  },
+  "Connexion": {
+    "imageAlt": "A starry sky, background of the login page.",
+    "checkEmailTitle": "Check your inbox",
+    "welcomeTitle": "Welcome",
+    "emailSentText": "A login link has just been sent to you. Open it from this device to access your space.",
+    "wrongPassword": "Incorrect email or password.",
+    "linkError": "Something went wrong logging in. Please try again in a moment, or contact us if it persists.",
+    "withPasswordText": "Log in with your email and password.",
+    "emailPlaceholder": "you@example.com",
+    "passwordPlaceholder": "Password",
+    "login": "Log in",
+    "or": "or",
+    "magicLinkText": "One email is enough — no password to remember. We'll send you a login link valid for a few minutes.",
+    "magicLinkTextWithPassword": " You'll be able to set a password once logged in, from your profile.",
+    "notConfigured": "Email login isn't enabled on this environment yet (missing database or Resend key).",
+    "receiveLink": "Get my login link"
   }
 }

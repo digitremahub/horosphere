@@ -14,6 +14,24 @@ import {
   fallbackTransits,
 } from './fallback-generator';
 
+export type Langue = 'fr' | 'en';
+
+// Les instructions de ces prompts restent rédigées en français (c'est la
+// langue de travail de ce fichier) — seule la langue du CONTENU généré
+// bascule selon la préférence de l'utilisateur (voir next-intl, src/i18n).
+// consigneLangue() ajoute une directive explicite au prompt ; motLangue()
+// s'utilise pour les mentions ponctuelles à l'intérieur du format JSON
+// attendu (ex: "nom d'une couleur porte-bonheur (...)").
+function consigneLangue(langue: Langue): string {
+  if (langue === 'en') {
+    return "\n\nIMPORTANT : rédige l'intégralité des champs texte de ta réponse UNIQUEMENT en anglais (pas en français), même si ces instructions te sont données en français. Les noms de champs JSON restent ceux indiqués ci-dessus, inchangés.";
+  }
+  return '';
+}
+function motLangue(langue: Langue): string {
+  return langue === 'en' ? 'in English' : 'en français';
+}
+
 export type HoroscopeReading = {
   headline: string;
   amour: string;
@@ -60,11 +78,13 @@ type Options = {
   sign: Sign;
   dateISO: string;
   naissance?: { date: string; heure?: string; lieu?: string; latitude?: number | null; longitude?: number | null; timezone?: string | null };
+  langue?: Langue;
 };
 
 type AstralOptions = {
   sign: Sign;
   naissance: { date: string; heure?: string; lieu?: string; latitude?: number | null; longitude?: number | null; timezone?: string | null };
+  langue?: Langue;
 };
 
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
@@ -102,6 +122,7 @@ export async function callClaude(apiKey: string, model: string, prompt: string, 
 }
 
 export async function generateHoroscope(opts: Options): Promise<HoroscopeReading> {
+  const langue = opts.langue ?? 'fr';
   const naissance = opts.feature === 'horoscope_personnalise' ? opts.naissance : undefined;
   const themeNatal =
     naissance?.heure && naissance.latitude != null && naissance.longitude != null && naissance.timezone
@@ -117,7 +138,7 @@ export async function generateHoroscope(opts: Options): Promise<HoroscopeReading
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     // Mode démo : pas de clé configurée, on utilise le générateur local déterministe.
-    return { ...fallbackHoroscope(opts.sign.key, opts.dateISO), ...natalExtra, mode: 'demo' };
+    return { ...fallbackHoroscope(opts.sign.key, opts.dateISO, langue), ...natalExtra, mode: 'demo' };
   }
   const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
   const natalTxt = themeNatal
@@ -130,7 +151,7 @@ export async function generateHoroscope(opts: Options): Promise<HoroscopeReading
         (naissance.lieu ? `, lieu ${naissance.lieu}` : '') +
         `.${natalTxt} Utilise-les pour personnaliser subtilement le ton${themeNatal ? ' — tu peux mentionner l\'ascendant ou la lune natale ci-dessus, ce sont des éléments réels' : ', sans inventer de calculs astronomiques précis'}.`
       : `Horoscope général du jour pour ce signe (pas de données de naissance précises).`;
-  const prompt = `Tu écris l'horoscope du jour pour l'application Horosphère, en français, pour le signe ${opts.sign.nom} (élément ${opts.sign.element}, planète maîtresse ${opts.sign.planete}). Date du jour : ${opts.dateISO}.
+  const prompt = `Tu écris l'horoscope du jour pour l'application Horosphère, pour le signe ${opts.sign.nom} (élément ${opts.sign.element}, planète maîtresse ${opts.sign.planete}). Date du jour : ${opts.dateISO}.
 ${contexte}
 Ton : chaleureux, concret, bienveillant, jamais culpabilisant ni anxiogène. Phrases courtes, une émotion à la fois. Évite les répétitions d'un jour à l'autre.
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
@@ -143,10 +164,10 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
   "scoreAmour": nombre entier entre 30 et 98,
   "scoreTravail": nombre entier entre 30 et 98,
   "scoreEnergie": nombre entier entre 30 et 98,
-  "couleur": "nom d'une couleur porte-bonheur en français",
+  "couleur": "nom d'une couleur porte-bonheur (${motLangue(langue)})",
   "chiffre": nombre entier entre 1 et 49,
   "talisman": "un petit objet porte-bonheur, ex: une clé, une plume"
-}`;
+}${consigneLangue(langue)}`;
   const parsed = await callClaude(apiKey, model, prompt, 700);
   return {
     headline: String(parsed.headline ?? '').slice(0, 200),
@@ -172,6 +193,7 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
  * (ascendant, lune natale, aspects — lib/natal.ts) et fourni tel quel à
  * l'IA ; sinon on reste qualitatif, sans jamais inventer ces éléments. */
 export async function generateAstralChart(opts: AstralOptions): Promise<AstralChart> {
+  const langue = opts.langue ?? 'fr';
   const { naissance } = opts;
   const themeNatal =
     naissance.heure && naissance.latitude != null && naissance.longitude != null && naissance.timezone
@@ -204,7 +226,7 @@ export async function generateAstralChart(opts: AstralOptions): Promise<AstralCh
   const consigneNatal = themeNatal
     ? "Intègre l'ascendant et la lune natale ci-dessus dans le portrait (ce sont des éléments réels et calculés) — sans inventer de maison ou de transit non fournis."
     : 'Ne prétends jamais calculer une position astronomique précise (pas d\'ascendant, de lune ou de maison inventés — reste qualitatif, basé sur le signe solaire).';
-  const prompt = `Tu écris le thème astral complet d'un utilisateur de l'application Horosphère, en français, pour le signe solaire ${opts.sign.nom} (élément ${opts.sign.element}, planète maîtresse ${opts.sign.planete}).
+  const prompt = `Tu écris le thème astral complet d'un utilisateur de l'application Horosphère, pour le signe solaire ${opts.sign.nom} (élément ${opts.sign.element}, planète maîtresse ${opts.sign.planete}).
 ${contexteNaissance}
 ${natalTxt}
 ${consigneNatal}
@@ -221,9 +243,9 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
   "scoreCarriere": nombre entier entre 30 et 98,
   "scoreSpiritualite": nombre entier entre 30 et 98,
   "conseilDeVie": "un conseil de fond, valable sur la durée",
-  "pierrePorteBonheur": "nom d'une pierre porte-bonheur en français",
+  "pierrePorteBonheur": "nom d'une pierre porte-bonheur (${motLangue(langue)})",
   "symboleCle": "un symbole clé du thème, ex: une clé ancienne, un compas"
-}`;
+}${consigneLangue(langue)}`;
   const parsed = await callClaude(apiKey, model, prompt, 1200);
   return {
     portrait: String(parsed.portrait ?? ''),
@@ -267,7 +289,9 @@ export async function generateSentiment(opts: {
   sign: Sign;
   weekKey: string;
   naissance?: { date: string; heure?: string; lieu?: string; latitude?: number | null; longitude?: number | null; timezone?: string | null };
+  langue?: Langue;
 }): Promise<SentimentReading> {
+  const langue = opts.langue ?? 'fr';
   const { naissance } = opts;
   const themeNatal =
     naissance?.heure && naissance.latitude != null && naissance.longitude != null && naissance.timezone
@@ -288,7 +312,7 @@ export async function generateSentiment(opts: {
   const natalTxt = themeNatal
     ? ` Thème natal réel, calculé (à utiliser factuellement, n'en invente aucun autre élément) : ascendant ${themeNatal.ascendant.signe.nom}, lune natale en ${themeNatal.luneSigne.nom} — tu peux t'appuyer dessus, notamment pour la dimension émotionnelle (la lune natale).`
     : '';
-  const prompt = `Tu écris une analyse sentimentale hebdomadaire pour l'application Horosphère, en français, pour le signe ${opts.sign.nom} (élément ${opts.sign.element}). Portée : la semaine en cours (semaine ${opts.weekKey}), pas la journée.${natalTxt}
+  const prompt = `Tu écris une analyse sentimentale hebdomadaire pour l'application Horosphère, pour le signe ${opts.sign.nom} (élément ${opts.sign.element}). Portée : la semaine en cours (semaine ${opts.weekKey}), pas la journée.${natalTxt}
 Ton : chaleureux, introspectif, jamais culpabilisant ni fataliste. Une seule idée par phrase.
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
 {
@@ -299,8 +323,8 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
   "conseil": "une phrase impérative courte, actionnable cette semaine",
   "scoreClarte": nombre entier entre 30 et 98,
   "scoreIntensite": nombre entier entre 20 et 95,
-  "motCle": "un seul mot résumant la semaine, en français"
-}`;
+  "motCle": "un seul mot résumant la semaine (${motLangue(langue)})"
+}${consigneLangue(langue)}`;
   const parsed = await callClaude(apiKey, model, prompt, 500);
   return {
     titre: String(parsed.titre ?? ''),
@@ -348,7 +372,9 @@ export async function generateCompatibility(opts: {
   autreSign: Sign;
   autreDateNaissance: string;
   seedKey: string;
+  langue?: Langue;
 }): Promise<CompatibilityReading> {
+  const langue = opts.langue ?? 'fr';
   const [, m1, d1] = opts.dateNaissance.split('-').map(Number);
   const [, m2, d2] = opts.autreDateNaissance.split('-').map(Number);
   const decan1 = decanOf(opts.sign, m1, d1);
@@ -386,7 +412,7 @@ export async function generateCompatibility(opts: {
   const natalTxt = themeNatal
     ? ` Thème natal réel de ${opts.prenom}, calculé (à utiliser factuellement) : ascendant ${themeNatal.ascendant.signe.nom}, lune natale en ${themeNatal.luneSigne.nom} — tu peux t'en servir pour nuancer la dynamique du duo, mais uniquement du côté de ${opts.prenom} (aucune position astronomique connue pour ${opts.autrePrenom}, dont on n'a que la date de naissance).`
     : '';
-  const prompt = `Tu écris une analyse de compatibilité amoureuse pour l'application Horosphère, en français, entre deux personnes :
+  const prompt = `Tu écris une analyse de compatibilité amoureuse pour l'application Horosphère, entre deux personnes :
 - ${opts.prenom}, signe ${opts.sign.nom} (élément ${opts.sign.element}), ${decan1}e décan (né(e) le ${opts.dateNaissance})
 - ${opts.autrePrenom}, signe ${opts.autreSign.nom} (élément ${opts.autreSign.element}), ${decan2}e décan (né(e) le ${opts.autreDateNaissance})
 Utilise les deux prénoms directement dans le texte plutôt que de dire "l'un" et "l'autre". Le décan (tiers du signe selon la date exacte de naissance) doit nuancer l'analyse sans jamais prétendre calculer une position astronomique précise pour ${opts.autrePrenom} (pas d'ascendant, de maison ou de transit inventés pour cette personne).${natalTxt}
@@ -400,7 +426,7 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
   "amour": "1 à 2 phrases sur la dynamique amoureuse spécifique",
   "communication": "1 à 2 phrases sur la façon dont ce duo communique le mieux",
   "conseil": "un conseil concret pour faire durer cette relation"
-}`;
+}${consigneLangue(langue)}`;
   const parsed = await callClaude(apiKey, model, prompt, 700);
   return {
     scoreGlobal: clampScore(parsed.scoreGlobal),
@@ -444,7 +470,9 @@ export type GrandeAnalyse = {
 export async function generateGrandeAnalyse(opts: {
   sign: Sign;
   naissance: { date: string; heure?: string; lieu?: string; latitude?: number | null; longitude?: number | null; timezone?: string | null };
+  langue?: Langue;
 }): Promise<GrandeAnalyse> {
+  const langue = opts.langue ?? 'fr';
   const { naissance } = opts;
   const themeNatal =
     naissance.heure && naissance.latitude != null && naissance.longitude != null && naissance.timezone
@@ -477,7 +505,7 @@ export async function generateGrandeAnalyse(opts: {
   const consigneNatal = themeNatal
     ? "Intègre l'ascendant et la lune natale ci-dessus (éléments réels et calculés) dans l'analyse, sans inventer de maison ou de transit non fournis."
     : 'Ne prétends jamais calculer une position astronomique précise (pas d\'ascendant, de maison ou de transit inventés) — reste qualitatif, basé sur le signe solaire et les informations fournies.';
-  const prompt = `Tu écris une grande analyse personnalisée pour l'application Horosphère, en français, pour le signe ${opts.sign.nom} (élément ${opts.sign.element}, planète maîtresse ${opts.sign.planete}). ${contexteNaissance}
+  const prompt = `Tu écris une grande analyse personnalisée pour l'application Horosphère, pour le signe ${opts.sign.nom} (élément ${opts.sign.element}, planète maîtresse ${opts.sign.planete}). ${contexteNaissance}
 ${natalTxt}
 C'est le bilan le plus complet proposé par l'application : couvre tous les grands axes de vie (amour, carrière, finances, santé, famille, évolution personnelle), pas seulement un portrait de fond. ${consigneNatal}
 Ton : dense, structuré, valorisant sans flatterie vide, jamais anxiogène.
@@ -496,7 +524,7 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
   "scoreFinances": nombre entier entre 30 et 98,
   "conseilPrincipal": "le conseil central de cette analyse, 1 phrase",
   "periodeCle": "une expression courte de période, ex: 'les quatre prochaines semaines'"
-}`;
+}${consigneLangue(langue)}`;
   const parsed = await callClaude(apiKey, model, prompt, 1400);
   return {
     synthese: String(parsed.synthese ?? ''),
@@ -539,7 +567,9 @@ export async function generateThematic(opts: {
   sign: Sign;
   seedKey: string;
   naissance?: { date: string; heure?: string; lieu?: string; latitude?: number | null; longitude?: number | null; timezone?: string | null };
+  langue?: Langue;
 }): Promise<ThematicReading> {
+  const langue = opts.langue ?? 'fr';
   const meta = THEMES[opts.theme];
   const { naissance } = opts;
   const themeNatal =
@@ -561,7 +591,7 @@ export async function generateThematic(opts: {
   const natalTxt = themeNatal
     ? ` Thème natal réel, calculé (à utiliser factuellement, n'en invente aucun autre élément) : ascendant ${themeNatal.ascendant.signe.nom}, lune natale en ${themeNatal.luneSigne.nom} — tu peux t'en servir s'il éclaire cet axe précis.`
     : '';
-  const prompt = `Tu écris une lecture astrologique thématique pour l'application Horosphère, en français, pour le signe ${opts.sign.nom} (élément ${opts.sign.element}, planète maîtresse ${opts.sign.planete}). Thème : ${meta.axe}. Portée : ${meta.portee}.
+  const prompt = `Tu écris une lecture astrologique thématique pour l'application Horosphère, pour le signe ${opts.sign.nom} (élément ${opts.sign.element}, planète maîtresse ${opts.sign.planete}). Thème : ${meta.axe}. Portée : ${meta.portee}.
 ${meta.consigne}${natalTxt}
 Ton : chaleureux, concret, bienveillant, jamais culpabilisant ni anxiogène.
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
@@ -571,7 +601,7 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
   "pointAttention": "1 phrase sur un point à surveiller ou à ne pas négliger",
   "conseil": "une phrase impérative courte, actionnable",
   "score": nombre entier entre 30 et 98
-}`;
+}${consigneLangue(langue)}`;
   const parsed = await callClaude(apiKey, model, prompt, 500);
   return {
     titre: String(parsed.titre ?? meta.titreCard),
@@ -607,7 +637,9 @@ export type LunarCycleReading = {
 export async function generateLunarCycle(opts: {
   sign: Sign;
   naissance?: { date: string; heure?: string; lieu?: string; latitude?: number | null; longitude?: number | null; timezone?: string | null };
+  langue?: Langue;
 }): Promise<LunarCycleReading> {
+  const langue = opts.langue ?? 'fr';
   const moon = moonPhaseInfo();
   const { naissance } = opts;
   const themeNatal =
@@ -629,7 +661,7 @@ export async function generateLunarCycle(opts: {
   const natalTxt = themeNatal
     ? ` Lune natale réelle de l'utilisateur, calculée (à utiliser factuellement) : ${themeNatal.luneSigne.nom}. Tu peux mettre en dialogue la phase lunaire du jour et cette lune natale.`
     : '';
-  const prompt = `Tu écris une lecture "cycle lunaire" pour l'application Horosphère, en français, pour le signe ${opts.sign.nom} (élément ${opts.sign.element}).
+  const prompt = `Tu écris une lecture "cycle lunaire" pour l'application Horosphère, pour le signe ${opts.sign.nom} (élément ${opts.sign.element}).
 Phase lunaire réelle du jour : ${moon.label}, illuminée à ${moon.illumination}%. N'invente pas d'autre phase que celle-ci.${natalTxt}
 Ton : chaleureux, contemplatif, concret.
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
@@ -637,7 +669,7 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
   "titre": "titre court de 3 à 6 mots",
   "interpretation": "2 à 3 phrases reliant cette phase lunaire réelle au signe de l'utilisateur",
   "conseil": "une phrase impérative courte, actionnable, en lien avec cette phase"
-}`;
+}${consigneLangue(langue)}`;
   const parsed = await callClaude(apiKey, model, prompt, 400);
   return {
     titre: String(parsed.titre ?? 'Cycle lunaire'),
@@ -681,7 +713,9 @@ const RULER_TO_PLANET_KEY: Record<string, string> = {
 export async function generateTransits(opts: {
   sign: Sign;
   naissance?: { date: string; heure?: string; lieu?: string; latitude?: number | null; longitude?: number | null; timezone?: string | null };
+  langue?: Langue;
 }): Promise<TransitsReading> {
+  const langue = opts.langue ?? 'fr';
   const positions = currentPlanetPositions();
   const byKey = new Map(positions.map((p) => [p.key, p]));
   const rulerKey = RULER_TO_PLANET_KEY[opts.sign.planete];
@@ -713,7 +747,7 @@ export async function generateTransits(opts: {
   const natalTxt = themeNatal
     ? ` Thème natal réel de l'utilisateur, calculé (à utiliser factuellement) : ascendant ${themeNatal.ascendant.signe.nom}, lune natale en ${themeNatal.luneSigne.nom}. Tu peux relier les transits du jour à ce thème de naissance.`
     : '';
-  const prompt = `Tu écris une lecture "transits planétaires" pour l'application Horosphère, en français, pour le signe ${opts.sign.nom} (élément ${opts.sign.element}, planète maîtresse ${opts.sign.planete}).
+  const prompt = `Tu écris une lecture "transits planétaires" pour l'application Horosphère, pour le signe ${opts.sign.nom} (élément ${opts.sign.element}, planète maîtresse ${opts.sign.planete}).
 Position réelle actuelle des planètes : ${contexte} N'invente aucune autre position planétaire que celles données.${natalTxt}
 Ton : concret, jamais fataliste, évite le jargon technique (pas d'aspects en degrés).
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
@@ -721,7 +755,7 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
   "titre": "titre court de 3 à 6 mots",
   "interpretation": "2 à 3 phrases reliant ces positions réelles au signe de l'utilisateur",
   "conseil": "une phrase impérative courte, actionnable"
-}`;
+}${consigneLangue(langue)}`;
   const parsed = await callClaude(apiKey, model, prompt, 450);
   return {
     titre: String(parsed.titre ?? 'Transits planétaires'),
