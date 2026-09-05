@@ -1,3 +1,4 @@
+import { getLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { listPublishedNews, splitArticleSections } from '@/lib/news';
 import { dbConfigured } from '@/lib/db';
@@ -32,6 +33,8 @@ function aspectDe(texte: string): string | null {
 // cette page.
 export default async function ActualitesPage({ searchParams }: { searchParams: Promise<{ a?: string }> }) {
   const { a } = await searchParams;
+  const locale = await getLocale();
+  const t = await getTranslations('Actualites');
   const skyEvents = getUpcomingSkyEvents();
   let items: Awaited<ReturnType<typeof listPublishedNews>> = [];
   let error: string | null = null;
@@ -40,33 +43,33 @@ export default async function ActualitesPage({ searchParams }: { searchParams: P
     try {
       items = await listPublishedNews(30);
     } catch {
-      error = "Impossible de charger les actualités pour le moment.";
+      error = t('loadError');
     }
   } else {
-    error = "La base de données n'est pas encore connectée.";
+    error = t('dbNotConnected');
   }
 
+  const dateLocale = locale === 'en' ? 'en-US' : 'fr-FR';
   const selected = (a && items.find((item) => item.slug === a)) || items[0] || null;
   const { corps, signesConcernes } = selected ? splitArticleSections(selected.contenu) : { corps: '', signesConcernes: [] };
   const dateLabel =
-    selected?.publie_le && new Date(selected.publie_le).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+    selected?.publie_le && new Date(selected.publie_le).toLocaleDateString(dateLocale, { day: 'numeric', month: 'long', year: 'numeric' });
 
   return (
     <main style={{ paddingBottom: 96 }}>
       <div className="page-bandeau">
         <img
           src="/images/actualites-bandeau.png"
-          alt="Un bureau d'astronome à l'ancienne (globe céleste, cartes, sextant) face à la Terre vue de l'espace, avec la lune et les planètes alignées dans le ciel."
+          alt={t('bannerAlt')}
           loading="eager"
         />
       </div>
 
       <div className="container-narrow" style={{ paddingTop: 56 }}>
-        <div className="pill" style={{ marginBottom: 16 }}>Actualité du ciel</div>
-        <h1 style={{ fontSize: '2rem', marginBottom: 14 }}>Ce qui se passe dans le ciel</h1>
+        <div className="pill" style={{ marginBottom: 16 }}>{t('pill')}</div>
+        <h1 style={{ fontSize: '2rem', marginBottom: 14 }}>{t('title')}</h1>
         <p style={{ color: 'var(--ombre)', marginBottom: 8 }}>
-          La position réelle des astres en direct, et une lecture de fond publiée chaque semaine — la
-          même matière qui alimente notre newsletter.
+          {t('subtitle')}
         </p>
       </div>
 
@@ -75,15 +78,14 @@ export default async function ActualitesPage({ searchParams }: { searchParams: P
           connexion ni abonnement. */}
       <section className="container" style={{ padding: '32px 24px 8px' }}>
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <div className="pill">En direct</div>
+          <div className="pill">{t('liveLabel')}</div>
         </div>
 
         <div className="actu-en-direct" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, alignItems: 'center' }}>
           <div style={{ textAlign: 'center' }}>
             <AstrolabeIllustration size={260} />
             <p style={{ color: 'var(--ombre)', fontSize: '0.88rem', maxWidth: 400, margin: '16px auto 0' }}>
-              La position réelle des sept planètes traditionnelles sur le zodiaque, telle qu'observée
-              depuis la Terre à l'instant présent.
+              {t('astrolabeText')}
             </p>
           </div>
           <MoonOfTheDay />
@@ -91,7 +93,7 @@ export default async function ActualitesPage({ searchParams }: { searchParams: P
 
         <div style={{ marginTop: 40 }}>
           <p style={{ color: 'var(--sourdine)', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16, textAlign: 'center' }}>
-            Prochains événements du ciel
+            {t('upcomingEvents')}
           </p>
           <SkyCountdown events={skyEvents} />
         </div>
@@ -107,7 +109,7 @@ export default async function ActualitesPage({ searchParams }: { searchParams: P
         )}
 
         {!error && items.length === 0 && (
-          <p style={{ color: 'var(--sourdine)' }}>Rien de publié pour l'instant — revenez bientôt.</p>
+          <p style={{ color: 'var(--sourdine)' }}>{t('empty')}</p>
         )}
 
         {!error && items.length > 0 && selected && (
@@ -137,7 +139,7 @@ export default async function ActualitesPage({ searchParams }: { searchParams: P
                       </div>
                     )}
                     <div className="mono" style={{ fontSize: '0.68rem', color: 'var(--sourdine)', marginBottom: 4 }}>
-                      {item.publie_le && new Date(item.publie_le).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      {item.publie_le && new Date(item.publie_le).toLocaleDateString(dateLocale, { day: 'numeric', month: 'long', year: 'numeric' })}
                     </div>
                     <h2 style={{ fontSize: '0.98rem', margin: 0, lineHeight: 1.35 }}>{item.titre}</h2>
                   </Link>
@@ -161,8 +163,8 @@ export default async function ActualitesPage({ searchParams }: { searchParams: P
 
               {signesConcernes.length > 0 && (
                 <div className="card" style={{ padding: '22px 20px', boxShadow: 'none' }}>
-                  <div className="pill" style={{ marginBottom: 14 }}>Cette semaine</div>
-                  <h3 style={{ fontSize: '1.02rem', marginBottom: 16 }}>Signes les plus concernés</h3>
+                  <div className="pill" style={{ marginBottom: 14 }}>{t('thisWeek')}</div>
+                  <h3 style={{ fontSize: '1.02rem', marginBottom: 16 }}>{t('mostAffectedSigns')}</h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                     {signesConcernes.map((s, i) => {
                       const aspect = aspectDe(s.texte);

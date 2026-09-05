@@ -6,18 +6,6 @@ export const metadata = {
   title: 'Politique de confidentialité — Horosphère',
 };
 
-// Un seul point n'est pas vérifiable depuis le code : la région
-// d'hébergement exacte de la base Neon (dépend de la configuration du
-// projet, pas du code source) — jamais inventée, voir mentions-legales
-// pour la même convention sur les champs d'identité.
-function AVerifier({ children }: { children: React.ReactNode }) {
-  return (
-    <span style={{ background: 'var(--brume)', border: '1px dashed var(--ambre)', borderRadius: 6, padding: '1px 8px', color: 'var(--ambre)', fontWeight: 600 }}>
-      {children}
-    </span>
-  );
-}
-
 export default async function PolitiqueConfidentialitePage() {
   const t = await getTranslations('PolitiqueConfidentialite');
   return (
@@ -97,12 +85,7 @@ export default async function PolitiqueConfidentialitePage() {
         </p>
         <ul style={{ margin: 0, paddingLeft: 20, fontSize: '0.92rem', color: 'var(--ombre)', display: 'flex', flexDirection: 'column', gap: 6 }}>
           <li>{t.rich('s4Vercel', { strong: (chunks) => <strong>{chunks}</strong> })}</li>
-          <li>
-            {t.rich('s4Neon', {
-              strong: (chunks) => <strong>{chunks}</strong>,
-              verify: (chunks) => <AVerifier>{chunks}</AVerifier>,
-            })}
-          </li>
+          <li>{t.rich('s4Neon', { strong: (chunks) => <strong>{chunks}</strong> })}</li>
           <li>{t.rich('s4Stripe', { strong: (chunks) => <strong>{chunks}</strong> })}</li>
           <li>{t.rich('s4Resend', { strong: (chunks) => <strong>{chunks}</strong> })}</li>
           <li>{t.rich('s4Anthropic', { strong: (chunks) => <strong>{chunks}</strong> })}</li>
