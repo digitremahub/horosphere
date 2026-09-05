@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 
 export const metadata = {
@@ -11,77 +12,69 @@ export const metadata = {
 function ACompleter({ children }: { children: React.ReactNode }) {
   return (
     <span style={{ background: 'var(--brume)', border: '1px dashed var(--ambre)', borderRadius: 6, padding: '1px 8px', color: 'var(--ambre)', fontWeight: 600 }}>
-      [À COMPLÉTER — {children}]
+      {children}
     </span>
   );
 }
 
-export default function MentionsLegalesPage() {
+export default async function MentionsLegalesPage() {
+  const t = await getTranslations('MentionsLegales');
   return (
     <main className="container-narrow" style={{ paddingTop: 56, paddingBottom: 96 }}>
-      <div className="pill" style={{ marginBottom: 16 }}>Informations légales</div>
-      <h1 style={{ fontSize: '2rem', marginBottom: 10 }}>Mentions légales</h1>
+      <div className="pill" style={{ marginBottom: 16 }}>{t('pill')}</div>
+      <h1 style={{ fontSize: '2rem', marginBottom: 10 }}>{t('title')}</h1>
       <p style={{ color: 'var(--ombre)', marginBottom: 36 }}>
-        Conformément aux articles 6-III et 19 de la loi n° 2004-575 du 21 juin 2004 pour la confiance dans
-        l'économie numérique, il est précisé aux utilisateurs du site Horosphère l'identité des différents
-        intervenants dans le cadre de sa réalisation et de son suivi.
+        {t('intro')}
       </p>
 
       <div className="card" style={{ padding: '26px 24px', marginBottom: 24 }}>
-        <h2 style={{ fontSize: '1.1rem', marginBottom: 14 }}>Éditeur du site</h2>
+        <h2 style={{ fontSize: '1.1rem', marginBottom: 14 }}>{t('s1Title')}</h2>
         <p style={{ margin: '0 0 8px', fontSize: '0.92rem' }}>
-          Nom / raison sociale : <ACompleter>nom de l'éditeur ou de la société</ACompleter>
+          {t('s1Name', { value: t('toComplete', { field: t('s1NameField') }) })}
         </p>
         <p style={{ margin: '0 0 8px', fontSize: '0.92rem' }}>
-          Forme juridique : <ACompleter>ex. entreprise individuelle, SASU, SARL…</ACompleter>
+          {t('s1Form', { value: t('toComplete', { field: t('s1FormField') }) })}
         </p>
         <p style={{ margin: '0 0 8px', fontSize: '0.92rem' }}>
-          Siège social / adresse : <ACompleter>adresse postale</ACompleter>
+          {t('s1Address', { value: t('toComplete', { field: t('s1AddressField') }) })}
         </p>
         <p style={{ margin: '0 0 8px', fontSize: '0.92rem' }}>
-          SIRET / RCS : <ACompleter>numéro d'immatriculation, si applicable</ACompleter>
+          {t('s1Siret', { value: t('toComplete', { field: t('s1SiretField') }) })}
         </p>
         <p style={{ margin: '0 0 8px', fontSize: '0.92rem' }}>
-          Directeur de la publication : François T.
+          {t('s1Director')}
         </p>
         <p style={{ margin: 0, fontSize: '0.92rem' }}>
-          Contact : <a href="mailto:contact@horosphere.fr" style={{ color: 'var(--lever-profond)' }}>contact@horosphere.fr</a>
+          {t.rich('s1Contact', { email: (chunks) => <a href="mailto:contact@horosphere.fr" style={{ color: 'var(--lever-profond)' }}>{chunks}</a> })}
         </p>
       </div>
 
       <div className="card" style={{ padding: '26px 24px', marginBottom: 24 }}>
-        <h2 style={{ fontSize: '1.1rem', marginBottom: 14 }}>Hébergement</h2>
+        <h2 style={{ fontSize: '1.1rem', marginBottom: 14 }}>{t('s2Title')}</h2>
         <p style={{ margin: '0 0 8px', fontSize: '0.92rem' }}>
-          Le site Horosphère est hébergé par :
+          {t('s2Text1')}
         </p>
         <p style={{ margin: 0, fontSize: '0.92rem' }}>
-          Vercel Inc. — 340 S Lemon Ave #4133, Walnut, CA 91789, États-Unis —{' '}
-          <a href="https://vercel.com" style={{ color: 'var(--lever-profond)' }}>vercel.com</a>
+          {t.rich('s2Text2', { link: (chunks) => <a href="https://vercel.com" style={{ color: 'var(--lever-profond)' }}>{chunks}</a> })}
         </p>
       </div>
 
       <div className="card" style={{ padding: '26px 24px', marginBottom: 24 }}>
-        <h2 style={{ fontSize: '1.1rem', marginBottom: 14 }}>Propriété intellectuelle</h2>
+        <h2 style={{ fontSize: '1.1rem', marginBottom: 14 }}>{t('s3Title')}</h2>
         <p style={{ margin: '0 0 12px', fontSize: '0.92rem' }}>
-          L'ensemble des éléments du site Horosphère (textes, illustrations, logo, mise en page, code) est,
-          sauf mention contraire, la propriété de l'éditeur du site. Toute reproduction, représentation,
-          modification ou adaptation totale ou partielle, sans autorisation préalable, est interdite.
+          {t('s3Text1')}
         </p>
         <p style={{ margin: 0, fontSize: '0.92rem' }}>
-          Les lectures et contenus générés par intelligence artificielle sont fournis à titre de
-          divertissement et de développement personnel. Ils ne constituent en aucun cas un avis médical,
-          juridique, financier ou psychologique, et ne sauraient engager la responsabilité de l'éditeur
-          quant aux décisions prises sur leur seul fondement.
+          {t('s3Text2')}
         </p>
       </div>
 
       <div className="card" style={{ padding: '26px 24px' }}>
-        <h2 style={{ fontSize: '1.1rem', marginBottom: 14 }}>Données personnelles</h2>
+        <h2 style={{ fontSize: '1.1rem', marginBottom: 14 }}>{t('s4Title')}</h2>
         <p style={{ margin: 0, fontSize: '0.92rem' }}>
-          Le traitement des données personnelles collectées via Horosphère (adresse e-mail, date, heure et
-          lieu de naissance, historique des lectures) est nécessaire à la fourniture du service. Le détail
-          des données collectées, leur durée de conservation, les destinataires et vos droits sont décrits
-          dans notre <Link href="/politique-de-confidentialite" style={{ color: 'var(--lever-profond)' }}>politique de confidentialité</Link>.
+          {t.rich('s4Text', {
+            link: (chunks) => <Link href="/politique-de-confidentialite" style={{ color: 'var(--lever-profond)' }}>{chunks}</Link>,
+          })}
         </p>
       </div>
     </main>

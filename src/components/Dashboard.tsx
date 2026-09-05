@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { FEATURE_COSTS, FEATURE_LABELS, FEATURE_CATEGORIES, FeatureCategory, FeatureKey } from '@/lib/pricing';
 import { THEMES, type ThemeKey } from '@/lib/themes';
@@ -59,6 +59,8 @@ export default function Dashboard({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const locale = useLocale();
+  const t = useTranslations('Dashboard');
+  const tp = useTranslations('Pricing');
 
   const cost = FEATURE_COSTS[feature];
   const needsAutrePersonne = feature === 'compatibilite_amoureuse';
@@ -76,7 +78,7 @@ export default function Dashboard({
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || 'Une erreur est survenue.');
+        setError(data.error || t('genericError'));
         setLoading(false);
         return;
       }
@@ -99,7 +101,7 @@ export default function Dashboard({
       setSignInfo(data.sign);
       setBalance(data.balance);
     } catch {
-      setError('Erreur réseau, réessaie.');
+      setError(t('networkError'));
     } finally {
       setLoading(false);
     }
@@ -111,19 +113,19 @@ export default function Dashboard({
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: '1.6rem' }}>Bonjour</h1>
+          <h1 style={{ fontSize: '1.6rem' }}>{t('greeting')}</h1>
           <p style={{ color: 'var(--ombre)', fontSize: '0.9rem' }}>{userName}</p>
         </div>
         <div className="card" style={{ padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: '0.8rem', color: 'var(--ombre)' }}>Solde</span>
+          <span style={{ fontSize: '0.8rem', color: 'var(--ombre)' }}>{t('balance')}</span>
           <span className="mono" style={{ fontSize: '1.2rem', fontWeight: 600, color: 'var(--lever-profond)' }}>{balance}</span>
-          <span style={{ fontSize: '0.8rem', color: 'var(--ombre)' }}>crédits</span>
-          <Link href="/tarifs" className="btn btn-ghost" style={{ padding: '7px 14px', fontSize: '0.78rem' }}>+ Ajouter</Link>
+          <span style={{ fontSize: '0.8rem', color: 'var(--ombre)' }}>{t('credits')}</span>
+          <Link href="/tarifs" className="btn btn-ghost" style={{ padding: '7px 14px', fontSize: '0.78rem' }}>{t('addCredits')}</Link>
         </div>
       </div>
 
       <Link href="/app/historique" style={{ display: 'inline-block', fontSize: '0.82rem', color: 'var(--ombre)', textDecoration: 'underline', marginBottom: 24 }}>
-        Voir l'historique de mes lectures
+        {t('viewHistory')}
       </Link>
 
       {balanceError && (
@@ -134,7 +136,7 @@ export default function Dashboard({
 
       <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: 32 }} className="dash-grid">
         <div>
-          <h2 style={{ fontSize: '1.1rem', marginBottom: 14 }}>Votre signe</h2>
+          <h2 style={{ fontSize: '1.1rem', marginBottom: 14 }}>{t('yourSign')}</h2>
           <div className="card" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24, boxShadow: 'none' }}>
             <SignCircle symbole={userSign.symbole} size={40} fontSize="1.2rem" />
             <div>
@@ -145,24 +147,26 @@ export default function Dashboard({
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 12, marginLeft: 4, borderLeft: '1px solid var(--trait)' }}>
                 <span style={{ fontSize: '1.3rem' }}>{ascendant.symbole}</span>
                 <div>
-                  <div className="mono" style={{ fontSize: '0.62rem', color: 'var(--sourdine)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Ascendant</div>
+                  <div className="mono" style={{ fontSize: '0.62rem', color: 'var(--sourdine)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('ascendant')}</div>
                   <div style={{ fontWeight: 600, fontSize: '0.86rem' }}>{ascendant.nom}</div>
                 </div>
               </div>
             )}
             <Link href="/app/profil" style={{ marginLeft: 'auto', fontSize: '0.78rem', color: 'var(--ombre)', textDecoration: 'underline', whiteSpace: 'nowrap' }}>
-              Modifier
+              {t('edit')}
             </Link>
           </div>
           {!ascendant && (
             <p style={{ fontSize: '0.78rem', color: 'var(--sourdine)', marginTop: -16, marginBottom: 24 }}>
-              Ajoutez votre heure de naissance à <Link href="/app/profil" style={{ color: 'var(--lever-profond)' }}>votre profil</Link> pour afficher votre ascendant, gratuitement.
+              {t.rich('addBirthTime', {
+                link: (chunks) => <Link href="/app/profil" style={{ color: 'var(--lever-profond)' }}>{chunks}</Link>,
+              })}
             </p>
           )}
 
           {CATEGORY_ORDER.map((cat) => (
             <div key={cat}>
-              <h2 style={{ fontSize: '1.1rem', marginBottom: 14 }}>{FEATURE_CATEGORIES[cat].titre}</h2>
+              <h2 style={{ fontSize: '1.1rem', marginBottom: 14 }}>{tp(`categories.${cat}`)}</h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
                 {FEATURE_ORDER.filter((key) => FEATURE_LABELS[key].categorie === cat).map((key) => {
                   const meta = FEATURE_LABELS[key];
@@ -190,19 +194,19 @@ export default function Dashboard({
                     >
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <span style={{ fontWeight: 600, fontSize: '0.92rem' }}>{meta.nom}</span>
+                          <span style={{ fontWeight: 600, fontSize: '0.92rem' }}>{tp(`features.${key}.nom`)}</span>
                           {locked && (
                             <span className="pill" style={{ padding: '2px 8px', fontSize: '0.62rem', borderColor: 'var(--ambre)', color: 'var(--ambre)' }}>
-                              🔒 Forfait requis
+                              {t('locked')}
                             </span>
                           )}
                         </div>
                         <div style={{ fontSize: '0.78rem', color: 'var(--sourdine)' }}>
-                          {meta.disponible ? meta.description : `${meta.description} — bientôt disponible`}
+                          {meta.disponible ? tp(`features.${key}.description`) : t('descriptionComingSoon', { description: tp(`features.${key}.description`) })}
                         </div>
                       </div>
                       <span className="mono" style={{ fontSize: '0.82rem', color: 'var(--lever-profond)', whiteSpace: 'nowrap' }}>
-                        {FEATURE_COSTS[key]} cr.
+                        {FEATURE_COSTS[key]} {tp('creditUnit')}
                       </span>
                     </button>
                   );
@@ -213,59 +217,59 @@ export default function Dashboard({
 
           {feature === 'horoscope_personnalise' && (
             <div className="card" style={{ padding: '12px 16px', marginBottom: 24, boxShadow: 'none', fontSize: '0.84rem', color: 'var(--ombre)' }}>
-              Basée sur l'heure et le lieu de naissance de votre profil.
+              {t('infoPersonalise')}
             </div>
           )}
 
           {feature === 'theme_astral_complet' && (
             <div className="card" style={{ padding: '12px 16px', marginBottom: 24, boxShadow: 'none', fontSize: '0.84rem', color: 'var(--ombre)' }}>
-              Un portrait de fond basé sur votre profil — pas une lecture du jour, vous pouvez le régénérer quand vous voulez.
+              {t('infoThemeAstral')}
             </div>
           )}
 
           {feature === 'analyse_sentimentale' && (
             <div className="card" style={{ padding: '12px 16px', marginBottom: 24, boxShadow: 'none', fontSize: '0.84rem', color: 'var(--ombre)' }}>
-              Portée d'une semaine entière — stable si vous la régénérez plusieurs fois cette semaine.
+              {t('infoSentimentale')}
             </div>
           )}
 
           {feature === 'grande_analyse' && (
             <div className="card" style={{ padding: '12px 16px', marginBottom: 24, boxShadow: 'none', fontSize: '0.84rem', color: 'var(--ombre)' }}>
-              Le bilan le plus complet : amour, carrière, finances, santé, famille et évolution personnelle.
+              {t('infoGrandeAnalyse')}
             </div>
           )}
 
           {(feature === 'cycle_lunaire' || feature === 'transits_planetaires') && (
             <div className="card" style={{ padding: '12px 16px', marginBottom: 24, boxShadow: 'none', fontSize: '0.84rem', color: 'var(--ombre)' }}>
-              Basée sur la position réelle {feature === 'cycle_lunaire' ? 'de la lune' : 'des planètes'} aujourd'hui, pas sur une estimation.
+              {t('infoPosition', { what: feature === 'cycle_lunaire' ? t('theMoon') : t('thePlanets') })}
             </div>
           )}
 
           {featureLocked && (
             <div className="card" style={{ padding: '14px 16px', marginBottom: 24, boxShadow: 'none', borderColor: 'var(--ambre)' }}>
               <p style={{ margin: '0 0 10px', fontSize: '0.86rem', color: 'var(--ombre)' }}>
-                Cette lecture est réservée aux abonnés — les crédits seuls ne suffisent pas ici.
+                {t('lockedTitle')}
               </p>
-              <Link href="/tarifs" className="btn btn-primary" style={{ padding: '9px 18px', fontSize: '0.82rem' }}>Voir les abonnements</Link>
+              <Link href="/tarifs" className="btn btn-primary" style={{ padding: '9px 18px', fontSize: '0.82rem' }}>{t('viewSubscriptions')}</Link>
             </div>
           )}
 
           {needsAutrePersonne && !featureLocked && (
             <div className="card" style={{ padding: '14px 16px', marginBottom: 24, boxShadow: 'none', display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div className="field-label" style={{ marginBottom: -4 }}>Comparer votre signe à</div>
+              <div className="field-label" style={{ marginBottom: -4 }}>{t('compareYourSignTo')}</div>
               <div>
-                <label htmlFor="autre-prenom" style={{ fontSize: '0.76rem', color: 'var(--sourdine)', display: 'block', marginBottom: 4 }}>Prénom</label>
+                <label htmlFor="autre-prenom" style={{ fontSize: '0.76rem', color: 'var(--sourdine)', display: 'block', marginBottom: 4 }}>{t('firstName')}</label>
                 <input
                   id="autre-prenom"
                   type="text"
                   value={autrePrenom}
                   onChange={(e) => setAutrePrenom(e.target.value)}
-                  placeholder="Ex. Camille"
+                  placeholder={t('firstNamePlaceholder')}
                   style={{ padding: '10px 12px', borderRadius: 10, border: '1px solid var(--trait)', background: 'var(--nacre)', color: 'var(--encre)', fontSize: '0.9rem', width: '100%' }}
                 />
               </div>
               <div>
-                <label htmlFor="autre-date" style={{ fontSize: '0.76rem', color: 'var(--sourdine)', display: 'block', marginBottom: 4 }}>Date de naissance</label>
+                <label htmlFor="autre-date" style={{ fontSize: '0.76rem', color: 'var(--sourdine)', display: 'block', marginBottom: 4 }}>{t('birthDate')}</label>
                 <input
                   id="autre-date"
                   type="date"
@@ -285,17 +289,17 @@ export default function Dashboard({
               style={{ width: '100%' }}
             >
               {loading
-                ? 'Lecture en cours…'
+                ? t('generating')
                 : balance < cost
-                ? `Crédits insuffisants (${balance}/${cost})`
+                ? t('insufficientCredits', { balance, cost })
                 : !canGenerate
-                ? 'Renseignez le prénom et la date de naissance'
-                : `Générer (${cost} crédit${cost > 1 ? 's' : ''})`}
+                ? t('fillNameAndDate')
+                : t('generate', { cost })}
             </button>
           )}
           {error && (
             <p style={{ fontSize: '0.84rem', color: 'var(--lever-profond)', marginTop: 10 }}>
-              {error} {(error.toLowerCase().includes('crédit') || error.toLowerCase().includes('abonnement')) && <Link href="/tarifs" style={{ textDecoration: 'underline' }}>Voir les forfaits</Link>}
+              {error} {(error.toLowerCase().includes('crédit') || error.toLowerCase().includes('credit') || error.toLowerCase().includes('abonnement') || error.toLowerCase().includes('subscription')) && <Link href="/tarifs" style={{ textDecoration: 'underline' }}>{t('viewPackages')}</Link>}
             </p>
           )}
         </div>
@@ -304,7 +308,7 @@ export default function Dashboard({
           {!hasResult && (
             <div className="card" style={{ padding: '40px 26px', textAlign: 'center', color: 'var(--sourdine)' }}>
               <EmptyStateIllustration size={72} />
-              <p style={{ margin: '14px 0 0' }}>Choisissez une lecture, votre horoscope apparaîtra ici.</p>
+              <p style={{ margin: '14px 0 0' }}>{t('chooseReadingPlaceholder')}</p>
             </div>
           )}
 
@@ -313,7 +317,7 @@ export default function Dashboard({
           {sentiment && signInfo && <SentimentCard reading={sentiment} signInfo={signInfo} />}
           {compat && signInfo && <CompatibilityCard reading={compat} signInfo={signInfo} autreSigne={compat.autreSigne} moiPrenom={compat.moiPrenom} />}
           {grandeAnalyse && signInfo && <GrandeAnalyseCard reading={grandeAnalyse} signInfo={signInfo} />}
-          {thematic && signInfo && isThemeKey(feature) && <ThematicCard reading={thematic} signInfo={signInfo} featureNom={FEATURE_LABELS[feature].nom} />}
+          {thematic && signInfo && isThemeKey(feature) && <ThematicCard reading={thematic} signInfo={signInfo} featureNom={tp(`features.${feature}.nom`)} />}
           {lunar && signInfo && <LunarCycleCard reading={lunar} signInfo={signInfo} />}
           {transits && signInfo && <TransitsCard reading={transits} signInfo={signInfo} />}
         </div>

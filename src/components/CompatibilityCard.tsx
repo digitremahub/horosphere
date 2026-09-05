@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import BrandMark from '@/components/BrandMark';
 import { Field, SignCircle } from '@/components/CardParts';
 import type { CompatibilityReading } from '@/lib/anthropic';
@@ -27,6 +28,7 @@ export default function CompatibilityCard({
   creditsSpent?: number;
   cornerArc?: boolean;
 }) {
+  const t = useTranslations('Cards');
   return (
     <div className="card card-enter" style={{ padding: '26px 24px', overflow: 'visible' }}>
       {cornerArc && (
@@ -52,20 +54,20 @@ export default function CompatibilityCard({
 
       {reading.mode === 'demo' && (
         <div className="pill" style={{ marginBottom: 14, borderColor: 'var(--ambre)', color: 'var(--ambre)' }}>
-          Mode démo{dateLabel ? '' : ' — clé IA non configurée'}
+          {dateLabel ? t('demoMode') : t('demoModeNoKey')}
         </div>
       )}
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginBottom: 18, paddingBottom: 18, borderBottom: '1px solid var(--trait)' }}>
         <div style={{ textAlign: 'center' }}>
           <SignCircle symbole={signInfo?.symbole ?? '?'} />
-          <div style={{ fontSize: '0.76rem', marginTop: 6 }}>{moiPrenom || signInfo?.nom || 'Vous'}</div>
+          <div style={{ fontSize: '0.76rem', marginTop: 6 }}>{moiPrenom || signInfo?.nom || t('you')}</div>
           {moiPrenom && signInfo?.nom && (
             <div className="mono" style={{ fontSize: '0.64rem', color: 'var(--sourdine)' }}>{signInfo.nom}</div>
           )}
           {reading.ascendantSigne && (
             <div className="mono" style={{ fontSize: '0.62rem', color: 'var(--lever-profond)', marginTop: 2 }}>
-              Asc. {reading.ascendantSigne.nom}
+              {t('ascShort')} {reading.ascendantSigne.nom}
             </div>
           )}
         </div>
@@ -81,18 +83,18 @@ export default function CompatibilityCard({
 
       <div style={{ textAlign: 'center', marginBottom: 20 }}>
         <div className="mono" style={{ fontSize: '2rem', fontWeight: 600, color: 'var(--lever-profond)' }}>{reading.scoreGlobal}%</div>
-        <div style={{ fontSize: '0.78rem', color: 'var(--sourdine)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Compatibilité</div>
+        <div style={{ fontSize: '0.78rem', color: 'var(--sourdine)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{t('compatibility')}</div>
       </div>
 
       <p className="display" style={{ fontStyle: 'italic', fontSize: '1.1rem', marginBottom: 16, textAlign: 'center' }}>{reading.resume}</p>
 
-      <Field label="Points forts" color="var(--sauge)" text={reading.pointsForts} />
-      <Field label="Point de friction" color="var(--lever)" text={reading.pointsFriction} />
-      <Field label="Amour" color="var(--prune)" text={reading.amour} />
-      <Field label="Communication" color="var(--ambre)" text={reading.communication} />
+      <Field label={t('compatStrengths')} color="var(--sauge)" text={reading.pointsForts} />
+      <Field label={t('frictionPoint')} color="var(--lever)" text={reading.pointsFriction} />
+      <Field label={t('love')} color="var(--prune)" text={reading.amour} />
+      <Field label={t('communication')} color="var(--ambre)" text={reading.communication} />
 
       <div style={{ background: 'var(--brume)', border: '1px dashed var(--trait)', borderRadius: 14, padding: '13px 16px' }}>
-        <div style={{ fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--lever-profond)', marginBottom: 4 }}>Conseil pour ce duo</div>
+        <div style={{ fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--lever-profond)', marginBottom: 4 }}>{t('duoAdvice')}</div>
         <p style={{ margin: 0, fontSize: '0.92rem' }}>{reading.conseil}</p>
       </div>
     </div>

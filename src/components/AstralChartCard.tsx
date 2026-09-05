@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import BrandMark from '@/components/BrandMark';
 import { Field, Meter, Lucky, SignCircle } from '@/components/CardParts';
 
@@ -39,6 +40,7 @@ export default function AstralChartCard({
   creditsSpent?: number;
   cornerArc?: boolean;
 }) {
+  const t = useTranslations('Cards');
   return (
     <div className="card card-enter" style={{ padding: '26px 24px', overflow: 'visible' }}>
       <div className="photo-frame" style={{ height: 120, marginBottom: 18 }}>
@@ -72,7 +74,7 @@ export default function AstralChartCard({
 
       {chart.mode === 'demo' && (
         <div className="pill" style={{ marginBottom: 14, borderColor: 'var(--ambre)', color: 'var(--ambre)' }}>
-          Mode démo{dateLabel ? '' : ' — clé IA non configurée'}
+          {dateLabel ? t('demoMode') : t('demoModeNoKey')}
         </div>
       )}
 
@@ -80,7 +82,7 @@ export default function AstralChartCard({
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid var(--trait)' }}>
           <SignCircle symbole={signInfo.symbole} />
           <div>
-            <div style={{ fontWeight: 700 }}>{signInfo.nom} — thème astral</div>
+            <div style={{ fontWeight: 700 }}>{t('astralChartTitle', { sign: signInfo.nom })}</div>
             <div className="mono" style={{ fontSize: '0.72rem', color: 'var(--sourdine)' }}>
               {[signInfo.element, signInfo.planete].filter(Boolean).join(' · ') || signInfo.dates}
             </div>
@@ -92,12 +94,12 @@ export default function AstralChartCard({
         <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap' }}>
           {chart.ascendantSigne && (
             <div className="pill" style={{ borderColor: 'var(--lever)', color: 'var(--lever-profond)' }}>
-              {chart.ascendantSigne.symbole} Ascendant {chart.ascendantSigne.nom}
+              {chart.ascendantSigne.symbole} {t('ascendant')} {chart.ascendantSigne.nom}
             </div>
           )}
           {chart.luneSigne && (
             <div className="pill" style={{ borderColor: 'var(--sauge)', color: 'var(--sauge)' }}>
-              {chart.luneSigne.symbole} Lune natale en {chart.luneSigne.nom}
+              {chart.luneSigne.symbole} {t('natalMoonIn')} {chart.luneSigne.nom}
             </div>
           )}
         </div>
@@ -105,29 +107,29 @@ export default function AstralChartCard({
 
       <p style={{ margin: '0 0 18px', fontSize: '0.94rem', lineHeight: 1.6, color: 'var(--encre)' }}>{chart.portrait}</p>
 
-      <Field label="Forces" color="var(--lever)" text={chart.forces} />
-      <Field label="Axe de progression" color="var(--prune)" text={chart.defis} />
+      <Field label={t('strengths')} color="var(--lever)" text={chart.forces} />
+      <Field label={t('growthAxis')} color="var(--prune)" text={chart.defis} />
 
       <div style={{ height: 1, background: 'var(--trait)', margin: '18px 0' }} />
 
-      <Field label="Amour" color="var(--prune)" text={chart.amour} />
-      <Field label="Carrière" color="var(--lever)" text={chart.carriere} />
-      <Field label="Équilibre intérieur" color="var(--sauge)" text={chart.spiritualite} />
+      <Field label={t('love')} color="var(--prune)" text={chart.amour} />
+      <Field label={t('career')} color="var(--lever)" text={chart.carriere} />
+      <Field label={t('innerBalance')} color="var(--sauge)" text={chart.spiritualite} />
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, margin: '18px 0' }}>
-        <Meter label="Amour" value={chart.scoreAmour} color="var(--prune)" />
-        <Meter label="Carrière" value={chart.scoreCarriere} color="var(--lever)" />
-        <Meter label="Équilibre intérieur" value={chart.scoreSpiritualite} color="var(--sauge)" />
+        <Meter label={t('love')} value={chart.scoreAmour} color="var(--prune)" />
+        <Meter label={t('career')} value={chart.scoreCarriere} color="var(--lever)" />
+        <Meter label={t('innerBalance')} value={chart.scoreSpiritualite} color="var(--sauge)" />
       </div>
 
       <div style={{ background: 'var(--brume)', border: '1px dashed var(--trait)', borderRadius: 14, padding: '13px 16px', marginBottom: 18 }}>
-        <div style={{ fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--lever-profond)', marginBottom: 4 }}>Conseil de fond</div>
+        <div style={{ fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--lever-profond)', marginBottom: 4 }}>{t('deepAdvice')}</div>
         <p style={{ margin: 0, fontSize: '0.92rem' }}>{chart.conseilDeVie}</p>
       </div>
 
       <div className="lucky-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', borderTop: '1px solid var(--trait)', paddingTop: 14 }}>
-        <Lucky label="Pierre" value={chart.pierrePorteBonheur} />
-        <Lucky label="Symbole clé" value={chart.symboleCle} divider />
+        <Lucky label={t('stone')} value={chart.pierrePorteBonheur} />
+        <Lucky label={t('keySymbol')} value={chart.symboleCle} divider />
       </div>
     </div>
   );

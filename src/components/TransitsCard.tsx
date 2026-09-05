@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import BrandMark from '@/components/BrandMark';
 import { SignCircle } from '@/components/CardParts';
 import type { TransitsReading } from '@/lib/anthropic';
@@ -20,6 +21,7 @@ export default function TransitsCard({
   creditsSpent?: number;
   cornerArc?: boolean;
 }) {
+  const t = useTranslations('Cards');
   return (
     <div className="card card-enter" style={{ padding: '26px 24px', overflow: 'visible' }}>
       {cornerArc && (
@@ -39,7 +41,7 @@ export default function TransitsCard({
 
       {reading.mode === 'demo' && (
         <div className="pill" style={{ marginBottom: 14, borderColor: 'var(--ambre)', color: 'var(--ambre)' }}>
-          Mode démo{dateLabel ? '' : ' — clé IA non configurée'}
+          {dateLabel ? t('demoMode') : t('demoModeNoKey')}
         </div>
       )}
 
@@ -47,7 +49,7 @@ export default function TransitsCard({
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid var(--trait)' }}>
           <SignCircle symbole={signInfo.symbole} />
           <div>
-            <div style={{ fontWeight: 700 }}>Transits planétaires</div>
+            <div style={{ fontWeight: 700 }}>{t('planetaryTransits')}</div>
             <div className="mono" style={{ fontSize: '0.72rem', color: 'var(--sourdine)' }}>{signInfo.nom}</div>
           </div>
         </div>
@@ -67,12 +69,12 @@ export default function TransitsCard({
         <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap' }}>
           {reading.ascendantSigne && (
             <div className="pill" style={{ borderColor: 'var(--lever)', color: 'var(--lever-profond)' }}>
-              {reading.ascendantSigne.symbole} Ascendant {reading.ascendantSigne.nom}
+              {reading.ascendantSigne.symbole} {t('ascendant')} {reading.ascendantSigne.nom}
             </div>
           )}
           {reading.luneSigne && (
             <div className="pill" style={{ borderColor: 'var(--sauge)', color: 'var(--sauge)' }}>
-              {reading.luneSigne.symbole} Lune natale en {reading.luneSigne.nom}
+              {reading.luneSigne.symbole} {t('natalMoonIn')} {reading.luneSigne.nom}
             </div>
           )}
         </div>
@@ -83,7 +85,7 @@ export default function TransitsCard({
       <p style={{ margin: '0 0 18px', fontSize: '0.94rem', lineHeight: 1.6, color: 'var(--encre)' }}>{reading.interpretation}</p>
 
       <div style={{ background: 'var(--brume)', border: '1px dashed var(--trait)', borderRadius: 14, padding: '13px 16px' }}>
-        <div style={{ fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--lever-profond)', marginBottom: 4 }}>Conseil</div>
+        <div style={{ fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--lever-profond)', marginBottom: 4 }}>{t('advice')}</div>
         <p style={{ margin: 0, fontSize: '0.92rem' }}>{reading.conseil}</p>
       </div>
     </div>

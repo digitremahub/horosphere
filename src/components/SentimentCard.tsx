@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import BrandMark from '@/components/BrandMark';
 import { Field, Meter, Lucky, SignCircle } from '@/components/CardParts';
 import type { SentimentReading } from '@/lib/anthropic';
@@ -20,6 +21,7 @@ export default function SentimentCard({
   creditsSpent?: number;
   cornerArc?: boolean;
 }) {
+  const t = useTranslations('Cards');
   return (
     <div className="card card-enter" style={{ padding: '26px 24px', overflow: 'visible' }}>
       {cornerArc && (
@@ -45,7 +47,7 @@ export default function SentimentCard({
 
       {reading.mode === 'demo' && (
         <div className="pill" style={{ marginBottom: 14, borderColor: 'var(--ambre)', color: 'var(--ambre)' }}>
-          Mode démo{dateLabel ? '' : ' — clé IA non configurée'}
+          {dateLabel ? t('demoMode') : t('demoModeNoKey')}
         </div>
       )}
 
@@ -53,8 +55,8 @@ export default function SentimentCard({
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid var(--trait)' }}>
           <SignCircle symbole={signInfo.symbole} />
           <div>
-            <div style={{ fontWeight: 700 }}>{signInfo.nom} — analyse sentimentale</div>
-            <div className="mono" style={{ fontSize: '0.72rem', color: 'var(--sourdine)' }}>Cette semaine</div>
+            <div style={{ fontWeight: 700 }}>{t('sentimentTitle', { sign: signInfo.nom })}</div>
+            <div className="mono" style={{ fontSize: '0.72rem', color: 'var(--sourdine)' }}>{t('thisWeek')}</div>
           </div>
         </div>
       )}
@@ -63,12 +65,12 @@ export default function SentimentCard({
         <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap' }}>
           {reading.ascendantSigne && (
             <div className="pill" style={{ borderColor: 'var(--lever)', color: 'var(--lever-profond)' }}>
-              {reading.ascendantSigne.symbole} Ascendant {reading.ascendantSigne.nom}
+              {reading.ascendantSigne.symbole} {t('ascendant')} {reading.ascendantSigne.nom}
             </div>
           )}
           {reading.luneSigne && (
             <div className="pill" style={{ borderColor: 'var(--sauge)', color: 'var(--sauge)' }}>
-              {reading.luneSigne.symbole} Lune natale en {reading.luneSigne.nom}
+              {reading.luneSigne.symbole} {t('natalMoonIn')} {reading.luneSigne.nom}
             </div>
           )}
         </div>
@@ -76,22 +78,22 @@ export default function SentimentCard({
 
       <p className="display" style={{ fontStyle: 'italic', fontSize: '1.2rem', marginBottom: 16 }}>{reading.titre}</p>
 
-      <Field label="Émotion dominante" color="var(--prune)" text={reading.dominante} />
-      <Field label="Ce qui se joue" color="var(--lever)" text={reading.enJeu} />
-      <Field label="Relations" color="var(--sauge)" text={reading.relations} />
+      <Field label={t('dominantEmotion')} color="var(--prune)" text={reading.dominante} />
+      <Field label={t('whatsAtPlay')} color="var(--lever)" text={reading.enJeu} />
+      <Field label={t('relationships')} color="var(--sauge)" text={reading.relations} />
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, margin: '18px 0' }}>
-        <Meter label="Clarté" value={reading.scoreClarte} color="var(--lever)" />
-        <Meter label="Intensité" value={reading.scoreIntensite} color="var(--prune)" />
+        <Meter label={t('clarity')} value={reading.scoreClarte} color="var(--lever)" />
+        <Meter label={t('intensity')} value={reading.scoreIntensite} color="var(--prune)" />
       </div>
 
       <div style={{ background: 'var(--brume)', border: '1px dashed var(--trait)', borderRadius: 14, padding: '13px 16px', marginBottom: 18 }}>
-        <div style={{ fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--lever-profond)', marginBottom: 4 }}>Conseil de la semaine</div>
+        <div style={{ fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--lever-profond)', marginBottom: 4 }}>{t('weekAdvice')}</div>
         <p style={{ margin: 0, fontSize: '0.92rem' }}>{reading.conseil}</p>
       </div>
 
       <div className="lucky-grid" style={{ display: 'grid', gridTemplateColumns: '1fr', borderTop: '1px solid var(--trait)', paddingTop: 14 }}>
-        <Lucky label="Mot clé de la semaine" value={reading.motCle} />
+        <Lucky label={t('weekKeyword')} value={reading.motCle} />
       </div>
     </div>
   );

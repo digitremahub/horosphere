@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getTranslations } from 'next-intl/server';
 import { auth } from '@/lib/auth';
 import { signFromBirthdate } from '@/lib/zodiac';
 import { localizedSign } from '@/lib/zodiac-i18n';
@@ -36,28 +37,26 @@ function isoWeekKey(date: Date): string {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  const userId = (session?.user as { id?: string } | undefined)?.id;
-  if (!session || !userId) {
-    return NextResponse.json({ error: 'Connecte-toi pour générer une lecture.' }, { status: 401 });
-  }
-
-  if (!dbConfigured) {
-    return NextResponse.json(
-      { error: "La base de données n'est pas encore connectée — les crédits ne peuvent pas être suivis." },
-      { status: 503 }
-    );
-  }
-
   const body = await req.json().catch(() => ({}));
   const feature = body.feature as FeatureKey;
   const langue: Langue = body.locale === 'en' ? 'en' : 'fr';
+  const t = await getTranslations({ locale: langue, namespace: 'ApiGenerate' });
+
+  const session = await auth();
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  if (!session || !userId) {
+    return NextResponse.json({ error: t('loginRequired') }, { status: 401 });
+  }
+
+  if (!dbConfigured) {
+    return NextResponse.json({ error: t('dbNotConfigured') }, { status: 503 });
+  }
 
   if (!feature || !(feature in FEATURE_COSTS)) {
-    return NextResponse.json({ error: 'Fonctionnalité inconnue.' }, { status: 400 });
+    return NextResponse.json({ error: t('unknownFeature') }, { status: 400 });
   }
   if (!FEATURE_LABELS[feature].disponible) {
-    return NextResponse.json({ error: 'Cette fonctionnalité arrive bientôt.' }, { status: 400 });
+    return NextResponse.json({ error: t('comingSoon') }, { status: 400 });
   }
 
   // La compatibilité amoureuse est la seule lecture qui compare à une
@@ -72,7 +71,7 @@ export async function POST(req: NextRequest) {
     autreDate = String(body.autreDateNaissance || '');
     const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(autreDate);
     if (!autrePrenom || !match) {
-      return NextResponse.json({ error: 'Indique le prénom et la date de naissance de la personne à comparer.' }, { status: 400 });
+      return NextResponse.json({ error: t('missingOtherPerson') }, { status: 400 });
     }
     autreSign = signFromBirthdate(Number(match[2]), Number(match[3]));
   }
@@ -88,11 +87,11 @@ export async function POST(req: NextRequest) {
       subscribed = await hasActiveSubscription(uid);
     } catch (err) {
       console.error('hasActiveSubscription failed', err);
-      return NextResponse.json({ error: 'Impossible de vérifier votre abonnement pour le moment.' }, { status: 500 });
+      return NextResponse.json({ error: t('subscriptionCheckFailed') }, { status: 500 });
     }
     if (!subscribed) {
       return NextResponse.json(
-        { error: 'Cette lecture nécessite un abonnement actif.', code: 'SUBSCRIPTION_REQUIRED' },
+        { error: t('subscriptionRequired'), code: 'SUBSCRIPTION_REQUIRED' },
         { status: 402 }
       );
     }
@@ -103,11 +102,11 @@ export async function POST(req: NextRequest) {
     profile = await getProfile(uid);
   } catch (err) {
     console.error('getProfile failed', err);
-    return NextResponse.json({ error: 'Impossible de charger votre profil.' }, { status: 500 });
+    return NextResponse.json({ error: t('profileLoadFailed') }, { status: 500 });
   }
   if (!profile) {
     return NextResponse.json(
-      { error: 'Complète ton profil avant de générer une lecture.', code: 'PROFILE_REQUIRED' },
+      { error: t('profileRequired'), code: 'PROFILE_REQUIRED' },
       { status: 400 }
     );
   }
@@ -135,7 +134,7 @@ export async function POST(req: NextRequest) {
   const balance = await getBalance(uid);
   if (balance < cost) {
     return NextResponse.json(
-      { error: `Crédits insuffisants (${balance}/${cost}).`, balance, needed: cost, code: 'INSUFFICIENT_CREDITS' },
+      { error: t('insufficientCredits', { balance, cost }), balance, needed: cost, code: 'INSUFFICIENT_CREDITS' },
       { status: 402 }
     );
   }
@@ -192,7 +191,7 @@ export async function POST(req: NextRequest) {
     }
   } catch (err) {
     console.error('generation failed', err);
-    return NextResponse.json({ error: "La génération a échoué, réessaie dans un instant." }, { status: 502 });
+    return NextResponse.json({ error: t('generationFailed') }, { status: 502 });
   }
 
   try {
@@ -200,12 +199,12 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     if (err instanceof InsufficientCreditsError) {
       return NextResponse.json(
-        { error: `Crédits insuffisants (${err.available}/${err.needed}).`, code: 'INSUFFICIENT_CREDITS' },
+        { error: t('insufficientCredits', { balance: err.available, cost: err.needed }), code: 'INSUFFICIENT_CREDITS' },
         { status: 402 }
       );
     }
     console.error('consumeCredits failed', err);
-    return NextResponse.json({ error: 'Erreur lors du débit des crédits.' }, { status: 500 });
+    return NextResponse.json({ error: t('creditDebitFailed') }, { status: 500 });
   }
 
   const newBalance = await getBalance(uid);

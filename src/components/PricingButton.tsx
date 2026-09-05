@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 
 export default function PricingButton({
@@ -8,7 +9,7 @@ export default function PricingButton({
   slug,
   loggedIn,
   configured,
-  label = 'Choisir',
+  label,
 }: {
   kind: 'pack' | 'sub';
   slug: string;
@@ -19,6 +20,8 @@ export default function PricingButton({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const t = useTranslations('PricingButton');
+  const buttonLabel = label ?? t('choose');
 
   async function handleClick() {
     if (!loggedIn) {
@@ -35,13 +38,13 @@ export default function PricingButton({
       });
       const data = await res.json();
       if (!res.ok || !data.url) {
-        setError(data.error || "Impossible de démarrer le paiement.");
+        setError(data.error || t('checkoutError'));
         setLoading(false);
         return;
       }
       window.location.href = data.url;
     } catch {
-      setError('Erreur réseau, réessaie.');
+      setError(t('networkError'));
       setLoading(false);
     }
   }
@@ -54,7 +57,7 @@ export default function PricingButton({
         className="btn btn-primary"
         style={{ width: '100%', opacity: configured ? 1 : 0.55 }}
       >
-        {!configured ? 'Bientôt disponible' : loading ? 'Un instant…' : label}
+        {!configured ? t('comingSoon') : loading ? t('loading') : buttonLabel}
       </button>
       {error && <p style={{ fontSize: '0.76rem', color: 'var(--lever-profond)', marginTop: 8 }}>{error}</p>}
     </div>

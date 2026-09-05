@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import BrandMark from '@/components/BrandMark';
 import { Field, Meter, Lucky, SignCircle } from '@/components/CardParts';
 
@@ -40,6 +41,7 @@ export default function ReadingCard({
   creditsSpent?: number;
   cornerArc?: boolean;
 }) {
+  const t = useTranslations('Cards');
   return (
     <div className="card card-enter" style={{ padding: '26px 24px', overflow: 'visible' }}>
       {cornerArc && (
@@ -65,7 +67,7 @@ export default function ReadingCard({
 
       {reading.mode === 'demo' && (
         <div className="pill" style={{ marginBottom: 14, borderColor: 'var(--ambre)', color: 'var(--ambre)' }}>
-          Mode démo{dateLabel ? '' : ' — clé IA non configurée'}
+          {dateLabel ? t('demoMode') : t('demoModeNoKey')}
         </div>
       )}
 
@@ -83,12 +85,12 @@ export default function ReadingCard({
         <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap' }}>
           {reading.ascendantSigne && (
             <div className="pill" style={{ borderColor: 'var(--lever)', color: 'var(--lever-profond)' }}>
-              {reading.ascendantSigne.symbole} Ascendant {reading.ascendantSigne.nom}
+              {reading.ascendantSigne.symbole} {t('ascendant')} {reading.ascendantSigne.nom}
             </div>
           )}
           {reading.luneSigne && (
             <div className="pill" style={{ borderColor: 'var(--sauge)', color: 'var(--sauge)' }}>
-              {reading.luneSigne.symbole} Lune natale en {reading.luneSigne.nom}
+              {reading.luneSigne.symbole} {t('natalMoonIn')} {reading.luneSigne.nom}
             </div>
           )}
         </div>
@@ -96,25 +98,25 @@ export default function ReadingCard({
 
       <p className="display" style={{ fontStyle: 'italic', fontSize: '1.2rem', marginBottom: 16 }}>{reading.headline}</p>
 
-      <Field label="Amour" color="var(--prune)" text={reading.amour} />
-      <Field label="Travail" color="var(--lever)" text={reading.travail} />
-      <Field label="Énergie" color="var(--sauge)" text={reading.energie} />
+      <Field label={t('love')} color="var(--prune)" text={reading.amour} />
+      <Field label={t('work')} color="var(--lever)" text={reading.travail} />
+      <Field label={t('energy')} color="var(--sauge)" text={reading.energie} />
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, margin: '18px 0' }}>
-        <Meter label="Amour" value={reading.scoreAmour} color="var(--prune)" />
-        <Meter label="Travail" value={reading.scoreTravail} color="var(--lever)" />
-        <Meter label="Énergie" value={reading.scoreEnergie} color="var(--sauge)" />
+        <Meter label={t('love')} value={reading.scoreAmour} color="var(--prune)" />
+        <Meter label={t('work')} value={reading.scoreTravail} color="var(--lever)" />
+        <Meter label={t('energy')} value={reading.scoreEnergie} color="var(--sauge)" />
       </div>
 
       <div style={{ background: 'var(--brume)', border: '1px dashed var(--trait)', borderRadius: 14, padding: '13px 16px', marginBottom: 18 }}>
-        <div style={{ fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--lever-profond)', marginBottom: 4 }}>Conseil du jour</div>
+        <div style={{ fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--lever-profond)', marginBottom: 4 }}>{t('adviceOfDay')}</div>
         <p style={{ margin: 0, fontSize: '0.92rem' }}>{reading.conseil}</p>
       </div>
 
       <div className="lucky-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', borderTop: '1px solid var(--trait)', paddingTop: 14 }}>
-        <Lucky label="Couleur" value={reading.couleur} />
-        <Lucky label="Chiffre" value={String(reading.chiffre)} mono divider />
-        <Lucky label="Talisman" value={reading.talisman} divider />
+        <Lucky label={t('color')} value={reading.couleur} />
+        <Lucky label={t('number')} value={String(reading.chiffre)} mono divider />
+        <Lucky label={t('talisman')} value={reading.talisman} divider />
       </div>
     </div>
   );

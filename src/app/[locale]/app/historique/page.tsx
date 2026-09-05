@@ -1,4 +1,4 @@
-import { getLocale } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { redirect, Link } from '@/i18n/navigation';
 import { auth } from '@/lib/auth';
 import { getHistory } from '@/lib/credits';
@@ -7,6 +7,7 @@ import { dbConfigured } from '@/lib/db';
 import { FEATURE_LABELS, FeatureKey } from '@/lib/pricing';
 import { THEMES } from '@/lib/themes';
 import { findSign } from '@/lib/zodiac';
+import { localizedSign } from '@/lib/zodiac-i18n';
 import ReadingCard, { type Reading } from '@/components/ReadingCard';
 import AstralChartCard, { type AstralChart } from '@/components/AstralChartCard';
 import SentimentCard from '@/components/SentimentCard';
@@ -23,6 +24,8 @@ const THEME_KEYS = new Set(Object.keys(THEMES));
 export default async function HistoriquePage() {
   const session = await auth();
   const locale = await getLocale();
+  const th = await getTranslations('Historique');
+  const tp = await getTranslations('Pricing');
   if (!session?.user) {
     redirect({ href: '/connexion', locale });
   }
@@ -49,10 +52,10 @@ export default async function HistoriquePage() {
     try {
       entries = await getHistory(userId, 30);
     } catch {
-      error = "Impossible de charger l'historique pour le moment.";
+      error = th('loadError');
     }
   } else {
-    error = "La base de données n'est pas encore connectée — l'historique ne peut pas être affiché.";
+    error = th('dbNotConnected');
   }
 
   return (
@@ -68,10 +71,10 @@ export default async function HistoriquePage() {
       <div className="container-narrow">
       <div style={{ marginBottom: 30 }}>
         <Link href="/app" style={{ fontSize: '0.82rem', color: 'var(--ombre)', textDecoration: 'none' }}>
-          ← Mon espace
+          {th('backToSpace')}
         </Link>
-        <h1 style={{ fontSize: '1.6rem', marginTop: 10 }}>Historique</h1>
-        <p style={{ color: 'var(--ombre)', fontSize: '0.9rem' }}>Vos lectures passées, les plus récentes en premier — exactement comme le jour où vous les avez générées.</p>
+        <h1 style={{ fontSize: '1.6rem', marginTop: 10 }}>{th('title')}</h1>
+        <p style={{ color: 'var(--ombre)', fontSize: '0.9rem' }}>{th('subtitle')}</p>
       </div>
 
       {error && (
@@ -83,14 +86,15 @@ export default async function HistoriquePage() {
       {!error && entries.length === 0 && (
         <div className="card" style={{ padding: '36px 24px', textAlign: 'center', color: 'var(--sourdine)' }}>
           <EmptyStateIllustration size={72} />
-          <p style={{ margin: '14px 0 0' }}>Aucune lecture pour l'instant. Vos horoscopes générés apparaîtront ici.</p>
+          <p style={{ margin: '14px 0 0' }}>{th('empty')}</p>
         </div>
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
         {entries.map((entry) => {
           const sign = entry.sign ? findSign(entry.sign) : null;
-          const meta = FEATURE_LABELS[entry.feature as FeatureKey] as { nom: string } | undefined;
+          const featureKey = FEATURE_LABELS[entry.feature as FeatureKey] ? (entry.feature as FeatureKey) : undefined;
+          const featureNom = featureKey ? tp(`features.${featureKey}.nom`) : undefined;
 
           // Tolère les lignes enregistrées avant la correction de l'encodage
           // (stockées comme une chaîne JSON au lieu d'un objet JSONB).
@@ -102,13 +106,13 @@ export default async function HistoriquePage() {
               rawReading = null;
             }
           }
-          const date = new Date(entry.created_at).toLocaleDateString('fr-FR', {
+          const date = new Date(entry.created_at).toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', {
             day: 'numeric',
             month: 'long',
             year: 'numeric',
           });
-          const dateLabel = `${date}${meta ? ` · ${meta.nom}` : ''}`;
-          const signInfo = sign ? { nom: sign.nom, symbole: sign.symbole, dates: sign.dates, element: sign.element, planete: sign.planete } : null;
+          const dateLabel = `${date}${featureNom ? ` · ${featureNom}` : ''}`;
+          const signInfo = sign ? localizedSign({ nom: sign.nom, symbole: sign.symbole, dates: sign.dates, element: sign.element, planete: sign.planete, key: sign.key }, locale) : null;
 
           if (entry.feature === 'theme_astral_complet') {
             const chart = rawReading as AstralChart | null;
@@ -198,7 +202,7 @@ export default async function HistoriquePage() {
                   key={entry.id}
                   reading={thematic}
                   signInfo={signInfo}
-                  featureNom={meta?.nom ?? 'Lecture'}
+                  featureNom={featureNom ?? th('readingFallback')}
                   dateLabel={dateLabel}
                   creditsSpent={entry.credits_spent}
                 />
@@ -228,7 +232,7 @@ export default async function HistoriquePage() {
                 <span className="mono" style={{ fontSize: '0.76rem', color: 'var(--lever-profond)' }}>-{entry.credits_spent} cr.</span>
               </div>
               <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--sourdine)' }}>
-                Contenu non disponible — cette lecture a été générée avant l'activation de l'historique.
+                {th('contentUnavailable')}
               </p>
             </div>
           );

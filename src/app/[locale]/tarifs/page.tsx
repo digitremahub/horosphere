@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server';
 import { auth } from '@/lib/auth';
 import { dbConfigured } from '@/lib/db';
 import { stripeConfigured } from '@/lib/stripe';
@@ -14,6 +15,7 @@ export default async function TarifsPage() {
   const loggedIn = Boolean(session?.user);
   const promoActive = promoSeptembre2026Active();
   const placesRestantes = promoActive && dbConfigured ? await premiersAbonnesRestants() : 0;
+  const t = await getTranslations('Pricing');
 
   return (
     <main style={{ paddingBottom: 96 }}>
@@ -33,32 +35,31 @@ export default async function TarifsPage() {
 
       <div className="container">
       <div style={{ textAlign: 'center', maxWidth: 620, margin: '0 auto 48px' }}>
-        <div className="pill" style={{ marginBottom: 16 }}>Tarifs</div>
-        <h1 style={{ fontSize: '2.1rem', marginBottom: 14 }}>Payez ce que vous lisez, gardez ce que vous achetez</h1>
+        <div className="pill" style={{ marginBottom: 16 }}>{t('pill')}</div>
+        <h1 style={{ fontSize: '2.1rem', marginBottom: 14 }}>{t('title')}</h1>
         <p style={{ color: 'var(--ombre)' }}>
-          Commencez par un pack quand l'envie s'en fait sentir. Passez à l'abonnement seulement si Horosphère
-          devient une habitude — jamais l'inverse.
+          {t('intro')}
         </p>
       </div>
 
       {promoActive && (
         <div className="card" style={{ padding: '20px 22px', marginBottom: 48, borderColor: 'var(--lever)', background: 'var(--brume)' }}>
-          <div className="pill" style={{ marginBottom: 12, borderColor: 'var(--lever)', color: 'var(--lever-profond)' }}>Offre de lancement — septembre 2026</div>
+          <div className="pill" style={{ marginBottom: 12, borderColor: 'var(--lever)', color: 'var(--lever-profond)' }}>{t('launchOfferPill')}</div>
           <ul style={{ margin: 0, paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 6, fontSize: '0.92rem', color: 'var(--encre)' }}>
-            <li>-10% sur tous les packs de crédits, appliqué automatiquement jusqu'au 30 septembre.</li>
+            <li>{t('promo10')}</li>
             <li>
               {placesRestantes > 0
-                ? `Crédits doublés sur le premier mois d'abonnement, pour les 100 premiers abonnés — plus que ${placesRestantes} place${placesRestantes > 1 ? 's' : ''}.`
-                : "Le bonus crédits doublés pour les 100 premiers abonnés est épuisé — merci à celles et ceux qui ont lancé Horosphère avec nous !"}
+                ? t('promoDoubleWithSlots', { n: placesRestantes })
+                : t('promoDoubleSoldOut')}
             </li>
-            <li>10 crédits offerts à l'inscription (au lieu de 3) — valables 7 jours.</li>
+            <li>{t('promoWelcomeCredits')}</li>
           </ul>
         </div>
       )}
 
-      <h2 style={{ fontSize: '1.3rem', marginBottom: 18 }}>Packs de crédits</h2>
+      <h2 style={{ fontSize: '1.3rem', marginBottom: 18 }}>{t('packsTitle')}</h2>
       <p style={{ color: 'var(--sourdine)', fontSize: '0.86rem', marginBottom: 22 }}>
-        Valables 45 jours après l'achat.{promoActive && ' Remise de 10% déjà appliquée au paiement, jusqu\'au 30 septembre.'}
+        {t('packsSubtitleBase')}{promoActive && t('packsSubtitlePromo')}
       </p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 18, marginBottom: 60 }}>
         {CREDIT_PACKS.map((p, i) => (
@@ -69,12 +70,12 @@ export default async function TarifsPage() {
               </div>
               <div style={{ fontSize: '1.6rem' }}>{p.emoji}</div>
               <div>
-                <div style={{ fontWeight: 700 }}>{p.nom}</div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--ombre)' }}>{p.accroche}</div>
+                <div style={{ fontWeight: 700 }}>{t(`packs.${p.slug}.nom`)}</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--ombre)' }}>{t(`packs.${p.slug}.accroche`)}</div>
               </div>
               <div>
                 <span className="mono" style={{ fontSize: '1.5rem', fontWeight: 500 }}>{euros(p.prixCentimes)}</span>
-                <div className="mono" style={{ fontSize: '0.78rem', color: 'var(--sourdine)' }}>{p.credits} crédits</div>
+                <div className="mono" style={{ fontSize: '0.78rem', color: 'var(--sourdine)' }}>{p.credits} {t('creditsUnit')}</div>
               </div>
               <PricingButton kind="pack" slug={p.slug} loggedIn={loggedIn} configured={stripeConfigured && Boolean(process.env[p.envKey])} />
             </div>
@@ -82,10 +83,10 @@ export default async function TarifsPage() {
         ))}
       </div>
 
-      <h2 style={{ fontSize: '1.3rem', marginBottom: 18 }}>Abonnements</h2>
+      <h2 style={{ fontSize: '1.3rem', marginBottom: 18 }}>{t('subscriptionsTitle')}</h2>
       <p style={{ color: 'var(--sourdine)', fontSize: '0.86rem', marginBottom: 22 }}>
-        Résiliable à tout moment, crédits rechargés chaque mois.
-        {promoActive && placesRestantes > 0 && ` Crédits doublés le premier mois pour les ${placesRestantes} prochains abonnés.`}
+        {t('subscriptionsSubtitleBase')}
+        {promoActive && placesRestantes > 0 && t('subscriptionsSubtitlePromo', { n: placesRestantes })}
       </p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20, marginBottom: 64 }}>
         {SUBSCRIPTIONS.map((s, i) => (
@@ -106,26 +107,26 @@ export default async function TarifsPage() {
               </div>
               {s.misEnAvant && (
                 <div className="pill" style={{ position: 'absolute', top: -13, left: 24, background: 'var(--lever)', color: 'var(--aube)', borderColor: 'var(--lever)' }}>
-                  Le plus choisi
+                  {t('mostChosen')}
                 </div>
               )}
               <div style={{ fontSize: '1.6rem' }}>{s.emoji}</div>
               <div>
-                <div style={{ fontWeight: 700 }}>{s.nom}</div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--ombre)' }}>{s.avantage}</div>
+                <div style={{ fontWeight: 700 }}>{t(`subscriptions.${s.slug}.nom`)}</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--ombre)' }}>{t(`subscriptions.${s.slug}.avantage`)}</div>
               </div>
               <div>
                 <span className="mono" style={{ fontSize: '1.5rem', fontWeight: 500 }}>{euros(s.prixCentimesParMois)}</span>
-                <span style={{ fontSize: '0.82rem', color: 'var(--sourdine)' }}> /mois</span>
-                <div className="mono" style={{ fontSize: '0.78rem', color: 'var(--sourdine)' }}>{s.creditsParMois} crédits / mois</div>
+                <span style={{ fontSize: '0.82rem', color: 'var(--sourdine)' }}> {t('perMonth')}</span>
+                <div className="mono" style={{ fontSize: '0.78rem', color: 'var(--sourdine)' }}>{s.creditsParMois} {t('creditsPerMonth')}</div>
               </div>
-              <PricingButton kind="sub" slug={s.slug} loggedIn={loggedIn} configured={stripeConfigured && Boolean(process.env[s.envKey])} label="S'abonner" />
+              <PricingButton kind="sub" slug={s.slug} loggedIn={loggedIn} configured={stripeConfigured && Boolean(process.env[s.envKey])} label={t('subscribe')} />
             </div>
           </ScrollReveal>
         ))}
       </div>
 
-      <h2 style={{ fontSize: '1.3rem', marginBottom: 18 }}>Combien coûte chaque lecture ?</h2>
+      <h2 style={{ fontSize: '1.3rem', marginBottom: 18 }}>{t('costTitle')}</h2>
       <div className="card" style={{ overflow: 'hidden' }}>
         {(Object.keys(FEATURE_COSTS) as (keyof typeof FEATURE_COSTS)[]).map((key, i, arr) => (
           <div
@@ -140,20 +141,21 @@ export default async function TarifsPage() {
           >
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontWeight: 600, fontSize: '0.94rem' }}>{FEATURE_LABELS[key].nom}</span>
+                <span style={{ fontWeight: 600, fontSize: '0.94rem' }}>{t(`features.${key}.nom`)}</span>
                 {FEATURE_LABELS[key].subscriptionOnly && (
                   <span className="pill" style={{ padding: '2px 8px', fontSize: '0.62rem', borderColor: 'var(--ambre)', color: 'var(--ambre)' }}>
-                    🔒 Abonnement requis
+                    {t('subscriptionRequiredBadge')}
                   </span>
                 )}
               </div>
               <div style={{ fontSize: '0.8rem', color: 'var(--sourdine)' }}>
-                {FEATURE_LABELS[key].description}
-                {!FEATURE_LABELS[key].disponible && ' — bientôt disponible'}
+                {FEATURE_LABELS[key].disponible
+                  ? t(`features.${key}.description`)
+                  : t('descriptionComingSoon', { description: t(`features.${key}.description`) })}
               </div>
             </div>
             <div className="mono" style={{ fontWeight: 600, color: 'var(--lever-profond)', whiteSpace: 'nowrap' }}>
-              {FEATURE_COSTS[key]} cr.
+              {FEATURE_COSTS[key]} {t('creditUnit')}
             </div>
           </div>
         ))}

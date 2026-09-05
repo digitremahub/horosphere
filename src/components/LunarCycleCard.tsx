@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import BrandMark from '@/components/BrandMark';
 import MoonPhase from '@/components/MoonPhase';
 import { SignCircle } from '@/components/CardParts';
@@ -20,6 +21,7 @@ export default function LunarCycleCard({
   creditsSpent?: number;
   cornerArc?: boolean;
 }) {
+  const t = useTranslations('Cards');
   return (
     <div className="card card-enter" style={{ padding: '26px 24px', overflow: 'visible' }}>
       {cornerArc && (
@@ -39,7 +41,7 @@ export default function LunarCycleCard({
 
       {reading.mode === 'demo' && (
         <div className="pill" style={{ marginBottom: 14, borderColor: 'var(--ambre)', color: 'var(--ambre)' }}>
-          Mode démo{dateLabel ? '' : ' — clé IA non configurée'}
+          {dateLabel ? t('demoMode') : t('demoModeNoKey')}
         </div>
       )}
 
@@ -47,7 +49,7 @@ export default function LunarCycleCard({
         <MoonPhase size={44} phase={reading.phase} />
         <div>
           <div style={{ fontWeight: 700 }}>{reading.phaseLabel}</div>
-          <div className="mono" style={{ fontSize: '0.72rem', color: 'var(--sourdine)' }}>{reading.illumination}% illuminée</div>
+          <div className="mono" style={{ fontSize: '0.72rem', color: 'var(--sourdine)' }}>{t('illuminated', { pct: reading.illumination })}</div>
         </div>
         {signInfo && (
           <div style={{ marginLeft: 'auto' }}>
@@ -60,12 +62,12 @@ export default function LunarCycleCard({
         <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap' }}>
           {reading.ascendantSigne && (
             <div className="pill" style={{ borderColor: 'var(--lever)', color: 'var(--lever-profond)' }}>
-              {reading.ascendantSigne.symbole} Ascendant {reading.ascendantSigne.nom}
+              {reading.ascendantSigne.symbole} {t('ascendant')} {reading.ascendantSigne.nom}
             </div>
           )}
           {reading.luneSigne && (
             <div className="pill" style={{ borderColor: 'var(--sauge)', color: 'var(--sauge)' }}>
-              {reading.luneSigne.symbole} Lune natale en {reading.luneSigne.nom}
+              {reading.luneSigne.symbole} {t('natalMoonIn')} {reading.luneSigne.nom}
             </div>
           )}
         </div>
@@ -76,7 +78,7 @@ export default function LunarCycleCard({
       <p style={{ margin: '0 0 18px', fontSize: '0.94rem', lineHeight: 1.6, color: 'var(--encre)' }}>{reading.interpretation}</p>
 
       <div style={{ background: 'var(--brume)', border: '1px dashed var(--trait)', borderRadius: 14, padding: '13px 16px' }}>
-        <div style={{ fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--lever-profond)', marginBottom: 4 }}>Conseil</div>
+        <div style={{ fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--lever-profond)', marginBottom: 4 }}>{t('advice')}</div>
         <p style={{ margin: 0, fontSize: '0.92rem' }}>{reading.conseil}</p>
       </div>
     </div>

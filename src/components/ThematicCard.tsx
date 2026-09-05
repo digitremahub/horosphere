@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import BrandMark from '@/components/BrandMark';
 import { Field, Meter, SignCircle } from '@/components/CardParts';
 import type { ThematicReading } from '@/lib/anthropic';
@@ -24,6 +25,7 @@ export default function ThematicCard({
   creditsSpent?: number;
   cornerArc?: boolean;
 }) {
+  const t = useTranslations('Cards');
   return (
     <div className="card card-enter" style={{ padding: '26px 24px', overflow: 'visible' }}>
       {cornerArc && (
@@ -49,7 +51,7 @@ export default function ThematicCard({
 
       {reading.mode === 'demo' && (
         <div className="pill" style={{ marginBottom: 14, borderColor: 'var(--ambre)', color: 'var(--ambre)' }}>
-          Mode démo{dateLabel ? '' : ' — clé IA non configurée'}
+          {dateLabel ? t('demoMode') : t('demoModeNoKey')}
         </div>
       )}
 
@@ -67,12 +69,12 @@ export default function ThematicCard({
         <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap' }}>
           {reading.ascendantSigne && (
             <div className="pill" style={{ borderColor: 'var(--lever)', color: 'var(--lever-profond)' }}>
-              {reading.ascendantSigne.symbole} Ascendant {reading.ascendantSigne.nom}
+              {reading.ascendantSigne.symbole} {t('ascendant')} {reading.ascendantSigne.nom}
             </div>
           )}
           {reading.luneSigne && (
             <div className="pill" style={{ borderColor: 'var(--sauge)', color: 'var(--sauge)' }}>
-              {reading.luneSigne.symbole} Lune natale en {reading.luneSigne.nom}
+              {reading.luneSigne.symbole} {t('natalMoonIn')} {reading.luneSigne.nom}
             </div>
           )}
         </div>
@@ -81,14 +83,14 @@ export default function ThematicCard({
       <p className="display" style={{ fontStyle: 'italic', fontSize: '1.2rem', marginBottom: 16 }}>{reading.titre}</p>
 
       <Field label={featureNom} color="var(--lever)" text={reading.texte} />
-      <Field label="À surveiller" color="var(--prune)" text={reading.pointAttention} />
+      <Field label={t('watchOutFor')} color="var(--prune)" text={reading.pointAttention} />
 
       <div style={{ margin: '18px 0' }}>
-        <Meter label="Énergie du moment" value={reading.score} color="var(--lever)" />
+        <Meter label={t('currentEnergy')} value={reading.score} color="var(--lever)" />
       </div>
 
       <div style={{ background: 'var(--brume)', border: '1px dashed var(--trait)', borderRadius: 14, padding: '13px 16px' }}>
-        <div style={{ fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--lever-profond)', marginBottom: 4 }}>Conseil</div>
+        <div style={{ fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--lever-profond)', marginBottom: 4 }}>{t('advice')}</div>
         <p style={{ margin: 0, fontSize: '0.92rem' }}>{reading.conseil}</p>
       </div>
     </div>

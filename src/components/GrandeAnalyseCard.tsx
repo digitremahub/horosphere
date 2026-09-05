@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import BrandMark from '@/components/BrandMark';
 import { Field, Meter, SignCircle } from '@/components/CardParts';
 import type { GrandeAnalyse } from '@/lib/anthropic';
@@ -21,6 +22,7 @@ export default function GrandeAnalyseCard({
   creditsSpent?: number;
   cornerArc?: boolean;
 }) {
+  const t = useTranslations('Cards');
   return (
     <div className="card card-enter" style={{ padding: '26px 24px', overflow: 'visible' }}>
       {cornerArc && (
@@ -46,7 +48,7 @@ export default function GrandeAnalyseCard({
 
       {reading.mode === 'demo' && (
         <div className="pill" style={{ marginBottom: 14, borderColor: 'var(--ambre)', color: 'var(--ambre)' }}>
-          Mode démo{dateLabel ? '' : ' — clé IA non configurée'}
+          {dateLabel ? t('demoMode') : t('demoModeNoKey')}
         </div>
       )}
 
@@ -54,9 +56,9 @@ export default function GrandeAnalyseCard({
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid var(--trait)' }}>
           <SignCircle symbole={signInfo.symbole} />
           <div>
-            <div style={{ fontWeight: 700 }}>{signInfo.nom} — grande analyse</div>
+            <div style={{ fontWeight: 700 }}>{t('grandeAnalyseTitle', { sign: signInfo.nom })}</div>
             <div className="mono" style={{ fontSize: '0.72rem', color: 'var(--sourdine)' }}>
-              Portée : {reading.periodeCle}
+              {t('scope', { period: reading.periodeCle })}
             </div>
           </div>
         </div>
@@ -66,12 +68,12 @@ export default function GrandeAnalyseCard({
         <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap' }}>
           {reading.ascendantSigne && (
             <div className="pill" style={{ borderColor: 'var(--lever)', color: 'var(--lever-profond)' }}>
-              {reading.ascendantSigne.symbole} Ascendant {reading.ascendantSigne.nom}
+              {reading.ascendantSigne.symbole} {t('ascendant')} {reading.ascendantSigne.nom}
             </div>
           )}
           {reading.luneSigne && (
             <div className="pill" style={{ borderColor: 'var(--sauge)', color: 'var(--sauge)' }}>
-              {reading.luneSigne.symbole} Lune natale en {reading.luneSigne.nom}
+              {reading.luneSigne.symbole} {t('natalMoonIn')} {reading.luneSigne.nom}
             </div>
           )}
         </div>
@@ -79,22 +81,22 @@ export default function GrandeAnalyseCard({
 
       <p style={{ margin: '0 0 18px', fontSize: '0.94rem', lineHeight: 1.6, color: 'var(--encre)' }}>{reading.synthese}</p>
 
-      <Field label="Amour" color="var(--prune)" text={reading.amour} />
-      <Field label="Carrière" color="var(--lever)" text={reading.carriere} />
-      <Field label="Finances" color="var(--ambre)" text={reading.finances} />
-      <Field label="Santé" color="var(--sauge)" text={reading.sante} />
-      <Field label="Famille" color="var(--lever-profond)" text={reading.famille} />
-      <Field label="Évolution personnelle" color="var(--ombre)" text={reading.evolutionPersonnelle} />
+      <Field label={t('love')} color="var(--prune)" text={reading.amour} />
+      <Field label={t('career')} color="var(--lever)" text={reading.carriere} />
+      <Field label={t('finances')} color="var(--ambre)" text={reading.finances} />
+      <Field label={t('health')} color="var(--sauge)" text={reading.sante} />
+      <Field label={t('family')} color="var(--lever-profond)" text={reading.famille} />
+      <Field label={t('personalGrowth')} color="var(--ombre)" text={reading.evolutionPersonnelle} />
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, margin: '18px 0' }}>
-        <Meter label="Amour" value={reading.scoreAmour} color="var(--prune)" />
-        <Meter label="Carrière" value={reading.scoreCarriere} color="var(--lever)" />
-        <Meter label="Santé" value={reading.scoreSante} color="var(--sauge)" />
-        <Meter label="Finances" value={reading.scoreFinances} color="var(--ambre)" />
+        <Meter label={t('love')} value={reading.scoreAmour} color="var(--prune)" />
+        <Meter label={t('career')} value={reading.scoreCarriere} color="var(--lever)" />
+        <Meter label={t('health')} value={reading.scoreSante} color="var(--sauge)" />
+        <Meter label={t('finances')} value={reading.scoreFinances} color="var(--ambre)" />
       </div>
 
       <div style={{ background: 'var(--brume)', border: '1px dashed var(--trait)', borderRadius: 14, padding: '13px 16px' }}>
-        <div style={{ fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--lever-profond)', marginBottom: 4 }}>Conseil principal</div>
+        <div style={{ fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--lever-profond)', marginBottom: 4 }}>{t('mainAdvice')}</div>
         <p style={{ margin: 0, fontSize: '0.92rem' }}>{reading.conseilPrincipal}</p>
       </div>
     </div>
