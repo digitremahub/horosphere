@@ -1,0 +1,25 @@
+{
+  "Metadata": {
+    "title": "Horosphère — your daily ritual",
+    "description": "AI-personalized daily horoscope. A moment of calm and clarity, every day."
+  },
+  "Nav": {
+    "home": "Home",
+    "news": "News",
+    "pricing": "Pricing",
+    "mySpace": "My space",
+    "history": "History",
+    "profile": "My profile",
+    "logout": "Log out",
+    "login": "Log in"
+  },
+  "Footer": {
+    "tagline": "A daily ritual, built to last.",
+    "legalNotice": "Legal notice",
+    "terms": "Terms",
+    "privacy": "Privacy"
+  },
+  "LanguageSwitcher": {
+    "label": "Language"
+  }
+}

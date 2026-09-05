@@ -1,0 +1,25 @@
+{
+  "Metadata": {
+    "title": "Horosphère — votre rituel du jour",
+    "description": "Horoscope quotidien personnalisé par IA. Un moment de calme et de clarté, chaque jour."
+  },
+  "Nav": {
+    "home": "Accueil",
+    "news": "Actualités",
+    "pricing": "Tarifs",
+    "mySpace": "Mon espace",
+    "history": "Historique",
+    "profile": "Mon profil",
+    "logout": "Se déconnecter",
+    "login": "Se connecter"
+  },
+  "Footer": {
+    "tagline": "Un rituel quotidien, pensé pour durer.",
+    "legalNotice": "Mentions légales",
+    "terms": "CGV",
+    "privacy": "Confidentialité"
+  },
+  "LanguageSwitcher": {
+    "label": "Langue"
+  }
+}
