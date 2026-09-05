@@ -8,6 +8,7 @@
 import { moonPhaseInfo } from '../components/MoonPhase';
 import { getUpcomingSkyEvents } from './skyEvents';
 import { callClaude } from './anthropic';
+import { genererIllustrationSociale } from './openaiImage';
 import { mulberry32, hashStr, pick } from './fallback-generator';
 
 export type SocialDraft = {
@@ -91,6 +92,41 @@ function nextEventLabel(dateISO: string): string {
   return `${next.label.toLowerCase()} le ${dateLabel}`;
 }
 
+// ===== Illustration IA (GPT / gpt-image-1) =====
+
+// Quatre déclinaisons des motifs visuels déjà établis sur le site (astrolabe,
+// carte du ciel, sextant, silhouette contemplative) — la variété quotidienne
+// vient de la phase lunaire réelle du jour, jamais d'un motif inventé au hasard.
+const SCENES_ILLUSTRATION = [
+  "un astrolabe en cuivre posé sur un balcon donnant sur la mer au crépuscule, sous une lune en {phase} entourée d'étoiles",
+  'une carte du ciel ancienne dépliée à la lumière d\'une bougie, une lune en {phase} visible par une fenêtre en arrière-plan',
+  'un sextant tenu face au couchant, une sphère armillaire dorée au premier plan, un ciel nocturne où domine une lune en {phase}',
+  'une silhouette contemplant un ciel étoilé à travers un astrolabe, une lune en {phase} bien visible, ambiance calme et méditative',
+];
+
+function sujetIllustrationDuJour(dateISO: string): string {
+  const moon = moonPhaseInfo(new Date(dateISO));
+  const rng = mulberry32(hashStr('illustration::' + dateISO));
+  const scene = interpole(pick(rng, SCENES_ILLUSTRATION), { phase: moon.label.toLowerCase() });
+  const evenement = nextEventLabel(dateISO);
+  return evenement ? `${scene}. Au loin, une suggestion discrète de ${evenement} qui approche.` : scene;
+}
+
+/** Résout les visuels du jour pour Facebook et Instagram : tente une
+ * illustration IA fraîche (gpt-image-1, partagée entre les deux plateformes
+ * puisqu'elles acceptent toutes les deux du JPEG 1536x1024), et retombe sur
+ * la rotation de visuels statiques du site en cas d'échec ou d'absence de
+ * clé OPENAI_API_KEY — jamais de blocage du pipeline de publication. */
+async function imagesDuJour(dateISO: string): Promise<{ facebook: string; instagram: string }> {
+  try {
+    const url = await genererIllustrationSociale(sujetIllustrationDuJour(dateISO), dateISO);
+    if (url) return { facebook: url, instagram: url };
+  } catch (err) {
+    console.error('genererIllustrationSociale a échoué, retombe sur les visuels statiques', err);
+  }
+  return { facebook: visuelDuJour(dateISO), instagram: visuelInstagramDuJour(dateISO) };
+}
+
 // ===== Mode démo (sans clé Anthropic) =====
 
 const IG_LEGENDES = [
@@ -117,18 +153,17 @@ function interpole(texte: string, vars: Record<string, string>): string {
 
 const HASHTAGS_BASE = '#horoscope #astrologie #horosphere #signeastrologique #spiritualite';
 
-function fallbackSocialContent(dateISO: string): DailySocialContent {
+async function fallbackSocialContent(dateISO: string): Promise<DailySocialContent> {
   const moon = moonPhaseInfo(new Date(dateISO));
   const jour = new Date(dateISO).toLocaleDateString('fr-FR', { weekday: 'long' });
   const vars = { phase: moon.label.toLowerCase(), influence: moon.influence, jour };
   const rng = mulberry32(hashStr('social::' + dateISO));
   const hook = pick(rng, TIKTOK_HOOKS);
-  const imageUrl = visuelDuJour(dateISO);
-  const imageUrlInstagram = visuelInstagramDuJour(dateISO);
+  const images = await imagesDuJour(dateISO);
 
   return {
-    instagram: { legende: interpole(pick(rng, IG_LEGENDES), vars), hashtags: HASHTAGS_BASE + ' #luneDuJour', imageUrl: imageUrlInstagram, scriptVideo: null, mode: 'demo' },
-    facebook: { legende: interpole(pick(rng, FB_LEGENDES), vars), hashtags: HASHTAGS_BASE, imageUrl, scriptVideo: null, mode: 'demo' },
+    instagram: { legende: interpole(pick(rng, IG_LEGENDES), vars), hashtags: HASHTAGS_BASE + ' #luneDuJour', imageUrl: images.instagram, scriptVideo: null, mode: 'demo' },
+    facebook: { legende: interpole(pick(rng, FB_LEGENDES), vars), hashtags: HASHTAGS_BASE, imageUrl: images.facebook, scriptVideo: null, mode: 'demo' },
     tiktok: {
       legende: `${hook} ${HASHTAGS_BASE}`,
       hashtags: HASHTAGS_BASE + ' #pourtoi #fyp',
@@ -169,20 +204,19 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
 
   try {
     const parsed = await callClaude(apiKey, model, prompt, 1200);
-    const imageUrl = visuelDuJour(dateISO);
-    const imageUrlInstagram = visuelInstagramDuJour(dateISO);
+    const images = await imagesDuJour(dateISO);
     return {
       instagram: {
         legende: String(parsed.instagram?.legende ?? ''),
         hashtags: String(parsed.instagram?.hashtags ?? HASHTAGS_BASE),
-        imageUrl: imageUrlInstagram,
+        imageUrl: images.instagram,
         scriptVideo: null,
         mode: 'ia',
       },
       facebook: {
         legende: String(parsed.facebook?.legende ?? ''),
         hashtags: String(parsed.facebook?.hashtags ?? HASHTAGS_BASE),
-        imageUrl,
+        imageUrl: images.facebook,
         scriptVideo: null,
         mode: 'ia',
       },
