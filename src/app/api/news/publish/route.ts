@@ -33,7 +33,18 @@ export async function POST(req: NextRequest) {
   const titre = String(body.titre || '').trim();
   const contenu = String(body.contenu || '').trim();
   if (!titre || !contenu) {
-    return NextResponse.json({ error: 'Titre et contenu sont obligatoires.' }, { status: 400 });
+    // Diagnostic temporaire (panne "Publication actualités" en 400) : la
+    // cause n'est pas confirmée, donc on renvoie ce qui a réellement été
+    // reçu plutôt que de deviner davantage. À retirer une fois la panne
+    // élucidée — ne doit jamais fuiter en usage normal (titre/contenu
+    // présents dans l'immense majorité des appels légitimes).
+    return NextResponse.json(
+      {
+        error: 'Titre et contenu sont obligatoires.',
+        debug: { contentType, receivedKeys: Object.keys(body), bodyPreview: JSON.stringify(body).slice(0, 500) },
+      },
+      { status: 400 }
+    );
   }
 
   try {
