@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { stripeClient, stripeConfigured } from '@/lib/stripe';
 import { requireDb, dbConfigured } from '@/lib/db';
 import { CREDIT_PACKS, SUBSCRIPTIONS } from '@/lib/pricing';
+import { promoSeptembre2026Active, COUPON_PACK_SEPTEMBRE_2026 } from '@/lib/promotions';
 
 async function getOrCreateCustomer(userId: number, email: string): Promise<string> {
   const sql = requireDb();
@@ -56,10 +57,17 @@ export async function POST(req: NextRequest) {
 
   const origin = req.headers.get('origin') || `https://${req.headers.get('host')}`;
 
+  // Promo de lancement (septembre 2026) : -10% sur les packs, appliqué
+  // automatiquement (pas de code à saisir) tant que le coupon Stripe reste
+  // valide — voir lib/promotions.ts. Ne concerne que les packs (paiement
+  // unique) ; les abonnements ont leur propre offre (voir /api/stripe/webhook).
+  const discounts = pack && promoSeptembre2026Active() ? [{ coupon: COUPON_PACK_SEPTEMBRE_2026 }] : undefined;
+
   const checkoutSession = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: pack ? 'payment' : 'subscription',
     line_items: [{ price: priceId, quantity: 1 }],
+    discounts,
     success_url: `${origin}/app?checkout=success`,
     cancel_url: `${origin}/tarifs?checkout=annule`,
     metadata: pack

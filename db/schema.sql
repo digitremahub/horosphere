@@ -167,3 +167,12 @@ CREATE TABLE IF NOT EXISTS news (
 );
 
 CREATE INDEX IF NOT EXISTS idx_news_publie ON news (publie, publie_le DESC);
+
+-- ===== Promo de lancement (septembre 2026) =====
+-- Compte les bénéficiaires du bonus "100 premiers abonnés" (x2 crédits sur
+-- le premier mois) — voir lib/promotions.ts. user_id en clé primaire :
+-- un réabonnement ultérieur ne peut jamais redoubler les crédits deux fois.
+CREATE TABLE IF NOT EXISTS promo_premiers_abonnes (
+  user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  granted_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);

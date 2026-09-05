@@ -3,6 +3,7 @@ import Stripe from 'stripe';
 import { stripeClient } from '@/lib/stripe';
 import { requireDb } from '@/lib/db';
 import { grantPackCredits, grantSubscriptionCredits } from '@/lib/credits';
+import { promoSeptembre2026Active, reserverBonusPremiersAbonnes } from '@/lib/promotions';
 
 export const runtime = 'nodejs';
 
@@ -71,9 +72,20 @@ export async function POST(req: NextRequest) {
         if (subId) {
           const sub = await stripe.subscriptions.retrieve(subId);
           const userId = Number(sub.metadata?.horosphereUserId);
-          const credits = Number(sub.metadata?.credits);
+          let credits = Number(sub.metadata?.credits);
           const slug = sub.metadata?.slug || 'inconnu';
           if (userId && credits) {
+            // Promo de lancement (septembre 2026) : x2 crédits sur le tout
+            // premier mois d'un abonnement, pour les 100 premiers abonnés
+            // seulement — jamais sur un renouvellement (billing_reason
+            // distingue la toute première facture des suivantes). Voir
+            // lib/promotions.ts pour l'octroi atomique (pas de double bonus
+            // même en cas de réabonnement ultérieur).
+            const premierePeriode = invoice.billing_reason === 'subscription_create';
+            if (premierePeriode && promoSeptembre2026Active()) {
+              const beneficie = await reserverBonusPremiersAbonnes(userId);
+              if (beneficie) credits *= 2;
+            }
             const periodLabel = new Date((sub as any).current_period_start * 1000).toISOString().slice(0, 7);
             await grantSubscriptionCredits(userId, credits, slug, periodLabel);
             await upsertSubscription(sub, userId, slug);

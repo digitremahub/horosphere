@@ -5,16 +5,24 @@ import ScrollReveal from '@/components/ScrollReveal';
 import { auth } from '@/lib/auth';
 import { dbConfigured } from '@/lib/db';
 import { getBalance, hasActiveSubscription } from '@/lib/credits';
+import { promoSeptembre2026Active } from '@/lib/promotions';
 
 // Photo réelle du rituel quotidien — voir la bannière tarifs et la
 // connexion pour les deux autres.
 const PHOTO_RITUEL = '/images/hero-accueil.png';
 
-const ETAPES = [
-  { titre: 'Vous arrivez, sans engagement', texte: "Créez votre compte en un e-mail, aucune carte requise. Vous recevez vos premiers crédits offerts." },
-  { titre: 'Vous lisez, à votre rythme', texte: 'Chaque lecture consomme quelques crédits. Vous ne payez que ce que vous utilisez.' },
-  { titre: 'Vous restez, si ça vous fait du bien', texte: 'Un pack quand vous en avez besoin, un abonnement si Horosphère devient une habitude. Toujours résiliable.' },
-];
+function etapes(promoActive: boolean) {
+  return [
+    {
+      titre: 'Vous arrivez, sans engagement',
+      texte: promoActive
+        ? "Créez votre compte en un e-mail, aucune carte requise. 10 crédits offerts (au lieu de 3) — valables 7 jours, offre de lancement de septembre."
+        : "Créez votre compte en un e-mail, aucune carte requise. Vous recevez vos premiers crédits offerts.",
+    },
+    { titre: 'Vous lisez, à votre rythme', texte: 'Chaque lecture consomme quelques crédits. Vous ne payez que ce que vous utilisez.' },
+    { titre: 'Vous restez, si ça vous fait du bien', texte: 'Un pack quand vous en avez besoin, un abonnement si Horosphère devient une habitude. Toujours résiliable.' },
+  ];
+}
 
 /** CTA principal de la page d'accueil : "Commencer gratuitement" n'a de
  * sens que pour quelqu'un qui n'a pas encore de compte. Une personne déjà
@@ -55,6 +63,7 @@ function SectionDivider() {
 
 export default async function HomePage() {
   const cta = await resolveMainCta();
+  const ETAPES = etapes(promoSeptembre2026Active());
   return (
     <main>
       {/* 0. Bandeau d'ouverture, plein écran en largeur */}

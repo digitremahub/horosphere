@@ -1,6 +1,8 @@
 import { auth } from '@/lib/auth';
+import { dbConfigured } from '@/lib/db';
 import { stripeConfigured } from '@/lib/stripe';
 import { CREDIT_PACKS, SUBSCRIPTIONS, FEATURE_COSTS, FEATURE_LABELS, euros } from '@/lib/pricing';
+import { promoSeptembre2026Active, premiersAbonnesRestants } from '@/lib/promotions';
 import PricingButton from '@/components/PricingButton';
 import BrandMark from '@/components/BrandMark';
 import ScrollReveal from '@/components/ScrollReveal';
@@ -10,6 +12,8 @@ const PHOTO_BANNIERE = '/images/bg-tarifs.png';
 export default async function TarifsPage() {
   const session = await auth();
   const loggedIn = Boolean(session?.user);
+  const promoActive = promoSeptembre2026Active();
+  const placesRestantes = promoActive && dbConfigured ? await premiersAbonnesRestants() : 0;
 
   return (
     <main style={{ paddingBottom: 96 }}>
@@ -37,8 +41,25 @@ export default async function TarifsPage() {
         </p>
       </div>
 
+      {promoActive && (
+        <div className="card" style={{ padding: '20px 22px', marginBottom: 48, borderColor: 'var(--lever)', background: 'var(--brume)' }}>
+          <div className="pill" style={{ marginBottom: 12, borderColor: 'var(--lever)', color: 'var(--lever-profond)' }}>Offre de lancement — septembre 2026</div>
+          <ul style={{ margin: 0, paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 6, fontSize: '0.92rem', color: 'var(--encre)' }}>
+            <li>-10% sur tous les packs de crédits, appliqué automatiquement jusqu'au 30 septembre.</li>
+            <li>
+              {placesRestantes > 0
+                ? `Crédits doublés sur le premier mois d'abonnement, pour les 100 premiers abonnés — plus que ${placesRestantes} place${placesRestantes > 1 ? 's' : ''}.`
+                : "Le bonus crédits doublés pour les 100 premiers abonnés est épuisé — merci à celles et ceux qui ont lancé Horosphère avec nous !"}
+            </li>
+            <li>10 crédits offerts à l'inscription (au lieu de 3) — valables 7 jours.</li>
+          </ul>
+        </div>
+      )}
+
       <h2 style={{ fontSize: '1.3rem', marginBottom: 18 }}>Packs de crédits</h2>
-      <p style={{ color: 'var(--sourdine)', fontSize: '0.86rem', marginBottom: 22 }}>Valables 45 jours après l'achat.</p>
+      <p style={{ color: 'var(--sourdine)', fontSize: '0.86rem', marginBottom: 22 }}>
+        Valables 45 jours après l'achat.{promoActive && ' Remise de 10% déjà appliquée au paiement, jusqu\'au 30 septembre.'}
+      </p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 18, marginBottom: 60 }}>
         {CREDIT_PACKS.map((p, i) => (
           <ScrollReveal key={p.slug} delay={i * 60}>
@@ -62,7 +83,10 @@ export default async function TarifsPage() {
       </div>
 
       <h2 style={{ fontSize: '1.3rem', marginBottom: 18 }}>Abonnements</h2>
-      <p style={{ color: 'var(--sourdine)', fontSize: '0.86rem', marginBottom: 22 }}>Résiliable à tout moment, crédits rechargés chaque mois.</p>
+      <p style={{ color: 'var(--sourdine)', fontSize: '0.86rem', marginBottom: 22 }}>
+        Résiliable à tout moment, crédits rechargés chaque mois.
+        {promoActive && placesRestantes > 0 && ` Crédits doublés le premier mois pour les ${placesRestantes} prochains abonnés.`}
+      </p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20, marginBottom: 64 }}>
         {SUBSCRIPTIONS.map((s, i) => (
           <ScrollReveal key={s.slug} delay={i * 60}>

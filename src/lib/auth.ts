@@ -6,7 +6,7 @@ import bcrypt from 'bcryptjs';
 import { Pool } from 'pg';
 import { sql } from './db';
 import { grantCredits } from './credits';
-import { CREDIT_EXPIRY_DAYS, WELCOME_CREDITS } from './pricing';
+import { creditsBienvenue } from './promotions';
 
 declare global {
   // eslint-disable-next-line no-var
@@ -90,10 +90,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   events: {
     // Crédits de bienvenue : promis sur la page d'accueil, accordés une
-    // seule fois, au moment où l'adaptateur crée la ligne `users`.
+    // seule fois, au moment où l'adaptateur crée la ligne `users`. Voir
+    // lib/promotions.ts : 10 crédits (valables 7 jours) au lieu de 3
+    // pendant la promo de lancement de septembre 2026.
     async createUser({ user }) {
       try {
-        await grantCredits(Number(user.id), WELCOME_CREDITS, 'signup:bienvenue', CREDIT_EXPIRY_DAYS);
+        const { credits, expirationJours, source } = creditsBienvenue();
+        await grantCredits(Number(user.id), credits, source, expirationJours);
       } catch (err) {
         console.error('Échec de l\'octroi des crédits de bienvenue', err);
       }
