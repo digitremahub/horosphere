@@ -1,4 +1,4 @@
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import BrandMark from '@/components/BrandMark';
 import MoonPhase from '@/components/MoonPhase';
 import { SignCircle } from '@/components/CardParts';
@@ -22,6 +22,7 @@ export default function LunarCycleCard({
   cornerArc?: boolean;
 }) {
   const t = useTranslations('Cards');
+  const locale = useLocale() as 'fr' | 'en' | 'es';
   return (
     <div className="card card-enter" style={{ padding: '26px 24px', overflow: 'visible' }}>
       {cornerArc && (
@@ -46,7 +47,7 @@ export default function LunarCycleCard({
       )}
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid var(--trait)' }}>
-        <MoonPhase size={44} phase={reading.phase} />
+        <MoonPhase size={44} phase={reading.phase} locale={locale} />
         <div>
           <div style={{ fontWeight: 700 }}>{reading.phaseLabel}</div>
           <div className="mono" style={{ fontSize: '0.72rem', color: 'var(--sourdine)' }}>{t('illuminated', { pct: reading.illumination })}</div>

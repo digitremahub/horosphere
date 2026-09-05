@@ -17,7 +17,7 @@ export default async function SiteHeader() {
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
           <Logo />
           <span className="display" style={{ fontSize: '1.25rem', fontStyle: 'italic', color: 'var(--encre)' }}>Horosphère</span>
-          <MoonPhase size={18} />
+          <MoonPhase size={18} locale={locale as 'fr' | 'en' | 'es'} />
         </Link>
 
         <nav style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: '0.92rem', flexWrap: 'wrap' }}>

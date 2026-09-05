@@ -6,6 +6,7 @@ import AstrolabeIllustration from '@/components/AstrolabeIllustration';
 import MoonOfTheDay from '@/components/MoonOfTheDay';
 import SkyCountdown from '@/components/SkyCountdown';
 import { getUpcomingSkyEvents } from '@/lib/skyEvents';
+import { dateLocaleTag } from '@/i18n/dateLocale';
 
 export const metadata = {
   title: 'Actualités — Horosphère',
@@ -49,7 +50,7 @@ export default async function ActualitesPage({ searchParams }: { searchParams: P
     error = t('dbNotConnected');
   }
 
-  const dateLocale = locale === 'en' ? 'en-US' : locale === 'es' ? 'es-ES' : 'fr-FR';
+  const dateLocale = dateLocaleTag(locale);
   const selected = (a && items.find((item) => item.slug === a)) || items[0] || null;
   const { corps, signesConcernes } = selected ? splitArticleSections(selected.contenu) : { corps: '', signesConcernes: [] };
   const dateLabel =

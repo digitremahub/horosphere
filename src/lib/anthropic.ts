@@ -641,7 +641,7 @@ export async function generateLunarCycle(opts: {
   langue?: Langue;
 }): Promise<LunarCycleReading> {
   const langue = opts.langue ?? 'fr';
-  const moon = moonPhaseInfo();
+  const moon = moonPhaseInfo(new Date(), langue);
   const { naissance } = opts;
   const themeNatal =
     naissance?.heure && naissance.latitude != null && naissance.longitude != null && naissance.timezone

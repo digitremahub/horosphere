@@ -1,7 +1,11 @@
+import { getLocale, getTranslations } from 'next-intl/server';
 import MoonPhase, { moonPhaseInfo } from './MoonPhase';
+import type { MoonLocale } from '@/lib/moon-i18n';
 
-export default function MoonOfTheDay() {
-  const info = moonPhaseInfo();
+export default async function MoonOfTheDay() {
+  const locale = (await getLocale()) as MoonLocale;
+  const t = await getTranslations('Moon');
+  const info = moonPhaseInfo(new Date(), locale);
 
   return (
     <div
@@ -16,14 +20,14 @@ export default function MoonOfTheDay() {
       }}
     >
       <div className="moon-of-day-icon" style={{ display: 'flex', justifyContent: 'center' }} aria-hidden="true">
-        <MoonPhase size={140} />
+        <MoonPhase size={140} locale={locale} />
       </div>
       <div>
         <div className="pill" style={{ marginBottom: 12, textTransform: 'capitalize' }}>{info.dateLabel}</div>
         <h3 style={{ fontSize: '1.4rem', marginBottom: 10 }}>{info.label}</h3>
         <p style={{ color: 'var(--ombre)', fontSize: '0.98rem', marginBottom: 10 }}>{info.influence}</p>
         <div className="mono" style={{ fontSize: '0.78rem', color: 'var(--sourdine)' }}>
-          {info.illumination}% de la lune est visible cette nuit
+          {t('illuminatedTonight', { pct: info.illumination })}
         </div>
       </div>
       <style>{`

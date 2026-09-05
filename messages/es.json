@@ -22,6 +22,16 @@
   "LanguageSwitcher": {
     "label": "Idioma"
   },
+  "Moon": {
+    "illuminatedTonight": "{pct}% de la luna es visible esta noche"
+  },
+  "SkyEvents": {
+    "nextFullMoon": "Próxima luna llena",
+    "nextNewMoon": "Próxima luna nueva",
+    "nextLunarEclipse": "Próximo eclipse lunar",
+    "nextSolarEclipse": "Próximo eclipse solar",
+    "now": "Ahora"
+  },
   "Cta": {
     "startFree": "Empezar gratis",
     "startFreeTeaser": "Recibir mi lectura completa",

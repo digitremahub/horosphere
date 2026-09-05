@@ -8,6 +8,7 @@ import { FEATURE_LABELS, FeatureKey } from '@/lib/pricing';
 import { THEMES } from '@/lib/themes';
 import { findSign } from '@/lib/zodiac';
 import { localizedSign } from '@/lib/zodiac-i18n';
+import { dateLocaleTag } from '@/i18n/dateLocale';
 import ReadingCard, { type Reading } from '@/components/ReadingCard';
 import AstralChartCard, { type AstralChart } from '@/components/AstralChartCard';
 import SentimentCard from '@/components/SentimentCard';
@@ -106,7 +107,7 @@ export default async function HistoriquePage() {
               rawReading = null;
             }
           }
-          const date = new Date(entry.created_at).toLocaleDateString(locale === 'en' ? 'en-US' : locale === 'es' ? 'es-ES' : 'fr-FR', {
+          const date = new Date(entry.created_at).toLocaleDateString(dateLocaleTag(locale), {
             day: 'numeric',
             month: 'long',
             year: 'numeric',

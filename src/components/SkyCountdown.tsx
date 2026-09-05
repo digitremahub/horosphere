@@ -6,7 +6,16 @@
 // temps restant, seconde par seconde, côté client.
 
 import { useEffect, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import type { SkyEvent } from '@/lib/skyEvents';
+import { dateLocaleTag } from '@/i18n/dateLocale';
+
+const KEY_TO_MESSAGE: Record<string, string> = {
+  'pleine-lune': 'nextFullMoon',
+  'nouvelle-lune': 'nextNewMoon',
+  'eclipse-lunaire': 'nextLunarEclipse',
+  'eclipse-solaire': 'nextSolarEclipse',
+};
 
 function splitRemaining(ms: number) {
   if (ms <= 0) return { j: 0, h: 0, m: 0, s: 0, passed: true };
@@ -25,6 +34,8 @@ function pad(n: number) {
 
 export default function SkyCountdown({ events }: { events: SkyEvent[] }) {
   const [now, setNow] = useState<number | null>(null);
+  const locale = useLocale();
+  const t = useTranslations('SkyEvents');
 
   useEffect(() => {
     setNow(Date.now());
@@ -40,17 +51,18 @@ export default function SkyCountdown({ events }: { events: SkyEvent[] }) {
       {events.map((e) => {
         const target = new Date(e.dateISO).getTime();
         const remaining = now !== null ? splitRemaining(target - now) : null;
-        const dateLabel = new Date(e.dateISO).toLocaleDateString('fr-FR', {
+        const dateLabel = new Date(e.dateISO).toLocaleDateString(dateLocaleTag(locale), {
           day: 'numeric',
           month: 'long',
           year: 'numeric',
         });
+        const messageKey = KEY_TO_MESSAGE[e.key];
 
         return (
           <div key={e.key} className="card" style={{ padding: '18px 14px', textAlign: 'center', boxShadow: 'none' }}>
-            <div className="field-label" style={{ marginBottom: 10 }}>{e.label}</div>
+            <div className="field-label" style={{ marginBottom: 10 }}>{messageKey ? t(messageKey) : e.label}</div>
             <div className="mono" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--lever-profond)', minHeight: '1.4em' }}>
-              {remaining ? (remaining.passed ? 'Maintenant' : `${remaining.j}j ${pad(remaining.h)}h ${pad(remaining.m)}m ${pad(remaining.s)}s`) : '—'}
+              {remaining ? (remaining.passed ? t('now') : `${remaining.j}j ${pad(remaining.h)}h ${pad(remaining.m)}m ${pad(remaining.s)}s`) : '—'}
             </div>
             <div style={{ fontSize: '0.74rem', color: 'var(--sourdine)', marginTop: 8 }}>{dateLabel}</div>
           </div>
