@@ -31,7 +31,7 @@ export default function FreeTeaser({
 
       <div className="pill" style={{ marginBottom: 16 }}>Aperçu gratuit</div>
 
-      <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 12, marginBottom: 18 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 8, marginBottom: 18 }}>
         {SIGNS.map((s) => (
           <button
             key={s.key}
@@ -39,18 +39,16 @@ export default function FreeTeaser({
             aria-pressed={s.key === signKey}
             className="pick-btn"
             style={{
-              flex: '0 0 auto',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               gap: 2,
-              width: 58,
-              padding: '9px 4px',
+              padding: '9px 2px',
               borderRadius: 12,
               border: `1px solid ${s.key === signKey ? 'var(--lever)' : 'var(--trait)'}`,
               background: s.key === signKey ? 'var(--brume)' : 'transparent',
               color: 'var(--ombre)',
-              fontSize: '0.62rem',
+              fontSize: '0.6rem',
               cursor: 'pointer',
             }}
           >

@@ -4,41 +4,91 @@
 // (date + signe) sélectionne des phrases dans des banques de texte FR.
 
 import type { ThemeKey } from './themes';
+import { SIGNS } from './zodiac';
 
+// Douze entrées par banque (au moins) — une par signe : voir pickDistinct
+// ci-dessous, qui garantit que les 12 signes reçoivent 12 textes différents
+// pour une même date plutôt que de piocher indépendamment dans une petite
+// banque (où le paradoxe des anniversaires rend les doublons visibles quasi
+// certains dès que plusieurs personnes comparent leur signe côte à côte,
+// ex: l'aperçu gratuit de la page d'accueil).
 const HEADLINES = [
   'Le ciel vous ouvre une porte discrète.',
   'Une journée à avancer à votre rythme.',
   'Les astres appellent à la patience.',
   'Un vent nouveau souffle sur vos projets.',
   'Le moment est bon pour trancher.',
+  'Une clarté inattendue éclaire votre chemin.',
+  "L'instant présent mérite toute votre attention.",
+  'Un pas de côté révèle une meilleure vue.',
+  'La journée récompense ceux qui écoutent leur instinct.',
+  'Un déclic discret change la couleur de la journée.',
+  'Le terrain est favorable à une initiative sincère.',
+  "Les astres invitent à ralentir avant d'avancer.",
 ];
 
 const AMOUR = [
   'En amour, vous attirez les échanges sincères si vous restez disponible.',
   "Côté cœur, une parole en suspens mérite d'être prononcée aujourd'hui.",
   'Une rencontre ou un message pourrait changer la tonalité de votre journée.',
+  'La tendresse se niche dans les petits gestes plus que les grandes déclarations.',
+  'Un malentendu ancien peut se dénouer si vous osez en reparler calmement.',
+  "L'harmonie sentimentale passe aujourd'hui par l'écoute plus que par les mots.",
+  'Une complicité retrouvée réchauffe une relation qui en avait besoin.',
+  'Le cœur gagne à rester ouvert, même face à une hésitation passagère.',
+  'Une déclaration honnête vaut mieux qu’un silence prudent, aujourd’hui.',
+  'Votre magnétisme naturel attire les bonnes personnes, à condition de le laisser paraître.',
+  'Un moment à deux, même bref, suffit à raviver une connexion.',
+  'La patience en amour porte ses fruits plus vite que prévu.',
 ];
 
 const TRAVAIL = [
   'Au travail, une idée que vous portez depuis un moment mérite d’être formulée à voix haute.',
   'La journée favorise la méthode plus que la précipitation.',
   'Une décision reportée peut enfin être prise.',
+  'Une collaboration inattendue ouvre une porte que vous n’aviez pas vue.',
+  'Le sérieux de vos efforts récents commence à porter ses fruits.',
+  'Un imprévu professionnel se résout mieux avec calme qu’avec insistance.',
+  'C’est le bon moment pour clarifier une attente restée floue avec un collègue.',
+  'Votre rigueur est remarquée, même sans retour immédiat.',
+  'Une petite victoire du jour mérite d’être reconnue, y compris par vous-même.',
+  'L’organisation prend le pas sur l’improvisation aujourd’hui, et c’est tant mieux.',
+  'Une proposition audacieuse a de bonnes chances d’être entendue.',
+  'Le travail de fond que vous menez discrètement commence à se voir.',
 ];
 
 const ENERGIE = [
   "Sur le plan physique, l'énergie est bonne si vous respectez vos limites.",
   "Une marche ou un moment au grand air fait plus de bien qu'un effort intense.",
   'Votre énergie est stable, idéale pour tenir un rythme régulier.',
+  'Un sommeil réparateur cette nuit change la donne pour toute la journée.',
+  "L'envie de bouger se fait sentir — suivez-la sans forcer.",
+  'Une pause consciente vaut mieux qu’un effort supplémentaire aujourd’hui.',
+  'Votre corps réclame de la douceur plus que de la performance.',
+  'Un regain de vitalité arrive en fin de journée — gardez-vous en un peu.',
+  'L’équilibre entre repos et activité est votre meilleur allié aujourd’hui.',
+  'Une respiration profonde suffit parfois à relancer toute la machine.',
+  'Votre énergie mentale est plus vive que d’habitude, profitez-en pour trancher.',
+  'Le corps suit si l’esprit est apaisé — commencez par calmer ce dernier.',
 ];
 
 const CONSEILS = [
   'Osez poser la question qui vous trotte en tête.',
   'Accordez-vous une heure sans écran.',
   'Prenez des nouvelles d’une personne que vous négligez.',
+  'Notez une idée avant qu’elle ne s’échappe.',
+  'Dites non à ce qui ne vous convient plus.',
+  'Offrez-vous un vrai moment de pause, sans culpabilité.',
+  'Réglez aujourd’hui ce petit détail qui traîne depuis trop longtemps.',
+  'Faites confiance à votre première impression.',
+  'Accordez-vous le droit de changer d’avis.',
+  'Célébrez une réussite, même modeste.',
+  'Prenez une décision plutôt que de continuer à peser le pour et le contre.',
+  'Écoutez ce que votre corps essaie de vous dire depuis un moment.',
 ];
 
-const COULEURS = ['Or', 'Bleu nuit', 'Lilas', 'Corail', 'Vert sauge'];
-const TALISMANS = ['une clé', 'une bougie', 'une plume', 'une étoile', 'une boussole'];
+const COULEURS = ['Or', 'Bleu nuit', 'Lilas', 'Corail', 'Vert sauge', 'Bordeaux', 'Argent', 'Turquoise', 'Terracotta', 'Ivoire', 'Prune', 'Ambre'];
+const TALISMANS = ['une clé', 'une bougie', 'une plume', 'une étoile', 'une boussole', 'un galet', 'une coquille', 'un ruban', 'une pierre polie', 'un carnet', 'une lanterne', 'un fil rouge'];
 
 // Exportées : réutilisées par lib/social.ts pour le mode démo du contenu
 // réseaux sociaux, sur le même principe (hash déterministe -> choix stable).
@@ -70,20 +120,43 @@ export function range(rng: () => number, min: number, max: number): number {
   return Math.round(min + rng() * (max - min));
 }
 
+/** Mélange déterministe (Fisher-Yates) de [0..n-1], pour une seed donnée. */
+function shuffledIndices(seed: number, n: number): number[] {
+  const arr = Array.from({ length: n }, (_, i) => i);
+  const rng = mulberry32(seed);
+  for (let i = n - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/** Choisit un élément de `arr` pour `signKey`, de façon à ce que — pour une
+ * même `varyKey` (ex: la date du jour) — chacun des 12 signes reçoive un
+ * élément différent des 11 autres, plutôt qu'une pioche indépendante par
+ * signe (qui produirait des doublons visibles dès que deux personnes
+ * comparent leur signe côte à côte, par paradoxe des anniversaires). `arr`
+ * doit contenir au moins autant d'entrées que de signes du zodiaque. */
+function pickDistinct<T>(varyKey: string, field: string, signKey: string, arr: T[]): T {
+  const signIndex = SIGNS.findIndex((s) => s.key === signKey);
+  const perm = shuffledIndices(hashStr(varyKey + '::' + field), SIGNS.length);
+  return arr[perm[signIndex === -1 ? 0 : signIndex] % arr.length];
+}
+
 export function fallbackHoroscope(signKey: string, dateISO: string) {
   const rng = mulberry32(hashStr(dateISO + '::' + signKey));
   return {
-    headline: pick(rng, HEADLINES),
-    amour: pick(rng, AMOUR),
-    travail: pick(rng, TRAVAIL),
-    energie: pick(rng, ENERGIE),
-    conseil: pick(rng, CONSEILS),
+    headline: pickDistinct(dateISO, 'headline', signKey, HEADLINES),
+    amour: pickDistinct(dateISO, 'amour', signKey, AMOUR),
+    travail: pickDistinct(dateISO, 'travail', signKey, TRAVAIL),
+    energie: pickDistinct(dateISO, 'energie', signKey, ENERGIE),
+    conseil: pickDistinct(dateISO, 'conseil', signKey, CONSEILS),
     scoreAmour: range(rng, 35, 97),
     scoreTravail: range(rng, 35, 97),
     scoreEnergie: range(rng, 35, 97),
-    couleur: pick(rng, COULEURS),
+    couleur: pickDistinct(dateISO, 'couleur', signKey, COULEURS),
     chiffre: range(rng, 1, 49),
-    talisman: pick(rng, TALISMANS),
+    talisman: pickDistinct(dateISO, 'talisman', signKey, TALISMANS),
   };
 }
 
