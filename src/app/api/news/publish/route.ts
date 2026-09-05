@@ -17,13 +17,18 @@ export async function POST(req: NextRequest) {
 
   // Accepte JSON ou x-www-form-urlencoded (Make envoie ce dernier pour
   // éviter l'échappement JSON manuel sur des champs Airtable en texte libre).
+  // Le corps brut est décodé nous-mêmes plutôt que via req.formData() : ce
+  // module Make n'envoie pas toujours un en-tête Content-Type que l'API
+  // Fetch juge assez strictement conforme pour formData(), qui échoue alors
+  // silencieusement (body vide -> 400 "titre et contenu obligatoires" alors
+  // que Make avait bien envoyé un article complet).
   const contentType = req.headers.get('content-type') || '';
   let body: Record<string, unknown> = {};
   if (contentType.includes('application/json')) {
     body = await req.json().catch(() => ({}));
   } else {
-    const form = await req.formData().catch(() => null);
-    if (form) body = Object.fromEntries(form.entries());
+    const raw = await req.text().catch(() => '');
+    if (raw) body = Object.fromEntries(new URLSearchParams(raw).entries());
   }
   const titre = String(body.titre || '').trim();
   const contenu = String(body.contenu || '').trim();
