@@ -35,6 +35,8 @@ export function siteUrl(): string {
 // Visuels déjà présents sur le site, mis en rotation quotidienne plutôt que
 // de générer une image à chaque fois (aucun outil de génération d'image
 // dans ce pipeline) — cohérent avec l'identité visuelle existante.
+// Facebook accepte le PNG sans problème (Graph API), donc ces cinq visuels
+// (dont bg-tarifs.png, au ratio 2.25:1) restent utilisables tels quels.
 const VISUELS = [
   '/images/hero-accueil.png',
   '/images/bg-theme-astral.png',
@@ -43,9 +45,26 @@ const VISUELS = [
   '/images/bg-connexion.png',
 ];
 
+// Instagram (Content Publishing API) impose du JPEG strict et un ratio
+// entre 4:5 et 1.91:1 — bg-tarifs.png (2.25:1) est hors gabarit, et le PNG
+// est refusé quel que soit le ratio. Copies JPEG dédiées dans
+// public/images/social/, mêmes visuels que ceux utilisés pour Facebook
+// (sauf bg-tarifs.png, exclu) pour garder une identité visuelle cohérente.
+const VISUELS_INSTAGRAM = [
+  '/images/social/hero-accueil.jpg',
+  '/images/social/bg-theme-astral.jpg',
+  '/images/social/bg-resultat-lecture.jpg',
+  '/images/social/bg-connexion.jpg',
+];
+
 export function visuelDuJour(dateISO: string): string {
   const rng = mulberry32(hashStr('visuel::' + dateISO));
   return siteUrl() + pick(rng, VISUELS);
+}
+
+export function visuelInstagramDuJour(dateISO: string): string {
+  const rng = mulberry32(hashStr('visuel-ig::' + dateISO));
+  return siteUrl() + pick(rng, VISUELS_INSTAGRAM);
 }
 
 // Illustrations dédiées à la page Actualités (fournies par le community
@@ -105,9 +124,10 @@ function fallbackSocialContent(dateISO: string): DailySocialContent {
   const rng = mulberry32(hashStr('social::' + dateISO));
   const hook = pick(rng, TIKTOK_HOOKS);
   const imageUrl = visuelDuJour(dateISO);
+  const imageUrlInstagram = visuelInstagramDuJour(dateISO);
 
   return {
-    instagram: { legende: interpole(pick(rng, IG_LEGENDES), vars), hashtags: HASHTAGS_BASE + ' #luneDuJour', imageUrl, scriptVideo: null, mode: 'demo' },
+    instagram: { legende: interpole(pick(rng, IG_LEGENDES), vars), hashtags: HASHTAGS_BASE + ' #luneDuJour', imageUrl: imageUrlInstagram, scriptVideo: null, mode: 'demo' },
     facebook: { legende: interpole(pick(rng, FB_LEGENDES), vars), hashtags: HASHTAGS_BASE, imageUrl, scriptVideo: null, mode: 'demo' },
     tiktok: {
       legende: `${hook} ${HASHTAGS_BASE}`,
@@ -150,11 +170,12 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
   try {
     const parsed = await callClaude(apiKey, model, prompt, 1200);
     const imageUrl = visuelDuJour(dateISO);
+    const imageUrlInstagram = visuelInstagramDuJour(dateISO);
     return {
       instagram: {
         legende: String(parsed.instagram?.legende ?? ''),
         hashtags: String(parsed.instagram?.hashtags ?? HASHTAGS_BASE),
-        imageUrl,
+        imageUrl: imageUrlInstagram,
         scriptVideo: null,
         mode: 'ia',
       },
