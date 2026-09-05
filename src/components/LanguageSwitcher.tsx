@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { routing } from '@/i18n/routing';
 
-const NOMS: Record<string, string> = { fr: 'FR', en: 'EN' };
+const NOMS: Record<string, string> = { fr: 'FR', en: 'EN', es: 'ES' };
 
 // Bascule la langue sans changer de page (le chemin est repris tel quel,
 // juste reconstruit sous l'autre préfixe — /tarifs <-> /en/tarifs).

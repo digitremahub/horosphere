@@ -14,7 +14,7 @@ import {
   fallbackTransits,
 } from './fallback-generator';
 
-export type Langue = 'fr' | 'en';
+export type Langue = 'fr' | 'en' | 'es';
 
 // Les instructions de ces prompts restent rédigées en français (c'est la
 // langue de travail de ce fichier) — seule la langue du CONTENU généré
@@ -22,14 +22,15 @@ export type Langue = 'fr' | 'en';
 // consigneLangue() ajoute une directive explicite au prompt ; motLangue()
 // s'utilise pour les mentions ponctuelles à l'intérieur du format JSON
 // attendu (ex: "nom d'une couleur porte-bonheur (...)").
+const NOMS_LANGUE: Record<Exclude<Langue, 'fr'>, string> = { en: 'anglais', es: 'espagnol' };
 function consigneLangue(langue: Langue): string {
-  if (langue === 'en') {
-    return "\n\nIMPORTANT : rédige l'intégralité des champs texte de ta réponse UNIQUEMENT en anglais (pas en français), même si ces instructions te sont données en français. Les noms de champs JSON restent ceux indiqués ci-dessus, inchangés.";
-  }
-  return '';
+  if (langue === 'fr') return '';
+  return `\n\nIMPORTANT : rédige l'intégralité des champs texte de ta réponse UNIQUEMENT en ${NOMS_LANGUE[langue]} (pas en français), même si ces instructions te sont données en français. Les noms de champs JSON restent ceux indiqués ci-dessus, inchangés.`;
 }
 function motLangue(langue: Langue): string {
-  return langue === 'en' ? 'in English' : 'en français';
+  if (langue === 'en') return 'in English';
+  if (langue === 'es') return 'en español';
+  return 'en français';
 }
 
 export type HoroscopeReading = {

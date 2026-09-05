@@ -106,7 +106,7 @@ export default async function HistoriquePage() {
               rawReading = null;
             }
           }
-          const date = new Date(entry.created_at).toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', {
+          const date = new Date(entry.created_at).toLocaleDateString(locale === 'en' ? 'en-US' : locale === 'es' ? 'es-ES' : 'fr-FR', {
             day: 'numeric',
             month: 'long',
             year: 'numeric',

@@ -49,7 +49,7 @@ export default async function ActualitesPage({ searchParams }: { searchParams: P
     error = t('dbNotConnected');
   }
 
-  const dateLocale = locale === 'en' ? 'en-US' : 'fr-FR';
+  const dateLocale = locale === 'en' ? 'en-US' : locale === 'es' ? 'es-ES' : 'fr-FR';
   const selected = (a && items.find((item) => item.slug === a)) || items[0] || null;
   const { corps, signesConcernes } = selected ? splitArticleSections(selected.contenu) : { corps: '', signesConcernes: [] };
   const dateLabel =

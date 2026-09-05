@@ -18,7 +18,7 @@ export default function FreeTeaser({
   ctaHref?: string;
   ctaLabel?: string;
 }) {
-  const locale = useLocale() as 'fr' | 'en';
+  const locale = useLocale() as 'fr' | 'en' | 'es';
   const t = useTranslations('Home');
   const tCta = useTranslations('Cta');
   const [signKey, setSignKey] = useState('belier');

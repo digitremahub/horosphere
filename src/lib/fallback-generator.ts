@@ -13,11 +13,11 @@ import { SIGNS } from './zodiac';
 // certains dès que plusieurs personnes comparent leur signe côte à côte,
 // ex: l'aperçu gratuit de la page d'accueil).
 //
-// Seul fallbackHoroscope() est bilingue (FR/EN) : c'est le seul de ces
-// générateurs de secours utilisé inconditionnellement, même quand la clé
-// IA est configurée (aperçu gratuit public de la page d'accueil, jamais
+// Seul fallbackHoroscope() est multilingue (FR/EN/ES) : c'est le seul de
+// ces générateurs de secours utilisé inconditionnellement, même quand la
+// clé IA est configurée (aperçu gratuit public de la page d'accueil, jamais
 // authentifié). Les autres fallbacks de ce fichier ne servent qu'en mode
-// démo (clé IA absente) — leur traduction anglaise reste à faire.
+// démo (clé IA absente) — leur traduction reste à faire.
 const HEADLINES_FR = [
   'Le ciel vous ouvre une porte discrète.',
   'Une journée à avancer à votre rythme.',
@@ -174,6 +174,84 @@ const CONSEILS_EN = [
 const COULEURS_EN = ['Gold', 'Midnight blue', 'Lilac', 'Coral', 'Sage green', 'Burgundy', 'Silver', 'Turquoise', 'Terracotta', 'Ivory', 'Plum', 'Amber'];
 const TALISMANS_EN = ['a key', 'a candle', 'a feather', 'a star', 'a compass', 'a pebble', 'a seashell', 'a ribbon', 'a polished stone', 'a notebook', 'a lantern', 'a red thread'];
 
+const HEADLINES_ES = [
+  'El cielo te abre una puerta discreta.',
+  'Un día para avanzar a tu propio ritmo.',
+  'Los astros piden paciencia.',
+  'Un viento nuevo sopla sobre tus proyectos.',
+  'Es un buen momento para decidir.',
+  'Una claridad inesperada ilumina tu camino.',
+  'El instante presente merece toda tu atención.',
+  'Un paso al lado revela una mejor vista.',
+  'El día recompensa a quienes escuchan su instinto.',
+  'Un clic discreto cambia el color del día.',
+  'El terreno es favorable para una iniciativa sincera.',
+  'Los astros invitan a bajar el ritmo antes de avanzar.',
+];
+
+const AMOUR_ES = [
+  'En el amor, atraes intercambios sinceros si te mantienes disponible.',
+  'En el terreno del corazón, una palabra pendiente merece decirse hoy.',
+  'Un encuentro o un mensaje podría cambiar el tono de tu día.',
+  'La ternura se esconde en los pequeños gestos más que en las grandes declaraciones.',
+  'Un malentendido antiguo puede resolverse si te atreves a hablarlo con calma.',
+  'Hoy la armonía sentimental pasa más por escuchar que por las palabras.',
+  'Una complicidad recuperada calienta una relación que lo necesitaba.',
+  'El corazón gana si permanece abierto, incluso ante una duda pasajera.',
+  'Hoy, una confesión honesta vale más que un silencio prudente.',
+  'Tu magnetismo natural atrae a las personas adecuadas, si lo dejas mostrarse.',
+  'Un momento a solas, aunque breve, basta para reavivar una conexión.',
+  'La paciencia en el amor da frutos más rápido de lo esperado.',
+];
+
+const TRAVAIL_ES = [
+  'En el trabajo, una idea que llevas tiempo guardando merece decirse en voz alta.',
+  'El día favorece el método más que la precipitación.',
+  'Una decisión aplazada por fin puede tomarse.',
+  'Una colaboración inesperada abre una puerta que no habías visto.',
+  'La seriedad de tus esfuerzos recientes empieza a dar frutos.',
+  'Un imprevisto profesional se resuelve mejor con calma que con insistencia.',
+  'Es un buen momento para aclarar una expectativa difusa con un compañero.',
+  'Tu rigor se nota, aunque no haya respuesta inmediata.',
+  'Una pequeña victoria del día merece ser reconocida, incluso por ti mismo.',
+  'Hoy la organización se impone a la improvisación, y eso es bueno.',
+  'Una propuesta audaz tiene buenas posibilidades de ser escuchada.',
+  'El trabajo de fondo que llevas adelante en silencio empieza a notarse.',
+];
+
+const ENERGIE_ES = [
+  'A nivel físico, la energía es buena si respetas tus límites.',
+  'Un paseo o un momento al aire libre sienta mejor que un esfuerzo intenso.',
+  'Tu energía es estable, ideal para mantener un ritmo regular.',
+  'Un sueño reparador esta noche cambia todo el día.',
+  'Las ganas de moverte se hacen notar — síguelas sin forzar.',
+  'Hoy una pausa consciente vale más que un esfuerzo adicional.',
+  'Tu cuerpo pide suavidad más que rendimiento.',
+  'Un repunte de vitalidad llega al final del día — guarda algo de reserva.',
+  'El equilibrio entre descanso y actividad es hoy tu mejor aliado.',
+  'A veces basta una respiración profunda para reactivar toda la máquina.',
+  'Tu energía mental está más despierta de lo habitual, aprovéchala para decidir.',
+  'El cuerpo sigue si la mente está en calma — empieza por calmar esta última.',
+];
+
+const CONSEILS_ES = [
+  'Atrévete a hacer la pregunta que te ronda la cabeza.',
+  'Regálate una hora sin pantallas.',
+  'Pregunta por alguien a quien tienes un poco olvidado.',
+  'Anota una idea antes de que se te escape.',
+  'Di que no a lo que ya no te conviene.',
+  'Concédete una pausa de verdad, sin culpa.',
+  'Resuelve hoy ese pequeño detalle que arrastras desde hace demasiado tiempo.',
+  'Confía en tu primera impresión.',
+  'Date el derecho a cambiar de opinión.',
+  'Celebra un logro, aunque sea modesto.',
+  'Toma una decisión en lugar de seguir sopesando los pros y los contras.',
+  'Escucha lo que tu cuerpo lleva tiempo intentando decirte.',
+];
+
+const COULEURS_ES = ['Dorado', 'Azul noche', 'Lila', 'Coral', 'Verde salvia', 'Burdeos', 'Plateado', 'Turquesa', 'Terracota', 'Marfil', 'Ciruela', 'Ámbar'];
+const TALISMANS_ES = ['una llave', 'una vela', 'una pluma', 'una estrella', 'una brújula', 'un guijarro', 'una concha', 'una cinta', 'una piedra pulida', 'un cuaderno', 'una linterna', 'un hilo rojo'];
+
 // Exportées : réutilisées par lib/social.ts pour le mode démo du contenu
 // réseaux sociaux, sur le même principe (hash déterministe -> choix stable).
 export function hashStr(s: string): number {
@@ -227,12 +305,15 @@ function pickDistinct<T>(varyKey: string, field: string, signKey: string, arr: T
   return arr[perm[signIndex === -1 ? 0 : signIndex] % arr.length];
 }
 
-export function fallbackHoroscope(signKey: string, dateISO: string, locale: 'fr' | 'en' = 'fr') {
+const BANQUES_PAR_LANGUE = {
+  fr: { headlines: HEADLINES_FR, amour: AMOUR_FR, travail: TRAVAIL_FR, energie: ENERGIE_FR, conseils: CONSEILS_FR, couleurs: COULEURS_FR, talismans: TALISMANS_FR },
+  en: { headlines: HEADLINES_EN, amour: AMOUR_EN, travail: TRAVAIL_EN, energie: ENERGIE_EN, conseils: CONSEILS_EN, couleurs: COULEURS_EN, talismans: TALISMANS_EN },
+  es: { headlines: HEADLINES_ES, amour: AMOUR_ES, travail: TRAVAIL_ES, energie: ENERGIE_ES, conseils: CONSEILS_ES, couleurs: COULEURS_ES, talismans: TALISMANS_ES },
+} as const;
+
+export function fallbackHoroscope(signKey: string, dateISO: string, locale: 'fr' | 'en' | 'es' = 'fr') {
   const rng = mulberry32(hashStr(dateISO + '::' + signKey));
-  const banks =
-    locale === 'en'
-      ? { headlines: HEADLINES_EN, amour: AMOUR_EN, travail: TRAVAIL_EN, energie: ENERGIE_EN, conseils: CONSEILS_EN, couleurs: COULEURS_EN, talismans: TALISMANS_EN }
-      : { headlines: HEADLINES_FR, amour: AMOUR_FR, travail: TRAVAIL_FR, energie: ENERGIE_FR, conseils: CONSEILS_FR, couleurs: COULEURS_FR, talismans: TALISMANS_FR };
+  const banks = BANQUES_PAR_LANGUE[locale] ?? BANQUES_PAR_LANGUE.fr;
   return {
     headline: pickDistinct(dateISO, 'headline', signKey, banks.headlines),
     amour: pickDistinct(dateISO, 'amour', signKey, banks.amour),

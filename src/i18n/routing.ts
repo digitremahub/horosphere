@@ -1,10 +1,11 @@
 import { defineRouting } from 'next-intl/routing';
 
 // Français par défaut, sans préfixe d'URL (horosphere.fr reste tel quel) ;
-// l'anglais vit sous /en (horosphere.fr/en/...). D'autres langues pourront
-// s'ajouter ici plus tard sans toucher au reste du routage.
+// l'anglais vit sous /en (horosphere.fr/en/...), l'espagnol sous /es.
+// D'autres langues pourront s'ajouter ici plus tard sans toucher au reste
+// du routage.
 export const routing = defineRouting({
-  locales: ['fr', 'en'],
+  locales: ['fr', 'en', 'es'],
   defaultLocale: 'fr',
   localePrefix: 'as-needed',
 });

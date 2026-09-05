@@ -39,7 +39,7 @@ function isoWeekKey(date: Date): string {
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const feature = body.feature as FeatureKey;
-  const langue: Langue = body.locale === 'en' ? 'en' : 'fr';
+  const langue: Langue = body.locale === 'en' || body.locale === 'es' ? body.locale : 'fr';
   const t = await getTranslations({ locale: langue, namespace: 'ApiGenerate' });
 
   const session = await auth();
