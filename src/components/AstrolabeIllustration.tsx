@@ -4,12 +4,15 @@
 // placées à leur véritable longitude écliptique géocentrique du moment
 // (voir lib/planets.ts, calculée via astronomy-engine — aucun appel
 // réseau), chacune identifiée par son glyphe (nom complet + signe + degré
-// au survol, voir <title>). Contrairement aux planètes, l'anneau extérieur
-// (graduations + arceau + aiguille) est purement décoratif : il tourne très
-// lentement pour suggérer un instrument vivant, sans jamais représenter de
-// donnée réelle — c'est pourquoi les planètes et leurs glyphes sont rendus
-// dans un groupe SÉPARÉ, non affecté par la rotation (un glyphe qui
-// tournerait avec l'anneau deviendrait illisible la moitié du temps).
+// au survol, voir <title>). Le disque central représente la Terre : ce
+// diagramme est géocentrique (les longitudes sont celles vues DEPUIS la
+// Terre), donc c'est elle — jamais une planète — qui occupe le centre fixe.
+// Contrairement aux planètes, l'anneau extérieur (graduations + arceau +
+// aiguille) est purement décoratif : il tourne très lentement pour suggérer
+// un instrument vivant, sans jamais représenter de donnée réelle — c'est
+// pourquoi la Terre, les planètes et leurs glyphes sont rendus dans un
+// groupe SÉPARÉ, non affecté par la rotation (un glyphe qui tournerait avec
+// l'anneau deviendrait illisible la moitié du temps).
 // Le décalage d'animation ci-dessous est calé sur l'horloge système plutôt
 // que sur 0 : sans ça, l'anneau repartait du même point de départ à chaque
 // chargement de page, ce qui donnait l'impression que l'instrument
@@ -19,7 +22,9 @@
 import { currentPlanetPositions, zodiacSignAt } from '@/lib/planets';
 
 const TICKS = Array.from({ length: 12 }, (_, i) => i * 30);
-const SPIN_DURATION_S = 90;
+// Un tour complet toutes les 4 minutes — assez lent pour rester un détail
+// d'ambiance en fond d'écran plutôt qu'un mouvement qui capte l'œil.
+const SPIN_DURATION_S = 240;
 
 function toXY(angle: number, r: number, cx = 100, cy = 100) {
   const rad = ((angle - 90) * Math.PI) / 180;
@@ -103,7 +108,12 @@ export default function AstrolabeIllustration({ size = 320 }: { size?: number })
       })}
 
       <circle cx="100" cy="100" r="30" fill="none" stroke="var(--trait)" strokeWidth="1" />
-      <path d="M 100 76 A 24 24 0 0 0 100 124 A 18 24 0 0 1 100 76 Z" fill="var(--ambre)" opacity="0.85" />
+      <g>
+        <circle cx="100" cy="100" r="13" fill="var(--sauge)" opacity="0.85" />
+        <ellipse cx="100" cy="100" rx="13" ry="5" fill="none" stroke="var(--aube)" strokeWidth="0.8" opacity="0.7" />
+        <line x1="100" y1="87" x2="100" y2="113" stroke="var(--aube)" strokeWidth="0.8" opacity="0.7" />
+        <title>Terre — ce diagramme montre le ciel tel qu'observé depuis ce point.</title>
+      </g>
     </svg>
   );
 }
