@@ -23,11 +23,14 @@ export async function POST(req: NextRequest) {
   // silencieusement (body vide -> 400 "titre et contenu obligatoires" alors
   // que Make avait bien envoyé un article complet).
   const contentType = req.headers.get('content-type') || '';
+  const contentLength = req.headers.get('content-length');
+  const contentEncoding = req.headers.get('content-encoding');
   let body: Record<string, unknown> = {};
+  let raw = '';
   if (contentType.includes('application/json')) {
     body = await req.json().catch(() => ({}));
   } else {
-    const raw = await req.text().catch(() => '');
+    raw = await req.text().catch(() => '');
     if (raw) body = Object.fromEntries(new URLSearchParams(raw).entries());
   }
   const titre = String(body.titre || '').trim();
@@ -39,8 +42,11 @@ export async function POST(req: NextRequest) {
     // élucidée.
     console.error('news/publish 400 — titre/contenu manquants', {
       contentType,
+      contentLength,
+      contentEncoding,
+      rawLength: raw.length,
+      rawPreview: raw.slice(0, 300),
       receivedKeys: Object.keys(body),
-      bodyPreview: JSON.stringify(body).slice(0, 800),
     });
     return NextResponse.json({ error: 'Titre et contenu sont obligatoires.' }, { status: 400 });
   }
