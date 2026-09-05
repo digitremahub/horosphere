@@ -10,7 +10,7 @@
 import { moonPhaseInfo } from '../components/MoonPhase';
 import { getUpcomingSkyEvents } from './skyEvents';
 import { currentPlanetPositions, zodiacSignAt } from './planets';
-import { signesLesPlusImpactes, ASPECT_LABEL, type ImpactedSign } from './aspects';
+import { signesLesPlusImpactes, soleilCycleActuel, ASPECT_LABEL, type ImpactedSign } from './aspects';
 import { callClaude } from './anthropic';
 import { visuelActuDuJour } from './social';
 import { mulberry32, hashStr, pick } from './fallback-generator';
@@ -38,10 +38,17 @@ function contexteDuCiel(date: Date) {
   // chaque mois, contrairement à la lune qui change chaque jour).
   const soleil = positions.find((p) => p.key === 'soleil')!;
   const impactes = signesLesPlusImpactes(zodiacSignAt(soleil.longitude).key);
-  return { moon, evenements, planetes, retrogrades, impactes };
+  // Ce classement ne change pas tant que le Soleil reste dans le même signe
+  // (~30 jours) — voir soleilCycleActuel : sans cette date de fin, un
+  // article publié chaque semaine donnerait l'impression, à tort, d'une
+  // actualité qui évolue alors que rien n'a changé sur cet axe.
+  const cycle = soleilCycleActuel(date);
+  return { moon, evenements, planetes, retrogrades, impactes, cycle };
 }
 
-function impactesTxt(impactes: ImpactedSign[]): string {
+const FORMAT_DATE_LONGUE: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long' };
+
+function impactesTxt(impactes: ImpactedSign[], cycleFin: Date): string {
   if (impactes.length === 0) return '';
   const INFLUENCE: Record<ImpactedSign['aspect'], string> = {
     conjonction: "l'énergie du moment s'exprime chez vous sans détour — vous la ressentez en premier",
@@ -49,7 +56,8 @@ function impactesTxt(impactes: ImpactedSign[]): string {
     carre: 'une friction active, souvent ce qui pousse concrètement à ajuster quelque chose',
   };
   const lignes = impactes.map(({ signe, aspect }) => `${signe.symbole} ${signe.nom} (${ASPECT_LABEL[aspect]}) — ${INFLUENCE[aspect]}.`);
-  return `Signes les plus concernés cette semaine :\n${lignes.join('\n')}`;
+  const finLabel = cycleFin.toLocaleDateString('fr-FR', FORMAT_DATE_LONGUE);
+  return `Signes les plus concernés (valable jusqu'au ${finLabel}) :\n${lignes.join('\n')}`;
 }
 
 // ===== Mode démo =====
@@ -78,7 +86,7 @@ function retrogradesTxt(retrogrades: { nom: string }[]): string {
 }
 
 function fallbackSkyNews(date: Date): SkyNewsDraft {
-  const { moon, evenements, planetes, retrogrades, impactes } = contexteDuCiel(date);
+  const { moon, evenements, planetes, retrogrades, impactes, cycle } = contexteDuCiel(date);
   const dateISO = date.toISOString().slice(0, 10);
   const rng = mulberry32(hashStr('skynews::' + dateISO));
   const titre = pick(rng, TITRES);
@@ -101,7 +109,7 @@ function fallbackSkyNews(date: Date): SkyNewsDraft {
     pick(rng, CLOTURES),
     // Toujours en dernier : lib/news.ts (splitArticleSections) extrait ce
     // bloc pour l'afficher dans son propre encadré sur la page article.
-    impactesTxt(impactes),
+    impactesTxt(impactes, cycle.fin),
   ]
     .filter(Boolean)
     .join('\n\n');
@@ -122,7 +130,7 @@ export async function generateSkyNews(date: Date = new Date()): Promise<SkyNewsD
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return fallbackSkyNews(date);
 
-  const { moon, evenements, planetes, retrogrades, impactes } = contexteDuCiel(date);
+  const { moon, evenements, planetes, retrogrades, impactes, cycle } = contexteDuCiel(date);
   const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
   const planetesTxt = planetes.map((p) => `${p.nom} en ${p.signe}${p.retrograde ? ', rétrograde' : ''}`).join(' ; ');
   const evenementsTxt = evenements
@@ -130,6 +138,7 @@ export async function generateSkyNews(date: Date = new Date()): Promise<SkyNewsD
     .join(' ; ');
   const retrogradesTxtIA = retrogrades.length > 0 ? retrogrades.map((r) => r.nom).join(', ') : 'aucune';
   const impactesTxtIA = impactes.map(({ signe, aspect }) => `${signe.nom} (${ASPECT_LABEL[aspect]})`).join(', ');
+  const cycleTxtIA = `du ${cycle.debut.toLocaleDateString('fr-FR', FORMAT_DATE_LONGUE)} au ${cycle.fin.toLocaleDateString('fr-FR', FORMAT_DATE_LONGUE)}`;
 
   const prompt = `Tu écris l'article hebdomadaire "actualité du ciel" pour le site Horosphère, en français. C'est un article éditorial sur ce qui se passe réellement dans le ciel cette semaine — pas une annonce sur l'entreprise Horosphère.
 
@@ -138,7 +147,7 @@ Données réelles du jour (${dateISO}) à utiliser, sans en inventer d'autres :
 - Prochains événements du ciel : ${evenementsTxt || 'aucun événement majeur imminent'}.
 - Position actuelle des planètes (signe) : ${planetesTxt}.
 - Planète(s) actuellement rétrograde(s) (mouvement apparent réel, calculé) : ${retrogradesTxtIA}.
-- Les 3 signes les plus concernés cette semaine, d'après les aspects du Soleil (conjonction = le signe du Soleil, opposition et carré = les aspects durs classiques) : ${impactesTxtIA}.
+- Les 3 signes les plus concernés, d'après les aspects du Soleil (conjonction = le signe du Soleil, opposition et carré = les aspects durs classiques) : ${impactesTxtIA}. Ce classement reste valable pour tout le cycle solaire en cours (${cycleTxtIA}) — précise cette fenêtre dans l'article plutôt que de la présenter comme une nouveauté de la semaine, puisqu'elle ne change qu'une douzaine de fois par an.
 
 Si au moins une planète est rétrograde, fais-en un point fort de l'article (c'est le type d'information la plus recherchée) — explique ce que ça change concrètement, sans dramatiser. Termine l'article par un court paragraphe ou une liste nommant ces 3 signes et l'influence de leur aspect (conjonction = concerné en premier, opposition = tension à équilibrer, carré = friction qui pousse à ajuster) — sans inventer d'autres signes ni d'autres aspects que ceux donnés. Ne prétends jamais calculer un ascendant, une maison ou un transit précis non fourni ci-dessus — reste sur les données données. Ton : chaleureux, curieux, jamais fataliste ni anxiogène, un peu poétique sans être vague. Longueur : 200 à 300 mots pour le contenu.
 
