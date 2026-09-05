@@ -71,16 +71,27 @@ export function visuelInstagramDuJour(dateISO: string): string {
 // Illustrations dédiées à la page Actualités (fournies par le community
 // manager) — distinctes des visuels des réseaux sociaux ci-dessus, pour ne
 // pas mélanger l'identité des deux usages. Utilisée par lib/skyNews.ts.
+// Purement décoratives : aucune ne prétend représenter un fait daté.
 const VISUELS_ACTUALITES = [
   '/images/actualites/carte-du-ciel.webp',
-  '/images/actualites/alignement-planetes.webp',
   '/images/actualites/sphere-armillaire.webp',
   '/images/actualites/eclipse.webp',
 ];
 
+// Repère spécial : contrairement aux visuels ci-dessus, "l'alignement des
+// planètes" prétend représenter un fait réel — il ne peut donc pas être une
+// image statique recyclée chaque semaine. Rendu à la demande par
+// /api/og/astrolabe à partir des vraies positions écliptiques du jour
+// (astronomy-engine), jamais un fichier fixe.
+const ASTROLABE_DYNAMIQUE = '__astrolabe__';
+
 export function visuelActuDuJour(dateISO: string): string {
   const rng = mulberry32(hashStr('visuel-actu::' + dateISO));
-  return siteUrl() + pick(rng, VISUELS_ACTUALITES);
+  const choix = pick(rng, [...VISUELS_ACTUALITES, ASTROLABE_DYNAMIQUE]);
+  if (choix === ASTROLABE_DYNAMIQUE) {
+    return `${siteUrl()}/api/og/astrolabe?date=${dateISO}`;
+  }
+  return siteUrl() + choix;
 }
 
 function nextEventLabel(dateISO: string): string {
