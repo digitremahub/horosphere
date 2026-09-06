@@ -38,6 +38,9 @@ export default async function LocaleLayout({
         <NextIntlClientProvider>
           <SiteHeader />
           {children}
+          <div className="page-bandeau-bas">
+            <img src="/images/bandeau-bas.png" alt="" loading="lazy" />
+          </div>
           <footer style={{ borderTop: '1px solid var(--trait)', marginTop: 80, padding: '32px 0', color: 'var(--sourdine)', fontSize: '0.82rem' }}>
             <div className="container" style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
               <span>© {new Date().getFullYear()} Horosphère</span>
