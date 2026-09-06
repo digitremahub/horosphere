@@ -14,6 +14,8 @@ import { signesLesPlusImpactes, soleilCycleActuel, ASPECT_LABEL, type ImpactedSi
 import { callClaude } from './anthropic';
 import { visuelActuDuJour } from './social';
 import { mulberry32, hashStr, pick } from './fallback-generator';
+import { listPublishedNews } from './news';
+import { dbConfigured } from './db';
 
 export type SkyNewsDraft = {
   titre: string;
@@ -123,6 +125,22 @@ function fallbackSkyNews(date: Date): SkyNewsDraft {
   };
 }
 
+/** Titre du dernier article publié — sert à éviter qu'un nouvel article
+ * reparte sur le même angle (ex. une rétrogradation en cours, qui dure des
+ * mois, se retrouvait mise en avant comme "fait notable" semaine après
+ * semaine sans que rien n'ait vraiment changé). Retombe sur `null` si la
+ * base est indisponible plutôt que de bloquer la génération. */
+async function dernierArticlePublie(): Promise<{ titre: string; contenu: string } | null> {
+  if (!dbConfigured) return null;
+  try {
+    const [dernier] = await listPublishedNews(1);
+    return dernier ? { titre: dernier.titre, contenu: dernier.contenu } : null;
+  } catch (err) {
+    console.error('dernierArticlePublie: lecture échouée', err);
+    return null;
+  }
+}
+
 // ===== Mode IA =====
 
 export async function generateSkyNews(date: Date = new Date()): Promise<SkyNewsDraft> {
@@ -131,6 +149,7 @@ export async function generateSkyNews(date: Date = new Date()): Promise<SkyNewsD
   if (!apiKey) return fallbackSkyNews(date);
 
   const { moon, evenements, planetes, retrogrades, impactes, cycle } = contexteDuCiel(date);
+  const precedent = await dernierArticlePublie();
   const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
   const planetesTxt = planetes.map((p) => `${p.nom} en ${p.signe}${p.retrograde ? ', rétrograde' : ''}`).join(' ; ');
   const evenementsTxt = evenements
@@ -148,8 +167,13 @@ Données réelles du jour (${dateISO}) à utiliser, sans en inventer d'autres :
 - Position actuelle des planètes (signe) : ${planetesTxt}.
 - Planète(s) actuellement rétrograde(s) (mouvement apparent réel, calculé) : ${retrogradesTxtIA}.
 - Les 3 signes les plus concernés, d'après les aspects du Soleil (conjonction = le signe du Soleil, opposition et carré = les aspects durs classiques) : ${impactesTxtIA}. Ce classement reste valable pour tout le cycle solaire en cours (${cycleTxtIA}) — précise cette fenêtre dans l'article plutôt que de la présenter comme une nouveauté de la semaine, puisqu'elle ne change qu'une douzaine de fois par an.
+${precedent ? `\nLe dernier article publié avait pour titre "${precedent.titre}" et commençait ainsi : "${precedent.contenu.slice(0, 300)}"` : ''}
 
-Si au moins une planète est rétrograde, fais-en un point fort de l'article (c'est le type d'information la plus recherchée) — explique ce que ça change concrètement, sans dramatiser. Termine l'article par un court paragraphe ou une liste nommant ces 3 signes et l'influence de leur aspect (conjonction = concerné en premier, opposition = tension à équilibrer, carré = friction qui pousse à ajuster) — sans inventer d'autres signes ni d'autres aspects que ceux donnés. Ne prétends jamais calculer un ascendant, une maison ou un transit précis non fourni ci-dessus — reste sur les données données. Ton : chaleureux, curieux, jamais fataliste ni anxiogène, un peu poétique sans être vague. Longueur : 200 à 300 mots pour le contenu.
+${
+  precedent && retrogrades.length > 0 && precedent.contenu.toLowerCase().includes('rétrograde')
+    ? `La rétrogradation ci-dessus était déjà le point fort de cet article précédent — comme rien de nouveau ne s'est produit sur cet axe, NE LA REMETS PAS EN AVANT cette semaine : mentionne-la en une phrase si besoin, mais choisis un autre point fort (un événement à venir, la lune, un aspect entre deux planètes, un des signes les plus concernés). Choisis aussi un titre et une accroche différents de l'article précédent.`
+    : `Si au moins une planète est rétrograde, fais-en un point fort de l'article (c'est le type d'information la plus recherchée) — explique ce que ça change concrètement, sans dramatiser.`
+}${precedent ? ' Dans tous les cas, choisis un titre et un angle clairement différents de l\'article précédent — un lecteur qui a lu les deux ne doit jamais avoir l\'impression de lire deux fois le même article.' : ''} Termine l'article par un court paragraphe ou une liste nommant ces 3 signes et l'influence de leur aspect (conjonction = concerné en premier, opposition = tension à équilibrer, carré = friction qui pousse à ajuster) — sans inventer d'autres signes ni d'autres aspects que ceux donnés. Ne prétends jamais calculer un ascendant, une maison ou un transit précis non fourni ci-dessus — reste sur les données données. Ton : chaleureux, curieux, jamais fataliste ni anxiogène, un peu poétique sans être vague. Longueur : 200 à 300 mots pour le contenu.
 
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
 {

@@ -37,6 +37,19 @@ const PENDING_STATEMENTS: { name: string; sql: string }[] = [
     sql: `UPDATE news SET contenu = replace(contenu, 'Meanwhile, la Lune', 'Pendant ce temps, la Lune')
       WHERE id = '42051efc-5937-459a-8b02-7c121f3751d6' AND contenu LIKE '%Meanwhile, la Lune%'`,
   },
+  {
+    // Ponctuel : deux articles quasi-identiques (même angle "Saturne
+    // rétrograde") publiés à un jour d'intervalle début septembre — tous
+    // deux issus de déclenchements manuels pendant la mise au point du
+    // scénario Make (voir executions_list : le cron hebdomadaire lui-même
+    // n'a jamais tourné à cette date), pas d'un vrai doublon de contenu.
+    // On dépublie le plus ancien (slug 'saturne-retrograde-ralentir-pour-structurer')
+    // et on garde celui du 5 septembre, déjà relu et dont les traductions
+    // EN/ES fonctionnent. WHERE publie = true : sans effet si déjà dépublié.
+    name: 'unpublish-duplicate-saturne-4-sept',
+    sql: `UPDATE news SET publie = false
+      WHERE slug = 'saturne-retrograde-ralentir-pour-structurer' AND publie = true`,
+  },
 ];
 
 async function runPending(req: NextRequest): Promise<NextResponse> {
