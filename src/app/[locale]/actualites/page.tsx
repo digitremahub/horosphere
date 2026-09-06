@@ -7,6 +7,7 @@ import MoonOfTheDay from '@/components/MoonOfTheDay';
 import SkyCountdown from '@/components/SkyCountdown';
 import { getUpcomingSkyEvents } from '@/lib/skyEvents';
 import { dateLocaleTag } from '@/i18n/dateLocale';
+import { translatedTitles, translatedArticle, type NewsLocale } from '@/lib/translate';
 
 export const metadata = {
   title: 'Actualités — Horosphère',
@@ -52,9 +53,19 @@ export default async function ActualitesPage({ searchParams }: { searchParams: P
 
   const dateLocale = dateLocaleTag(locale);
   const selected = (a && items.find((item) => item.slug === a)) || items[0] || null;
-  const { corps, signesConcernes } = selected ? splitArticleSections(selected.contenu) : { corps: '', signesConcernes: [] };
   const dateLabel =
     selected?.publie_le && new Date(selected.publie_le).toLocaleDateString(dateLocale, { day: 'numeric', month: 'long', year: 'numeric' });
+
+  // Les actualités n'existent qu'en français en base (voir lib/news.ts) —
+  // traduites à la volée et mises en cache pour /en et /es (voir
+  // lib/translate.ts) plutôt que dupliquées à la publication. Les titres de
+  // la liste sont traduits en un seul appel groupé ; l'article ouvert est
+  // traduit intégralement (titre + contenu).
+  const titresTraduits =
+    locale !== 'fr' ? await translatedTitles(items, locale as NewsLocale) : null;
+  const selectedTraduit =
+    selected && locale !== 'fr' ? await translatedArticle(selected, locale as NewsLocale) : selected;
+  const { corps, signesConcernes } = selectedTraduit ? splitArticleSections(selectedTraduit.contenu) : { corps: '', signesConcernes: [] };
 
   return (
     <main style={{ paddingBottom: 96 }}>
@@ -142,7 +153,7 @@ export default async function ActualitesPage({ searchParams }: { searchParams: P
                     <div className="mono" style={{ fontSize: '0.68rem', color: 'var(--sourdine)', marginBottom: 4 }}>
                       {item.publie_le && new Date(item.publie_le).toLocaleDateString(dateLocale, { day: 'numeric', month: 'long', year: 'numeric' })}
                     </div>
-                    <h2 style={{ fontSize: '0.98rem', margin: 0, lineHeight: 1.35 }}>{item.titre}</h2>
+                    <h2 style={{ fontSize: '0.98rem', margin: 0, lineHeight: 1.35 }}>{titresTraduits?.get(item.id) ?? item.titre}</h2>
                   </Link>
                 );
               })}
@@ -157,7 +168,7 @@ export default async function ActualitesPage({ searchParams }: { searchParams: P
                 </div>
               )}
               <div className="mono" style={{ fontSize: '0.76rem', color: 'var(--sourdine)', marginBottom: 8 }}>{dateLabel}</div>
-              <h2 style={{ fontSize: '1.6rem', marginBottom: 22 }}>{selected.titre}</h2>
+              <h2 style={{ fontSize: '1.6rem', marginBottom: 22 }}>{selectedTraduit?.titre ?? selected.titre}</h2>
               <div style={{ whiteSpace: 'pre-wrap', fontSize: '1rem', lineHeight: 1.7, marginBottom: signesConcernes.length > 0 ? 30 : 0 }}>
                 {corps}
               </div>

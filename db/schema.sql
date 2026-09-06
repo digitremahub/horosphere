@@ -168,6 +168,22 @@ CREATE TABLE IF NOT EXISTS news (
 
 CREATE INDEX IF NOT EXISTS idx_news_publie ON news (publie, publie_le DESC);
 
+-- Traduction à la volée (voir lib/translate.ts) des actualités, mises en
+-- cache ici pour ne jamais retraduire deux fois le même article dans la
+-- même langue. `fr` n'a jamais de ligne ici (c'est déjà la langue de
+-- `news`). Une ligne peut être partielle : translatedTitles() n'écrit que
+-- `titre` (liste des actualités), translatedArticle() complète ensuite
+-- `resume`/`contenu` quand cet article précis est ouvert.
+CREATE TABLE IF NOT EXISTS news_translations (
+  news_id UUID NOT NULL REFERENCES news(id) ON DELETE CASCADE,
+  locale TEXT NOT NULL,
+  titre TEXT,
+  resume TEXT,
+  contenu TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (news_id, locale)
+);
+
 -- ===== Promo de lancement (septembre 2026) =====
 -- Compte les bénéficiaires du bonus "100 premiers abonnés" (x2 crédits sur
 -- le premier mois) — voir lib/promotions.ts. user_id en clé primaire :

@@ -18,6 +18,7 @@ export async function GET() {
        OR (table_name = 'profiles' AND column_name = 'newsletter_opt_in')
        OR (table_name = 'profiles' AND column_name = 'lieu_latitude')
        OR (table_name = 'news' AND column_name = 'slug')
+       OR (table_name = 'news_translations' AND column_name = 'locale')
   `;
   const has = (table: string, column: string) => rows.some((r) => r.table_name === table && r.column_name === column);
 
@@ -27,5 +28,6 @@ export async function GET() {
     profiles_newsletter_opt_in: has('profiles', 'newsletter_opt_in'),
     profiles_lieu_latitude: has('profiles', 'lieu_latitude'),
     news_table: has('news', 'slug'),
+    news_translations_table: has('news_translations', 'locale'),
   });
 }
