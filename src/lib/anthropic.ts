@@ -103,6 +103,16 @@ export async function callClaude(apiKey: string, model: string, prompt: string, 
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({ model, max_tokens: maxTokens, temperature: 0.9, messages: [{ role: 'user', content: prompt }] }),
+    // Next.js met en cache les fetch() faits côté serveur (Data Cache), y
+    // compris en POST, en se basant sur l'URL + le corps de la requête. Or
+    // le corps ici est quasi-identique d'un appel à l'autre pour un même
+    // article (même prompt de traduction) : sans no-store, un premier appel
+    // qui échoue silencieusement (l'IA renvoie le texte source, sans lever
+    // d'erreur) reste mis en cache et est reservi indéfiniment tel quel à
+    // chaque nouvelle tentative — retenter n'appelait alors jamais vraiment
+    // l'API Anthropic une seconde fois. C'est ce qui a rendu le bug de
+    // traduction figée reproductible à coup sûr plutôt qu'aléatoire.
+    cache: 'no-store',
   });
   if (!res.ok) {
     const detail = await res.text().catch(() => '');
