@@ -27,6 +27,16 @@ const PENDING_STATEMENTS: { name: string; sql: string }[] = [
       PRIMARY KEY (news_id, locale)
     )`,
   },
+  {
+    // Ponctuel : un mot anglais ("Meanwhile,") s'était glissé dans le
+    // contenu français généré par l'IA (skyNews.ts) pour cet article — déjà
+    // corrigé côté Airtable, corrigé ici côté Postgres (source réellement
+    // servie par le site). Sans WHERE contenu LIKE, ce statement ne
+    // toucherait plus rien après le premier passage : rejouable sans risque.
+    name: 'fix-meanwhile-42051efc',
+    sql: `UPDATE news SET contenu = replace(contenu, 'Meanwhile, la Lune', 'Pendant ce temps, la Lune')
+      WHERE id = '42051efc-5937-459a-8b02-7c121f3751d6' AND contenu LIKE '%Meanwhile, la Lune%'`,
+  },
 ];
 
 async function runPending(req: NextRequest): Promise<NextResponse> {
