@@ -20,10 +20,11 @@ export async function GET(req: NextRequest) {
   const avatarsData = await avatarsRes.json().catch(() => null);
   const voicesData = await voicesRes.json().catch(() => null);
 
+  const langParam = searchParams.get('lang');
   const avatars = (avatarsData?.data?.avatars ?? []).slice(0, 15).map((a: any) => ({ avatar_id: a.avatar_id, name: a.avatar_name }));
   const voices = (voicesData?.data?.voices ?? [])
-    .filter((v: any) => v.language === 'French' || v.language === 'English')
-    .slice(0, 15)
+    .filter((v: any) => !langParam || v.language === langParam)
+    .slice(0, 20)
     .map((v: any) => ({ voice_id: v.voice_id, name: v.name, language: v.language, gender: v.gender }));
 
   return NextResponse.json({ avatarsStatus: avatarsRes.status, voicesStatus: voicesRes.status, avatars, voices });
