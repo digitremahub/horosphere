@@ -7,8 +7,16 @@
 // HEYGEN_AVATAR_ID et HEYGEN_VOICE_ID pointent vers un avatar/voix de stock
 // à choisir dans le tableau de bord HeyGen (GET /v2/avatars et /v2/voices
 // listent les identifiants disponibles) — à défaut de valeur configurée, on
-// retombe sur des identifiants de stock courants, à ajuster une fois le
-// compte HeyGen exploré.
+// retombe sur des valeurs par défaut confirmées disponibles sur le compte
+// connecté (voir /api/admin/heygen-lookup, à retirer une fois ce choix
+// définitif).
+//
+// Utilise volontairement l'API v2 (POST /v2/video/generate) plutôt que la
+// v3 : la v3 "Generate from template" impose de construire un template à
+// l'avance dans le tableau de bord HeyGen (pas d'équivalent freeform
+// avatar+script simple trouvé dans sa documentation), alors que la v2 reste
+// pleinement fonctionnelle jusqu'au 31/10/2026 — largement de quoi migrer
+// plus tard sans urgence. À surveiller avant cette date.
 
 const HEYGEN_API_BASE = 'https://api.heygen.com';
 
@@ -29,8 +37,12 @@ function requireApiKey(): string {
  * vidéo, à interroger via `etatAvatarVideo`. */
 export async function soumettreAvatarVideo(script: string): Promise<string> {
   const apiKey = requireApiKey();
-  const avatarId = process.env.HEYGEN_AVATAR_ID || 'Daisy-inskirt-20220818';
-  const voiceId = process.env.HEYGEN_VOICE_ID || '2d5b0e6cf36f460aa7fc47e3eee4ba54';
+  // Valeurs par défaut vérifiées disponibles sur le compte HeyGen connecté
+  // (voir /api/admin/heygen-lookup) : avatar de stock générique + voix
+  // française "Gaëlle" (le script est en français — une voix non taguée
+  // French rendrait un accent anglais peu crédible pour la marque).
+  const avatarId = process.env.HEYGEN_AVATAR_ID || 'Abigail_expressive_2024112501';
+  const voiceId = process.env.HEYGEN_VOICE_ID || '67375f26ab6e44ce8569cea3840ef594';
 
   const res = await fetch(`${HEYGEN_API_BASE}/v2/video/generate`, {
     method: 'POST',
