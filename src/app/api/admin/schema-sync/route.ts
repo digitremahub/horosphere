@@ -29,8 +29,13 @@ const PENDING_STATEMENTS: { name: string; sql: string }[] = [
   },
 ];
 
-export async function POST(req: NextRequest) {
-  if (!hasValidAutomationSecret(req)) {
+async function runPending(req: NextRequest): Promise<NextResponse> {
+  // Accepte le secret en en-tête (Make) ou en paramètre `secret` (déclenché
+  // à la main via un simple GET, ex. depuis un outil qui ne pose pas
+  // d'en-têtes personnalisés) — même secret, deux façons de le présenter.
+  const bySecretParam = new URL(req.url).searchParams.get('secret');
+  const authorized = hasValidAutomationSecret(req) || (!!bySecretParam && bySecretParam === process.env.SOCIAL_AUTOMATION_SECRET);
+  if (!authorized) {
     return NextResponse.json({ error: 'Non autorisé.' }, { status: 401 });
   }
   if (!dbConfigured) {
@@ -49,4 +54,12 @@ export async function POST(req: NextRequest) {
     }
   }
   return NextResponse.json({ applied, failed });
+}
+
+export async function POST(req: NextRequest) {
+  return runPending(req);
+}
+
+export async function GET(req: NextRequest) {
+  return runPending(req);
 }
