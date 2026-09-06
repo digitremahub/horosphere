@@ -115,22 +115,31 @@ const SCENES_ILLUSTRATION = [
   'une silhouette contemplant un ciel étoilé à travers un astrolabe, une lune en {phase} bien visible, ambiance calme et méditative',
 ];
 
-function sujetIllustrationDuJour(dateISO: string): string {
+/** `legendeDuJour` est la légende Instagram réellement générée pour ce post
+ * (IA ou démo) — passée ici pour que l'illustration montre CE post précis
+ * (ex. "lâcher-prise avant la nouvelle lune du 11 septembre") plutôt qu'une
+ * scène qui ne connaît que la phase lunaire et rien du texte publié à côté. */
+function sujetIllustrationDuJour(dateISO: string, legendeDuJour?: string): string {
   const moon = moonPhaseInfo(new Date(dateISO));
   const rng = mulberry32(hashStr('illustration::' + dateISO));
   const scene = interpole(pick(rng, SCENES_ILLUSTRATION), { phase: moon.label.toLowerCase() });
   const evenement = nextEventLabel(dateISO);
-  return evenement ? `${scene}. Au loin, une suggestion discrète de ${evenement} qui approche.` : scene;
+  const base = evenement ? `${scene}. Au loin, une suggestion discrète de ${evenement} qui approche.` : scene;
+  if (!legendeDuJour) return base;
+  return `${base}\n\nLe post que cette image accompagne dit, en substance : "${legendeDuJour.slice(0, 220)}" — que l'ambiance de l'image évoque cette idée précise (jamais de texte, lettres ou mots visibles dans l'image).`;
 }
 
 /** Résout les visuels du jour pour Facebook et Instagram : tente une
  * illustration IA fraîche (gpt-image-1, partagée entre les deux plateformes
  * puisqu'elles acceptent toutes les deux du JPEG 1536x1024), et retombe sur
  * la rotation de visuels statiques du site en cas d'échec ou d'absence de
- * clé OPENAI_API_KEY — jamais de blocage du pipeline de publication. */
-async function imagesDuJour(dateISO: string): Promise<{ facebook: string; instagram: string }> {
+ * clé OPENAI_API_KEY — jamais de blocage du pipeline de publication.
+ * `legendeDuJour` (la légende Instagram déjà écrite pour ce post) est
+ * transmise à GPT pour que le visuel illustre le contenu réel du jour, pas
+ * seulement la phase lunaire générique. */
+async function imagesDuJour(dateISO: string, legendeDuJour?: string): Promise<{ facebook: string; instagram: string }> {
   try {
-    const url = await genererIllustrationSociale(sujetIllustrationDuJour(dateISO), dateISO);
+    const url = await genererIllustrationSociale(sujetIllustrationDuJour(dateISO, legendeDuJour), dateISO);
     if (url) return { facebook: url, instagram: url };
   } catch (err) {
     console.error('genererIllustrationSociale a échoué, retombe sur les visuels statiques', err);
@@ -170,11 +179,13 @@ async function fallbackSocialContent(dateISO: string): Promise<DailySocialConten
   const vars = { phase: moon.label.toLowerCase(), influence: moon.influence, jour };
   const rng = mulberry32(hashStr('social::' + dateISO));
   const hook = pick(rng, TIKTOK_HOOKS);
-  const images = await imagesDuJour(dateISO);
+  const igLegende = interpole(pick(rng, IG_LEGENDES), vars);
+  const fbLegende = interpole(pick(rng, FB_LEGENDES), vars);
+  const images = await imagesDuJour(dateISO, igLegende);
 
   return {
-    instagram: { legende: interpole(pick(rng, IG_LEGENDES), vars), hashtags: HASHTAGS_BASE + ' #luneDuJour', imageUrl: images.instagram, scriptVideo: null, mode: 'demo' },
-    facebook: { legende: interpole(pick(rng, FB_LEGENDES), vars), hashtags: HASHTAGS_BASE, imageUrl: images.facebook, scriptVideo: null, mode: 'demo' },
+    instagram: { legende: igLegende, hashtags: HASHTAGS_BASE + ' #luneDuJour', imageUrl: images.instagram, scriptVideo: null, mode: 'demo' },
+    facebook: { legende: fbLegende, hashtags: HASHTAGS_BASE, imageUrl: images.facebook, scriptVideo: null, mode: 'demo' },
     tiktok: {
       legende: `${hook} ${HASHTAGS_BASE}`,
       hashtags: HASHTAGS_BASE + ' #pourtoi #fyp',
@@ -215,7 +226,7 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
 
   try {
     const parsed = await callClaude(apiKey, model, prompt, 1200);
-    const images = await imagesDuJour(dateISO);
+    const images = await imagesDuJour(dateISO, String(parsed.instagram?.legende ?? ''));
     return {
       instagram: {
         legende: String(parsed.instagram?.legende ?? ''),
