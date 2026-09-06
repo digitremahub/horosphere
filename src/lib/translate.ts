@@ -77,8 +77,20 @@ ${missing.map((i, idx) => `${idx + 1}. ${i.titre}`).join('\n')}`;
 
     const sql = requireDb();
     for (let idx = 0; idx < missing.length; idx++) {
-      const titre = typeof traductions[idx] === 'string' && traductions[idx] ? (traductions[idx] as string) : missing[idx].titre;
+      const candidat = typeof traductions[idx] === 'string' ? (traductions[idx] as string).trim() : '';
+      // Un titre "traduit" identique au français n'est presque jamais une
+      // vraie coïncidence (même sur un titre à base de noms propres, la
+      // ponctuation ou la casse diffère normalement) — plus probablement un
+      // échec silencieux de l'IA (elle a renvoyé la langue source). On garde
+      // le français pour cet affichage, mais SANS le mettre en cache, pour
+      // qu'une prochaine requête retente plutôt que de figer l'erreur.
+      const echecSilencieux = !candidat || candidat === missing[idx].titre;
+      const titre = echecSilencieux ? missing[idx].titre : candidat;
       result.set(missing[idx].id, titre);
+      if (echecSilencieux) {
+        console.error('translatedTitles: traduction ignorée (identique au français)', { newsId: missing[idx].id, locale });
+        continue;
+      }
       await sql`
         INSERT INTO news_translations (news_id, locale, titre)
         VALUES (${missing[idx].id}, ${locale}, ${titre})
@@ -125,6 +137,16 @@ ${item.contenu}`;
       resume: typeof parsed?.resume === 'string' ? parsed.resume : item.resume,
       contenu: typeof parsed?.contenu === 'string' && parsed.contenu ? parsed.contenu : item.contenu,
     };
+    // Comme pour translatedTitles() : un contenu "traduit" identique au
+    // français (titre ET corps) trahit presque toujours un échec silencieux
+    // de l'IA plutôt qu'une vraie coïncidence — sur un texte de plusieurs
+    // phrases, une traduction authentique ne retombe jamais mot pour mot
+    // sur la source. On ne met alors pas ce résultat en cache, pour qu'une
+    // prochaine requête retente au lieu de figer l'erreur durablement.
+    if (traduit.titre === item.titre && traduit.contenu === item.contenu) {
+      console.error('translatedArticle: traduction ignorée (identique au français)', { newsId: item.id, locale });
+      return item;
+    }
     const sql = requireDb();
     await sql`
       INSERT INTO news_translations (news_id, locale, titre, resume, contenu)

@@ -20,6 +20,9 @@ export async function GET(req: NextRequest) {
   if (!item) return NextResponse.json({ error: 'not found' }, { status: 404 });
 
   const sql = requireDb();
+  if (searchParams.get('purge') === '1') {
+    await sql`DELETE FROM news_translations WHERE news_id = ${item.id} AND locale = ${locale}`;
+  }
   const cachedRows = await sql`SELECT * FROM news_translations WHERE news_id = ${item.id}`;
 
   let translationAttempt: unknown = null;
