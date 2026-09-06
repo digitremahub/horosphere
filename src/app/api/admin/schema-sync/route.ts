@@ -1,0 +1,52 @@
+// Applique les statements DDL en attente (voir db/schema.sql) directement en
+// production — sans ça, chaque nouvelle table nécessite d'avoir `psql` et
+// DATABASE_URL sous la main (personne ici n'a accès à cette variable en
+// clair : ni Claude, ni un scénario Make). Chaque statement est idempotent
+// (CREATE TABLE IF NOT EXISTS / ADD COLUMN IF NOT EXISTS), donc rejouer ce
+// endpoint plusieurs fois ne fait jamais de mal. Protégé par le même secret
+// que les autres routes d'automatisation.
+//
+// Pas un remplacement de db/schema.sql (qui reste la référence complète,
+// à jour) : au fur et à mesure des sessions, on ajoute ici seulement les
+// statements pas encore confirmés appliqués via /api/health/schema.
+
+import { NextRequest, NextResponse } from 'next/server';
+import { hasValidAutomationSecret } from '@/lib/automationAuth';
+import { requireDb, dbConfigured } from '@/lib/db';
+
+const PENDING_STATEMENTS: { name: string; sql: string }[] = [
+  {
+    name: 'news_translations',
+    sql: `CREATE TABLE IF NOT EXISTS news_translations (
+      news_id UUID NOT NULL REFERENCES news(id) ON DELETE CASCADE,
+      locale TEXT NOT NULL,
+      titre TEXT,
+      resume TEXT,
+      contenu TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (news_id, locale)
+    )`,
+  },
+];
+
+export async function POST(req: NextRequest) {
+  if (!hasValidAutomationSecret(req)) {
+    return NextResponse.json({ error: 'Non autorisé.' }, { status: 401 });
+  }
+  if (!dbConfigured) {
+    return NextResponse.json({ error: "La base de données n'est pas configurée." }, { status: 503 });
+  }
+
+  const sql = requireDb();
+  const applied: string[] = [];
+  const failed: { name: string; error: string }[] = [];
+  for (const stmt of PENDING_STATEMENTS) {
+    try {
+      await sql.unsafe(stmt.sql);
+      applied.push(stmt.name);
+    } catch (err) {
+      failed.push({ name: stmt.name, error: err instanceof Error ? err.message : String(err) });
+    }
+  }
+  return NextResponse.json({ applied, failed });
+}
