@@ -28,6 +28,26 @@ function aspectDe(texte: string): string | null {
   return null;
 }
 
+// Les articles ne sortent plus à date fixe mais au fil des vraies périodes
+// de changement du ciel (voir lib/skyNews.ts) — afficher la date exacte de
+// publication donnerait à tort l'impression d'un calendrier rigide. On
+// affiche plutôt la semaine (lundi-dimanche) que couvre l'article.
+function semaineDe(date: Date): { debut: Date; fin: Date } {
+  const jour = date.getDay(); // 0 = dimanche ... 6 = samedi
+  const decalageDepuisLundi = jour === 0 ? 6 : jour - 1;
+  const debut = new Date(date);
+  debut.setDate(date.getDate() - decalageDepuisLundi);
+  const fin = new Date(debut);
+  fin.setDate(debut.getDate() + 6);
+  return { debut, fin };
+}
+
+function semaineLabel(publieLe: string, dateLocale: string, t: (key: string, values: Record<string, string>) => string): string {
+  const { debut, fin } = semaineDe(new Date(publieLe));
+  const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long' };
+  return t('weekOf', { start: debut.toLocaleDateString(dateLocale, opts), end: fin.toLocaleDateString(dateLocale, opts) });
+}
+
 // Une seule page, sans navigation vers une page article séparée : à gauche
 // la liste des actualités, à droite l'actualité lue, choisie via ?a=<slug>
 // (par défaut la plus récente). `<Link>` change juste ce paramètre, donc ça
@@ -53,8 +73,7 @@ export default async function ActualitesPage({ searchParams }: { searchParams: P
 
   const dateLocale = dateLocaleTag(locale);
   const selected = (a && items.find((item) => item.slug === a)) || items[0] || null;
-  const dateLabel =
-    selected?.publie_le && new Date(selected.publie_le).toLocaleDateString(dateLocale, { day: 'numeric', month: 'long', year: 'numeric' });
+  const dateLabel = selected?.publie_le && semaineLabel(selected.publie_le, dateLocale, t);
 
   // Les actualités n'existent qu'en français en base (voir lib/news.ts) —
   // traduites à la volée et mises en cache pour /en et /es (voir
@@ -151,7 +170,7 @@ export default async function ActualitesPage({ searchParams }: { searchParams: P
                       </div>
                     )}
                     <div className="mono" style={{ fontSize: '0.68rem', color: 'var(--sourdine)', marginBottom: 4 }}>
-                      {item.publie_le && new Date(item.publie_le).toLocaleDateString(dateLocale, { day: 'numeric', month: 'long', year: 'numeric' })}
+                      {item.publie_le && semaineLabel(item.publie_le, dateLocale, t)}
                     </div>
                     <h2 style={{ fontSize: '0.98rem', margin: 0, lineHeight: 1.35 }}>{titresTraduits?.get(item.id) ?? item.titre}</h2>
                   </Link>

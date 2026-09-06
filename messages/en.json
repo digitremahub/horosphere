@@ -105,7 +105,8 @@
     "dbNotConnected": "The database isn't connected yet.",
     "empty": "Nothing published yet — check back soon.",
     "thisWeek": "This week",
-    "mostAffectedSigns": "Most affected signs"
+    "mostAffectedSigns": "Most affected signs",
+    "weekOf": "Week of {start} to {end}"
   },
   "Profil": {
     "imageAlt": "A silhouette gazing at the starry sky through an astrolabe, background of the birth details form.",

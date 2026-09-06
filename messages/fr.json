@@ -105,7 +105,8 @@
     "dbNotConnected": "La base de données n'est pas encore connectée.",
     "empty": "Rien de publié pour l'instant — revenez bientôt.",
     "thisWeek": "Cette semaine",
-    "mostAffectedSigns": "Signes les plus concernés"
+    "mostAffectedSigns": "Signes les plus concernés",
+    "weekOf": "Semaine du {start} au {end}"
   },
   "Profil": {
     "imageAlt": "Une silhouette contemplant le ciel étoilé à travers un astrolabe, en fond du formulaire de naissance.",
