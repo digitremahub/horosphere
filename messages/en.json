@@ -283,16 +283,16 @@
       "guidance_spirituelle": { "nom": "Spiritual guidance", "description": "A deep reading, with a concrete practice to move forward on your inner path." }
     },
     "packs": {
-      "initiation": { "nom": "Initiation", "accroche": "Discover Horosphère" },
-      "eveil": { "nom": "Awakening", "accroche": "Occasional light use" },
-      "connexion": { "nom": "Connection", "accroche": "Regular user" },
-      "illumination": { "nom": "Illumination", "accroche": "Big pack" },
-      "eternite": { "nom": "Eternity", "accroche": "Best value" }
+      "initiation": { "nom": "First Step", "accroche": "Discover Horosphère" },
+      "eveil": { "nom": "Momentum", "accroche": "Occasional light use" },
+      "connexion": { "nom": "Rhythm", "accroche": "Regular user" },
+      "illumination": { "nom": "Course", "accroche": "Big pack" },
+      "eternite": { "nom": "Horizon", "accroche": "Best value" }
     },
     "subscriptions": {
       "essentiel": { "nom": "Horosphère", "avantage": "Preferential rate" },
-      "premium": { "nom": "Horosphère Premium", "avantage": "Premium access" },
-      "vip": { "nom": "Horosphère VIP", "avantage": "The complete experience" }
+      "premium": { "nom": "Horosphère Support", "avantage": "Reinforced, day-to-day support" },
+      "vip": { "nom": "Horosphère Guidance", "avantage": "The most complete guidance" }
     }
   },
   "Cgv": {

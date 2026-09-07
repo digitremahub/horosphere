@@ -283,16 +283,16 @@
       "guidance_spirituelle": { "nom": "Guía espiritual", "description": "Una lectura profunda, con una práctica concreta para avanzar en tu camino interior." }
     },
     "packs": {
-      "initiation": { "nom": "Iniciación", "accroche": "Descubre Horosphère" },
-      "eveil": { "nom": "Despertar", "accroche": "Uso puntual y ligero" },
-      "connexion": { "nom": "Conexión", "accroche": "Usuario habitual" },
-      "illumination": { "nom": "Iluminación", "accroche": "Paquete grande" },
-      "eternite": { "nom": "Eternidad", "accroche": "Mejor relación volumen-precio" }
+      "initiation": { "nom": "Primer Paso", "accroche": "Descubre Horosphère" },
+      "eveil": { "nom": "Impulso", "accroche": "Uso puntual y ligero" },
+      "connexion": { "nom": "Ritmo", "accroche": "Usuario habitual" },
+      "illumination": { "nom": "Rumbo", "accroche": "Paquete grande" },
+      "eternite": { "nom": "Horizonte", "accroche": "Mejor relación volumen-precio" }
     },
     "subscriptions": {
       "essentiel": { "nom": "Horosphère", "avantage": "Tarifa preferente" },
-      "premium": { "nom": "Horosphère Premium", "avantage": "Acceso premium" },
-      "vip": { "nom": "Horosphère VIP", "avantage": "La experiencia completa" }
+      "premium": { "nom": "Horosphère Acompañamiento", "avantage": "Un acompañamiento reforzado, cada día" },
+      "vip": { "nom": "Horosphère Guía", "avantage": "El acompañamiento más completo" }
     }
   },
   "Cgv": {
