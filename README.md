@@ -113,3 +113,55 @@ Les scénarios Make.com associés (déjà créés dans le compte Make relié) :
   "✅ Publier" de la table Actualités, vers `/api/news/publish`.
 - **Horosphère — Newsletter hebdomadaire** — une fois par semaine, appelle
   `/api/newsletter/send-weekly`.
+
+## Roadmap — Émission Elian & Lya (phase 2, à partir de 100 abonnés)
+
+Idée mise en attente explicitement par l'utilisateur ("garde ça pour la
+phase 2 de développement, une fois que nous aurons 100 abonnés") — pas
+implémentée, spec conservée ici pour ne pas la perdre. Ne pas commencer le
+travail d'analyse/implémentation tant que ce seuil n'est pas atteint et
+que l'utilisateur ne relance pas explicitement le sujet.
+
+Mini émission quotidienne vidéo avec deux personnages IA générés via
+HeyGen (voir `lib/heygen.ts`, déjà utilisé pour le récap dominical) :
+**Elian** et **Lya**. Cohérent avec le positionnement "développement
+personnel par les astres" (voir plus haut) : l'astro comme langage,
+l'action comme finalité.
+
+**Personas (rôles fixes, jamais interchangés) :**
+- **Elian — la voix de l'astro.** Explique le ciel, la cohérence
+  astrologique du jour ("le pourquoi cosmique"). Ton pédagogue, posé.
+  Conviction : rien n'est arbitraire, comprendre le ciel c'est comprendre
+  une part de soi. Registre : cohérence, comprendre, relier, sens,
+  pourquoi. Ex. : *"Ce n'est pas un hasard si Mercure fait ça
+  aujourd'hui — voici ce que ça révèle."*
+- **Lya — la voix de l'action.** Transforme la lecture d'Elian en
+  décision, en geste concret du jour. Ton direct, énergique, orienté
+  résultat. Conviction : comprendre ne suffit pas, seule l'action du jour
+  compte. Registre : action, décision, aujourd'hui, concret, résultat.
+  Ex. : *"Peu importe pourquoi, voici ce que tu fais avec ça
+  aujourd'hui."*
+
+**3 formats d'épisode, choisis selon la nature du transit du jour (jamais
+arbitrairement) :**
+1. **Classique** (Elian ouvre → Lya conclut) — transit neutre/équilibré.
+2. **Intention** (Lya ouvre → Elian complète) — transit orienté action
+   (Mars, Soleil en aspect dynamique).
+3. **Tension** (désaccord Lya/Elian → résolution en fin d'épisode) —
+   transit introspectif/rétrograde ou aspect tendu (carré, opposition) ;
+   à utiliser occasionnellement, pas systématiquement sur ces transits.
+
+**Travail demandé le moment venu** (voir le brief complet dans l'historique
+de session si besoin de le retrouver mot pour mot) :
+1. Concevoir la règle qui détermine automatiquement le format du jour à
+   partir du type de transit astrologique (probablement une extension de
+   `lib/aspects.ts`/`lib/planets.ts`, qui exposent déjà rétrogradations et
+   aspects).
+2. Adapter/créer le module de génération de script pour respecter
+   strictement les deux personas (registre lexical, ton, rôle fixe) —
+   vraisemblablement un nouveau prompt dans `lib/anthropic.ts` ou un
+   fichier dédié, dans l'esprit de `lib/reels.ts`/`lib/heygen.ts` déjà en
+   place.
+3. Présenter la proposition d'architecture (règles + templates par
+   format) avant toute implémentation définitive — l'utilisateur l'a
+   explicitement demandé.
