@@ -46,16 +46,14 @@ export default async function LocaleLayout({
             <div className="container" style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
               <span>© {new Date().getFullYear()} Horosphère</span>
               <span>{t('tagline')}</span>
-              <span style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
-                <SocialIcons label={t('followUs')} />
-                <span style={{ display: 'flex', gap: 18 }}>
-                  <Link href="/mentions-legales" style={{ color: 'var(--sourdine)' }}>{t('legalNotice')}</Link>
-                  <Link href="/cgv" style={{ color: 'var(--sourdine)' }}>{t('terms')}</Link>
-                  <Link href="/politique-de-confidentialite" style={{ color: 'var(--sourdine)' }}>{t('privacy')}</Link>
-                </span>
+              <span style={{ display: 'flex', gap: 18 }}>
+                <Link href="/mentions-legales" style={{ color: 'var(--sourdine)' }}>{t('legalNotice')}</Link>
+                <Link href="/cgv" style={{ color: 'var(--sourdine)' }}>{t('terms')}</Link>
+                <Link href="/politique-de-confidentialite" style={{ color: 'var(--sourdine)' }}>{t('privacy')}</Link>
               </span>
             </div>
           </footer>
+          <SocialIcons />
           <ScrollToTopButton />
         </NextIntlClientProvider>
       </body>
