@@ -50,6 +50,10 @@ const PENDING_STATEMENTS: { name: string; sql: string }[] = [
     sql: `UPDATE news SET publie = false
       WHERE slug = 'saturne-retrograde-ralentir-pour-structurer' AND publie = true`,
   },
+  {
+    name: 'horoscope_email_opt_in',
+    sql: `ALTER TABLE profiles ADD COLUMN IF NOT EXISTS horoscope_email_opt_in BOOLEAN NOT NULL DEFAULT false`,
+  },
 ];
 
 async function runPending(req: NextRequest): Promise<NextResponse> {

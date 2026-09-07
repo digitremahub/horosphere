@@ -59,6 +59,7 @@ export default async function ProfilPage({ searchParams }: { searchParams: Promi
     const lieuNaissance = String(formData.get('lieu_naissance') || '').trim();
     const telephone = String(formData.get('telephone') || '').trim();
     const newsletterOptIn = formData.get('newsletter_opt_in') === 'on';
+    const horoscopeEmailOptIn = formData.get('horoscope_email_opt_in') === 'on';
 
     if (!prenom || !nom || !dateNaissance || !lieuNaissance) {
       redirect({ href: '/app/profil', locale });
@@ -72,6 +73,7 @@ export default async function ProfilPage({ searchParams }: { searchParams: Promi
       lieuNaissance,
       telephone: telephone || null,
       newsletterOptIn,
+      horoscopeEmailOptIn,
     });
 
     redirect({ href: '/app', locale });
@@ -202,6 +204,19 @@ export default async function ProfilPage({ searchParams }: { searchParams: Promi
             />
             <span>
               {t('newsletterLabel')}
+            </span>
+          </label>
+
+          <label htmlFor="horoscope_email_opt_in" style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: '0.86rem', cursor: 'pointer' }}>
+            <input
+              id="horoscope_email_opt_in"
+              name="horoscope_email_opt_in"
+              type="checkbox"
+              defaultChecked={profile ? profile.horoscope_email_opt_in : false}
+              style={{ marginTop: 3 }}
+            />
+            <span>
+              {t('horoscopeEmailLabel')}
             </span>
           </label>
 

@@ -14,6 +14,7 @@ export type Profile = {
   lieu_timezone: string | null;
   telephone: string | null;
   newsletter_opt_in: boolean;
+  horoscope_email_opt_in: boolean;
 };
 
 // Les colonnes lieu_latitude/longitude/timezone n'existent que si
@@ -51,7 +52,7 @@ export async function getProfile(userId: number): Promise<Profile | null> {
   if (!(await hasLieuColumns())) {
     const rows = await sql<Omit<Profile, 'lieu_latitude' | 'lieu_longitude' | 'lieu_timezone'>[]>`
       SELECT user_id, prenom, nom, date_naissance::text AS date_naissance,
-        heure_naissance::text AS heure_naissance, lieu_naissance, telephone, newsletter_opt_in
+        heure_naissance::text AS heure_naissance, lieu_naissance, telephone, newsletter_opt_in, horoscope_email_opt_in
       FROM profiles WHERE user_id = ${userId}
     `;
     const row = rows[0];
@@ -70,7 +71,8 @@ export async function getProfile(userId: number): Promise<Profile | null> {
       lieu_longitude,
       lieu_timezone,
       telephone,
-      newsletter_opt_in
+      newsletter_opt_in,
+      horoscope_email_opt_in
     FROM profiles
     WHERE user_id = ${userId}
   `;
@@ -87,10 +89,12 @@ export async function saveProfile(
     lieuNaissance: string;
     telephone?: string | null;
     newsletterOptIn?: boolean;
+    horoscopeEmailOptIn?: boolean;
   }
 ) {
   const sql = requireDb();
   const newsletterOptIn = data.newsletterOptIn ?? true;
+  const horoscopeEmailOptIn = data.horoscopeEmailOptIn ?? false;
 
   if (!(await hasLieuColumns())) {
     // Schéma pas encore à jour (db/schema.sql non rejoué) : on enregistre le
@@ -98,10 +102,10 @@ export async function saveProfile(
     // l'enregistrement — pas de géocodage, pas de thème natal, mais le
     // profil (le principal) continue de fonctionner.
     await sql`
-      INSERT INTO profiles (user_id, prenom, nom, date_naissance, heure_naissance, lieu_naissance, telephone, newsletter_opt_in)
+      INSERT INTO profiles (user_id, prenom, nom, date_naissance, heure_naissance, lieu_naissance, telephone, newsletter_opt_in, horoscope_email_opt_in)
       VALUES (
         ${userId}, ${data.prenom}, ${data.nom}, ${data.dateNaissance},
-        ${data.heureNaissance || null}, ${data.lieuNaissance}, ${data.telephone || null}, ${newsletterOptIn}
+        ${data.heureNaissance || null}, ${data.lieuNaissance}, ${data.telephone || null}, ${newsletterOptIn}, ${horoscopeEmailOptIn}
       )
       ON CONFLICT (user_id) DO UPDATE SET
         prenom = EXCLUDED.prenom,
@@ -111,6 +115,7 @@ export async function saveProfile(
         lieu_naissance = EXCLUDED.lieu_naissance,
         telephone = EXCLUDED.telephone,
         newsletter_opt_in = ${newsletterOptIn},
+        horoscope_email_opt_in = ${horoscopeEmailOptIn},
         updated_at = now()
     `;
     return;
@@ -148,7 +153,7 @@ export async function saveProfile(
   await sql`
     INSERT INTO profiles (
       user_id, prenom, nom, date_naissance, heure_naissance, lieu_naissance,
-      lieu_latitude, lieu_longitude, lieu_timezone, telephone, newsletter_opt_in
+      lieu_latitude, lieu_longitude, lieu_timezone, telephone, newsletter_opt_in, horoscope_email_opt_in
     )
     VALUES (
       ${userId},
@@ -161,7 +166,8 @@ export async function saveProfile(
       ${longitude},
       ${timezone},
       ${data.telephone || null},
-      ${newsletterOptIn}
+      ${newsletterOptIn},
+      ${horoscopeEmailOptIn}
     )
     ON CONFLICT (user_id) DO UPDATE SET
       prenom = EXCLUDED.prenom,
@@ -174,6 +180,7 @@ export async function saveProfile(
       lieu_timezone = EXCLUDED.lieu_timezone,
       telephone = EXCLUDED.telephone,
       newsletter_opt_in = ${newsletterOptIn},
+      horoscope_email_opt_in = ${horoscopeEmailOptIn},
       updated_at = now()
   `;
 }

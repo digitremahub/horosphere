@@ -142,6 +142,13 @@ ALTER TABLE profiles ADD COLUMN IF NOT EXISTS lieu_latitude DOUBLE PRECISION;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS lieu_longitude DOUBLE PRECISION;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS lieu_timezone TEXT;
 
+-- Horoscope quotidien envoyé par e-mail (voir lib/dailyHoroscopeEmail.ts) —
+-- opt-in explicite et FALSE par défaut, contrairement à newsletter_opt_in :
+-- cet envoi consomme un crédit (feature horoscope_quotidien, voir
+-- pricing.ts) à chaque fois, ça ne peut pas être une case cochée sans
+-- action de l'utilisateur.
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS horoscope_email_opt_in BOOLEAN NOT NULL DEFAULT false;
+
 -- ===== Promotion réseaux sociaux =====
 -- La validation et l'édition du contenu se font désormais dans une base
 -- Airtable (déléguable à un community manager, sans toucher au code) —
