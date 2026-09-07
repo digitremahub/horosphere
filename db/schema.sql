@@ -199,3 +199,24 @@ CREATE TABLE IF NOT EXISTS promo_premiers_abonnes (
   user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
   granted_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- ===== Publications réseaux sociaux (carrousel homepage) =====
+-- Copie des posts réellement publiés (Facebook/Instagram), écrite par le
+-- scénario Make "Publication réseaux sociaux (posts approuvés)" juste après
+-- chaque publication réussie (voir /api/social/record-published). Sert
+-- uniquement à alimenter le carrousel de la page d'accueil — la source de
+-- vérité éditoriale reste Airtable. airtable_id (l'id de la ligne Airtable)
+-- rend l'écriture idempotente : un ré-appel accidentel met juste à jour la
+-- même ligne au lieu d'en créer une deuxième.
+CREATE TABLE IF NOT EXISTS social_posts (
+  id SERIAL PRIMARY KEY,
+  airtable_id TEXT NOT NULL UNIQUE,
+  platform TEXT NOT NULL,
+  image_url TEXT,
+  caption TEXT NOT NULL DEFAULT '',
+  hashtags TEXT,
+  publie_le TIMESTAMPTZ NOT NULL DEFAULT now(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_social_posts_publie_le ON social_posts (publie_le DESC);

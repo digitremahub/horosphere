@@ -17,7 +17,8 @@
     "tagline": "Un rituel quotidien, pour avancer chaque jour.",
     "legalNotice": "Mentions légales",
     "terms": "CGV",
-    "privacy": "Confidentialité"
+    "privacy": "Confidentialité",
+    "followUs": "Suivez-nous"
   },
   "LanguageSwitcher": {
     "label": "Langue"
@@ -59,6 +60,8 @@
     "packagesTitle": "Des forfaits qui respectent votre budget",
     "packagesText": "Des packs de crédits sans expiration précipitée (45 jours pour en profiter), ou un abonnement si Horosphère devient un rendez-vous régulier. Rien n'est imposé au premier jour.",
     "discoverPackages": "Découvrir les forfaits",
+    "socialPill": "Sur les réseaux",
+    "socialTitle": "Retrouvez Horosphère sur Instagram et Facebook",
     "freePreviewPill": "Aperçu gratuit",
     "freeAtLogin": "Gratuit à la connexion — sans carte bancaire."
   },

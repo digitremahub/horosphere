@@ -54,6 +54,23 @@ const PENDING_STATEMENTS: { name: string; sql: string }[] = [
     name: 'horoscope_email_opt_in',
     sql: `ALTER TABLE profiles ADD COLUMN IF NOT EXISTS horoscope_email_opt_in BOOLEAN NOT NULL DEFAULT false`,
   },
+  {
+    name: 'social_posts',
+    sql: `CREATE TABLE IF NOT EXISTS social_posts (
+      id SERIAL PRIMARY KEY,
+      airtable_id TEXT NOT NULL UNIQUE,
+      platform TEXT NOT NULL,
+      image_url TEXT,
+      caption TEXT NOT NULL DEFAULT '',
+      hashtags TEXT,
+      publie_le TIMESTAMPTZ NOT NULL DEFAULT now(),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )`,
+  },
+  {
+    name: 'idx_social_posts_publie_le',
+    sql: `CREATE INDEX IF NOT EXISTS idx_social_posts_publie_le ON social_posts (publie_le DESC)`,
+  },
 ];
 
 async function runPending(req: NextRequest): Promise<NextResponse> {

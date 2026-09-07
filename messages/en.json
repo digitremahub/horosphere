@@ -17,7 +17,8 @@
     "tagline": "A daily ritual, to move forward every day.",
     "legalNotice": "Legal notice",
     "terms": "Terms",
-    "privacy": "Privacy"
+    "privacy": "Privacy",
+    "followUs": "Follow us"
   },
   "LanguageSwitcher": {
     "label": "Language"
@@ -59,6 +60,8 @@
     "packagesTitle": "Packages that respect your budget",
     "packagesText": "Credit packs with no rushed expiration (45 days to use them), or a subscription if Horosphère becomes a regular appointment. Nothing is forced on day one.",
     "discoverPackages": "Discover the packages",
+    "socialPill": "On social media",
+    "socialTitle": "Find Horosphère on Instagram and Facebook",
     "freePreviewPill": "Free preview",
     "freeAtLogin": "Free at sign-up — no card required."
   },

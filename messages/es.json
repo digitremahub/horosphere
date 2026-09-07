@@ -17,7 +17,8 @@
     "tagline": "Un ritual diario, para avanzar cada día.",
     "legalNotice": "Aviso legal",
     "terms": "Condiciones",
-    "privacy": "Privacidad"
+    "privacy": "Privacidad",
+    "followUs": "Síguenos"
   },
   "LanguageSwitcher": {
     "label": "Idioma"
@@ -59,6 +60,8 @@
     "packagesTitle": "Paquetes que respetan tu presupuesto",
     "packagesText": "Paquetes de créditos sin caducidad precipitada (45 días para aprovecharlos), o una suscripción si Horosphère se convierte en una cita regular. Nada se impone el primer día.",
     "discoverPackages": "Descubrir los paquetes",
+    "socialPill": "En redes sociales",
+    "socialTitle": "Encuentra Horosphère en Instagram y Facebook",
     "freePreviewPill": "Vista previa gratuita",
     "freeAtLogin": "Gratis al registrarte — sin tarjeta bancaria."
   },

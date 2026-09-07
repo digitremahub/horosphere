@@ -3,6 +3,7 @@ import FreeTeaser from '@/components/FreeTeaser';
 import DegreeArc from '@/components/DegreeArc';
 import ZodiacWheelIllustration from '@/components/ZodiacWheelIllustration';
 import ScrollReveal from '@/components/ScrollReveal';
+import SocialCarousel from '@/components/SocialCarousel';
 import { Link } from '@/i18n/navigation';
 import { auth } from '@/lib/auth';
 import { dbConfigured } from '@/lib/db';
@@ -127,6 +128,12 @@ export default async function HomePage() {
           </ScrollReveal>
         </div>
       </section>
+
+      <SectionDivider />
+
+      {/* 4.5 Carrousel des publications réseaux sociaux — n'apparaît que
+         si des posts publiés existent déjà, voir SocialCarousel. */}
+      <SocialCarousel />
 
       <SectionDivider />
 
