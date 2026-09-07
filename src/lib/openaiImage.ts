@@ -52,9 +52,15 @@ export async function genererIllustrationSociale(sujet: string, dateISO: string)
   const buffer = Buffer.from(b64, 'base64');
 
   const { put } = await import('@vercel/blob');
+  // Le store Blob connecté au projet utilise l'authentification OIDC de
+  // Vercel (pas de BLOB_READ_WRITE_TOKEN classique) : il faut lui passer
+  // explicitement son storeId, exposé via la variable d'environnement
+  // créée à la connexion du store (voir Storage → connexion du projet).
+  const storeId = process.env.BLOB_HOROSPHERE_STORE_ID;
   const blob = await put(`social/${dateISO}-${Date.now()}.jpg`, buffer, {
     access: 'public',
     contentType: 'image/jpeg',
+    ...(storeId ? { storeId } : {}),
   });
   return blob.url;
 }
