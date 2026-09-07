@@ -9,6 +9,7 @@ import { moonPhaseInfo } from '../components/MoonPhase';
 import { getUpcomingSkyEvents } from './skyEvents';
 import { callClaude } from './anthropic';
 import { genererIllustrationSociale } from './openaiImage';
+import { soumettreAvatarVideo } from './heygen';
 import { mulberry32, hashStr, pick } from './fallback-generator';
 
 export type SocialDraft = {
@@ -17,6 +18,11 @@ export type SocialDraft = {
   imageUrl: string | null;
   scriptVideo: string | null;
   mode: 'ia' | 'demo';
+  // TikTok uniquement : identifiant du rendu HeyGen soumis à partir de
+  // `scriptVideo` (voir soumettreVideoAvatarTiktok) — absent si
+  // HEYGEN_API_KEY n'est pas configurée ou si la soumission a échoué
+  // (jamais bloquant : le script texte reste disponible dans tous les cas).
+  heygenVideoId?: string | null;
 };
 
 export type DailySocialContent = {
@@ -163,12 +169,32 @@ const TIKTOK_HOOKS = [
   "Pourquoi ton horoscope générique ne te dit jamais quoi FAIRE (et ce qu'on fait différemment)",
   "3 secondes pour savoir quoi faire aujourd'hui, selon le ciel",
 ];
+// Monologue pur, pensé pour être lu par un avatar vidéo (HeyGen) — pas
+// d'indication de tournage ("montrer l'écran...") comme dans une ancienne
+// version pensée pour être filmée par une vraie personne : voir
+// soumettreVideoAvatarTiktok, qui envoie ce texte tel quel à l'avatar.
 const TIKTOK_SCRIPTS = [
-  "Accroche (0-3s) : {hook}\nDéveloppement (3-15s) : montrer l'écran d'Horosphère, taper sa date de naissance, faire apparaître le résultat personnalisé.\nChute (15-20s) : \"{phase} aujourd'hui — {influence}. Voici l'action à mener.\"\nCTA : lien en bio, premiers crédits offerts.",
+  "{hook} {phase} aujourd'hui — {influence}. Sur Horosphère, on ne vous sort pas l'horoscope générique de votre signe : votre thème natal réel, calculé à partir de votre date, votre heure et votre lieu de naissance, vous dit ce qu'il y a vraiment à faire aujourd'hui. Premiers crédits offerts, lien en bio.",
 ];
 
 function interpole(texte: string, vars: Record<string, string>): string {
   return Object.entries(vars).reduce((acc, [k, v]) => acc.replaceAll(`{${k}}`, v), texte);
+}
+
+/** Soumet le script TikTok à HeyGen pour générer la vidéo avatar (voir
+ * lib/heygen.ts) — jamais bloquant : renvoie `null` sans lever d'erreur si
+ * HEYGEN_API_KEY n'est pas configurée ou si la soumission échoue, le script
+ * texte restant de toute façon disponible dans le brouillon Airtable. Le
+ * rendu est asynchrone : l'identifiant renvoyé est à interroger via
+ * /api/social/reel-status (provider "heygen") pour récupérer l'URL finale. */
+async function soumettreVideoAvatarTiktok(script: string): Promise<string | null> {
+  if (!process.env.HEYGEN_API_KEY) return null;
+  try {
+    return await soumettreAvatarVideo(script);
+  } catch (err) {
+    console.error('soumettreVideoAvatarTiktok: soumission HeyGen échouée', err);
+    return null;
+  }
 }
 
 const HASHTAGS_BASE = '#horoscope #astrologie #horosphere #signeastrologique #developpementpersonnel';
@@ -182,6 +208,8 @@ async function fallbackSocialContent(dateISO: string): Promise<DailySocialConten
   const igLegende = interpole(pick(rng, IG_LEGENDES), vars);
   const fbLegende = interpole(pick(rng, FB_LEGENDES), vars);
   const images = await imagesDuJour(dateISO, igLegende);
+  const scriptTiktok = interpole(pick(rng, TIKTOK_SCRIPTS), { ...vars, hook });
+  const heygenVideoId = await soumettreVideoAvatarTiktok(scriptTiktok);
 
   return {
     instagram: { legende: igLegende, hashtags: HASHTAGS_BASE + ' #luneDuJour', imageUrl: images.instagram, scriptVideo: null, mode: 'demo' },
@@ -190,8 +218,9 @@ async function fallbackSocialContent(dateISO: string): Promise<DailySocialConten
       legende: `${hook} ${HASHTAGS_BASE}`,
       hashtags: HASHTAGS_BASE + ' #pourtoi #fyp',
       imageUrl: null,
-      scriptVideo: interpole(pick(rng, TIKTOK_SCRIPTS), { ...vars, hook }),
+      scriptVideo: scriptTiktok,
       mode: 'demo',
+      heygenVideoId,
     },
   };
 }
@@ -221,12 +250,13 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
 {
   "instagram": { "legende": "légende Instagram, 2 à 4 phrases courtes, ton chaleureux, emojis avec parcimonie, se termine par une invitation à passer à l'action sur Horosphère", "hashtags": "8 à 12 hashtags pertinents séparés par des espaces, en français et anglais mélangés" },
   "facebook": { "legende": "légende Facebook, un peu plus longue et conversationnelle qu'Instagram, moins d'emojis, mentionne la personnalisation réelle (date/heure/lieu de naissance) et l'action concrète qui en découle", "hashtags": "3 à 5 hashtags, moins dense que sur Instagram" },
-  "tiktok": { "accroche": "1 phrase choc pour les 3 premières secondes de la vidéo, orientée vers l'action à mener", "script": "script court en 3 temps (accroche / démonstration de l'app / chute+appel à l'action), pensé pour un tournage simple par une vraie personne", "legende": "légende TikTok courte et punchy", "hashtags": "5 à 8 hashtags TikTok pertinents dont #pourtoi #fyp" }
+  "tiktok": { "script": "texte intégral à lire à voix haute par un avatar vidéo (15 à 25 secondes de parole, pas d'indication de tournage ni de mise en scène) : commence par une phrase choc, enchaîne sur la proposition de valeur, termine par un appel à l'action", "legende": "légende TikTok courte et punchy", "hashtags": "5 à 8 hashtags TikTok pertinents dont #pourtoi #fyp" }
 }`;
 
   try {
     const parsed = await callClaude(apiKey, model, prompt, 1200);
     const images = await imagesDuJour(dateISO, String(parsed.instagram?.legende ?? ''));
+    const scriptTiktokIA = String(parsed.tiktok?.script ?? '').trim();
     return {
       instagram: {
         legende: String(parsed.instagram?.legende ?? ''),
@@ -246,8 +276,9 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
         legende: String(parsed.tiktok?.legende ?? ''),
         hashtags: String(parsed.tiktok?.hashtags ?? HASHTAGS_BASE),
         imageUrl: null,
-        scriptVideo: `Accroche : ${String(parsed.tiktok?.accroche ?? '')}\n\nScript : ${String(parsed.tiktok?.script ?? '')}`,
+        scriptVideo: scriptTiktokIA,
         mode: 'ia',
+        heygenVideoId: scriptTiktokIA ? await soumettreVideoAvatarTiktok(scriptTiktokIA) : null,
       },
     };
   } catch (err) {
