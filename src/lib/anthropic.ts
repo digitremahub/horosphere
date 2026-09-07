@@ -21,7 +21,7 @@ export type Langue = 'fr' | 'en' | 'es';
 // bascule selon la préférence de l'utilisateur (voir next-intl, src/i18n).
 // consigneLangue() ajoute une directive explicite au prompt ; motLangue()
 // s'utilise pour les mentions ponctuelles à l'intérieur du format JSON
-// attendu (ex: "nom d'une couleur porte-bonheur (...)").
+// attendu (ex: "un seul mot résumant la semaine (...)").
 const NOMS_LANGUE: Record<Exclude<Langue, 'fr'>, string> = { en: 'anglais', es: 'espagnol' };
 function consigneLangue(langue: Langue): string {
   if (langue === 'fr') return '';
@@ -42,9 +42,6 @@ export type HoroscopeReading = {
   scoreAmour: number;
   scoreTravail: number;
   scoreEnergie: number;
-  couleur: string;
-  chiffre: number;
-  talisman: string;
   // Présents uniquement pour l'horoscope personnalisé, quand l'heure et le
   // lieu de naissance ont pu être résolus en thème natal réel (voir
   // lib/natal.ts) — jamais approximés, et jamais pour l'horoscope
@@ -53,6 +50,18 @@ export type HoroscopeReading = {
   luneSigne?: { nom: string; symbole: string };
   mode: 'ia' | 'demo';
 };
+
+// Positionnement Horosphère : le développement personnel PAR les astres —
+// pas un horoscope-divertissement. On garde une voix affirmative (on croit
+// réellement au pouvoir des astres, pas de distance sceptique façon "c'est
+// symbolique") mais on bannit le FATALISME PASSIF ("voici ce qui va vous
+// arriver") au profit de l'AGIR : chaque observation astrologique doit se
+// prolonger en une implication concrète pour la personne — ce qu'elle peut
+// comprendre, décider ou changer aujourd'hui — jamais une simple
+// description de ce qui se passe autour d'elle. Partagée par tous les
+// générateurs ci-dessous plutôt que répétée dans chaque prompt.
+const DIRECTIVE_TON =
+  "Ton : direct, chaleureux, jamais fataliste ni passif. Tu t'adresses à quelqu'un qui croit sincèrement au pouvoir des astres, mais qui vient chercher un guide pour AGIR, pas une prédiction à subir passivement. Chaque phrase doit relier une réalité astrologique à une implication concrète pour la personne (agir, décider, structurer, avancer) — jamais une observation isolée sans conséquence pratique. Bannis les formules de destin figé (\"les astres vous révèlent votre destin\", \"il est écrit que...\") au profit d'un vocabulaire de clarté et d'action.";
 
 export type AstralChart = {
   portrait: string;
@@ -65,8 +74,6 @@ export type AstralChart = {
   scoreCarriere: number;
   scoreSpiritualite: number;
   conseilDeVie: string;
-  pierrePorteBonheur: string;
-  symboleCle: string;
   // Présents uniquement quand l'heure et le lieu de naissance ont pu être
   // résolus en un thème natal réel (voir lib/natal.ts) — jamais approximés.
   ascendantSigne?: { nom: string; symbole: string };
@@ -164,20 +171,17 @@ export async function generateHoroscope(opts: Options): Promise<HoroscopeReading
       : `Horoscope général du jour pour ce signe (pas de données de naissance précises).`;
   const prompt = `Tu écris l'horoscope du jour pour l'application Horosphère, pour le signe ${opts.sign.nom} (élément ${opts.sign.element}, planète maîtresse ${opts.sign.planete}). Date du jour : ${opts.dateISO}.
 ${contexte}
-Ton : chaleureux, concret, bienveillant, jamais culpabilisant ni anxiogène. Phrases courtes, une émotion à la fois. Évite les répétitions d'un jour à l'autre.
+${DIRECTIVE_TON} Phrases courtes, une émotion à la fois, jamais culpabilisant ni anxiogène. Évite les répétitions d'un jour à l'autre.
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
 {
-  "headline": "phrase d'accroche de 5 à 9 mots",
-  "amour": "1 à 2 phrases sur le plan sentimental",
-  "travail": "1 à 2 phrases sur le plan professionnel",
-  "energie": "1 à 2 phrases sur la forme physique et mentale",
-  "conseil": "une phrase impérative courte, actionnable pour aujourd'hui",
+  "headline": "phrase d'accroche de 5 à 9 mots, orientée vers ce qu'il y a à faire ou décider — pas une simple ambiance",
+  "amour": "1 à 2 phrases sur le plan sentimental, se terminant par ce que ça implique concrètement aujourd'hui",
+  "travail": "1 à 2 phrases sur le plan professionnel, se terminant par ce que ça implique concrètement aujourd'hui",
+  "energie": "1 à 2 phrases sur la forme physique et mentale, se terminant par ce que ça implique concrètement aujourd'hui",
+  "conseil": "une phrase impérative courte, l'action principale à mener aujourd'hui — c'est le cœur de la lecture, pas un ajout",
   "scoreAmour": nombre entier entre 30 et 98,
   "scoreTravail": nombre entier entre 30 et 98,
-  "scoreEnergie": nombre entier entre 30 et 98,
-  "couleur": "nom d'une couleur porte-bonheur (${motLangue(langue)})",
-  "chiffre": nombre entier entre 1 et 49,
-  "talisman": "un petit objet porte-bonheur, ex: une clé, une plume"
+  "scoreEnergie": nombre entier entre 30 et 98
 }${consigneLangue(langue)}`;
   const parsed = await callClaude(apiKey, model, prompt, 700);
   return {
@@ -189,9 +193,6 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
     scoreAmour: clampScore(parsed.scoreAmour),
     scoreTravail: clampScore(parsed.scoreTravail),
     scoreEnergie: clampScore(parsed.scoreEnergie),
-    couleur: String(parsed.couleur ?? 'Or'),
-    chiffre: Math.max(1, Math.min(49, Math.round(Number(parsed.chiffre) || 7))),
-    talisman: String(parsed.talisman ?? 'une bougie'),
     ...natalExtra,
     mode: 'ia',
   };
@@ -241,21 +242,19 @@ export async function generateAstralChart(opts: AstralOptions): Promise<AstralCh
 ${contexteNaissance}
 ${natalTxt}
 ${consigneNatal}
-Ton : chaleureux, dense mais accessible, valorisant sans flatterie vide, jamais fataliste. Portrait de fond, pas une prédiction du jour.
+${DIRECTIVE_TON} Dense mais accessible, valorisant sans flatterie vide. Portrait de fond, pas une prédiction du jour — mais chaque axe (forces, défis, amour, carrière, équilibre intérieur) doit éclairer une décision ou un ajustement possible, jamais rester une simple description de personnalité.
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
 {
   "portrait": "3 à 5 phrases de portrait de personnalité général, basé sur le signe",
-  "forces": "1 à 2 phrases sur les forces principales",
-  "defis": "1 à 2 phrases sur le principal axe de progression",
-  "amour": "1 à 2 phrases sur la dynamique amoureuse de fond",
-  "carriere": "1 à 2 phrases sur la dynamique professionnelle de fond",
-  "spiritualite": "1 à 2 phrases sur l'équilibre intérieur",
+  "forces": "1 à 2 phrases sur les forces principales, et comment s'en servir activement",
+  "defis": "1 à 2 phrases sur le principal axe de progression, et un premier pas concret pour y travailler",
+  "amour": "1 à 2 phrases sur la dynamique amoureuse de fond, se terminant par une implication concrète",
+  "carriere": "1 à 2 phrases sur la dynamique professionnelle de fond, se terminant par une implication concrète",
+  "spiritualite": "1 à 2 phrases sur l'équilibre intérieur, se terminant par une implication concrète",
   "scoreAmour": nombre entier entre 30 et 98,
   "scoreCarriere": nombre entier entre 30 et 98,
   "scoreSpiritualite": nombre entier entre 30 et 98,
-  "conseilDeVie": "un conseil de fond, valable sur la durée",
-  "pierrePorteBonheur": "nom d'une pierre porte-bonheur (${motLangue(langue)})",
-  "symboleCle": "un symbole clé du thème, ex: une clé ancienne, un compas"
+  "conseilDeVie": "un conseil de fond, actionnable, valable sur la durée — pas une simple observation"
 }${consigneLangue(langue)}`;
   const parsed = await callClaude(apiKey, model, prompt, 1200);
   return {
@@ -269,8 +268,6 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
     scoreCarriere: clampScore(parsed.scoreCarriere),
     scoreSpiritualite: clampScore(parsed.scoreSpiritualite),
     conseilDeVie: String(parsed.conseilDeVie ?? ''),
-    pierrePorteBonheur: String(parsed.pierrePorteBonheur ?? 'Améthyste'),
-    symboleCle: String(parsed.symboleCle ?? 'une clé ancienne'),
     ...natalExtra,
     mode: 'ia',
   };
@@ -324,7 +321,7 @@ export async function generateSentiment(opts: {
     ? ` Thème natal réel, calculé (à utiliser factuellement, n'en invente aucun autre élément) : ascendant ${themeNatal.ascendant.signe.nom}, lune natale en ${themeNatal.luneSigne.nom} — tu peux t'appuyer dessus, notamment pour la dimension émotionnelle (la lune natale).`
     : '';
   const prompt = `Tu écris une analyse sentimentale hebdomadaire pour l'application Horosphère, pour le signe ${opts.sign.nom} (élément ${opts.sign.element}). Portée : la semaine en cours (semaine ${opts.weekKey}), pas la journée.${natalTxt}
-Ton : chaleureux, introspectif, jamais culpabilisant ni fataliste. Une seule idée par phrase.
+${DIRECTIVE_TON} Introspectif, une seule idée par phrase.
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
 {
   "titre": "titre court de 3 à 6 mots pour cette semaine",
@@ -427,7 +424,7 @@ export async function generateCompatibility(opts: {
 - ${opts.prenom}, signe ${opts.sign.nom} (élément ${opts.sign.element}), ${decan1}e décan (né(e) le ${opts.dateNaissance})
 - ${opts.autrePrenom}, signe ${opts.autreSign.nom} (élément ${opts.autreSign.element}), ${decan2}e décan (né(e) le ${opts.autreDateNaissance})
 Utilise les deux prénoms directement dans le texte plutôt que de dire "l'un" et "l'autre". Le décan (tiers du signe selon la date exacte de naissance) doit nuancer l'analyse sans jamais prétendre calculer une position astronomique précise pour ${opts.autrePrenom} (pas d'ascendant, de maison ou de transit inventés pour cette personne).${natalTxt}
-Ton : nuancé, jamais binaire ("ça marche" / "ça marche pas"), valorise les deux personnes, reste concret. Pas de fatalisme.
+${DIRECTIVE_TON} Nuancé, jamais binaire ("ça marche" / "ça marche pas"), valorise les deux personnes.
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
 {
   "scoreGlobal": nombre entier entre 35 et 98,
@@ -519,7 +516,7 @@ export async function generateGrandeAnalyse(opts: {
   const prompt = `Tu écris une grande analyse personnalisée pour l'application Horosphère, pour le signe ${opts.sign.nom} (élément ${opts.sign.element}, planète maîtresse ${opts.sign.planete}). ${contexteNaissance}
 ${natalTxt}
 C'est le bilan le plus complet proposé par l'application : couvre tous les grands axes de vie (amour, carrière, finances, santé, famille, évolution personnelle), pas seulement un portrait de fond. ${consigneNatal}
-Ton : dense, structuré, valorisant sans flatterie vide, jamais anxiogène.
+${DIRECTIVE_TON} Dense, structuré, valorisant sans flatterie vide.
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
 {
   "synthese": "3 à 4 phrases de synthèse générale de la période",
@@ -604,7 +601,7 @@ export async function generateThematic(opts: {
     : '';
   const prompt = `Tu écris une lecture astrologique thématique pour l'application Horosphère, pour le signe ${opts.sign.nom} (élément ${opts.sign.element}, planète maîtresse ${opts.sign.planete}). Thème : ${meta.axe}. Portée : ${meta.portee}.
 ${meta.consigne}${natalTxt}
-Ton : chaleureux, concret, bienveillant, jamais culpabilisant ni anxiogène.
+${DIRECTIVE_TON}
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
 {
   "titre": "titre court de 3 à 7 mots",
@@ -674,7 +671,7 @@ export async function generateLunarCycle(opts: {
     : '';
   const prompt = `Tu écris une lecture "cycle lunaire" pour l'application Horosphère, pour le signe ${opts.sign.nom} (élément ${opts.sign.element}).
 Phase lunaire réelle du jour : ${moon.label}, illuminée à ${moon.illumination}%. N'invente pas d'autre phase que celle-ci.${natalTxt}
-Ton : chaleureux, contemplatif, concret.
+${DIRECTIVE_TON} Contemplatif sur la lecture, mais toujours concret sur l'implication.
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
 {
   "titre": "titre court de 3 à 6 mots",
@@ -760,7 +757,7 @@ export async function generateTransits(opts: {
     : '';
   const prompt = `Tu écris une lecture "transits planétaires" pour l'application Horosphère, pour le signe ${opts.sign.nom} (élément ${opts.sign.element}, planète maîtresse ${opts.sign.planete}).
 Position réelle actuelle des planètes : ${contexte} N'invente aucune autre position planétaire que celles données.${natalTxt}
-Ton : concret, jamais fataliste, évite le jargon technique (pas d'aspects en degrés).
+${DIRECTIVE_TON} Évite le jargon technique (pas d'aspects en degrés).
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
 {
   "titre": "titre court de 3 à 6 mots",

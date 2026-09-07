@@ -59,8 +59,7 @@ function buildEmailHtml(prenom: string, signeNom: string, signeSymbole: string, 
       <tr><td style="padding-bottom:14px;font-size:15px;"><strong>Amour</strong><br>${reading.amour}</td></tr>
       <tr><td style="padding-bottom:14px;font-size:15px;"><strong>Travail</strong><br>${reading.travail}</td></tr>
       <tr><td style="padding-bottom:14px;font-size:15px;"><strong>Énergie</strong><br>${reading.energie}</td></tr>
-      <tr><td style="padding-bottom:20px;font-size:15px;"><strong>Conseil du jour</strong><br>${reading.conseil}</td></tr>
-      <tr><td style="padding-bottom:24px;font-size:13px;color:#6b6b6b;">Couleur du jour : ${reading.couleur} · Chiffre : ${reading.chiffre} · Talisman : ${reading.talisman}</td></tr>
+      <tr><td style="padding-bottom:24px;font-size:15px;"><strong>Action du jour</strong><br>${reading.conseil}</td></tr>
       <tr><td style="padding-top:8px;font-size:12px;color:#9a9a9a;">
         Vous recevez cet e-mail car vous avez activé l'envoi quotidien de votre horoscope dans
         <a href="${base}/app/profil" style="color:#9a9a9a;">votre profil Horosphère</a>, où vous pouvez le désactiver à tout moment.

@@ -19,18 +19,18 @@ import { SIGNS } from './zodiac';
 // authentifié). Les autres fallbacks de ce fichier ne servent qu'en mode
 // démo (clé IA absente) — leur traduction reste à faire.
 const HEADLINES_FR = [
-  'Le ciel vous ouvre une porte discrète.',
-  'Une journée à avancer à votre rythme.',
-  'Les astres appellent à la patience.',
-  'Un vent nouveau souffle sur vos projets.',
-  'Le moment est bon pour trancher.',
-  'Une clarté inattendue éclaire votre chemin.',
-  "L'instant présent mérite toute votre attention.",
-  'Un pas de côté révèle une meilleure vue.',
-  'La journée récompense ceux qui écoutent leur instinct.',
-  'Un déclic discret change la couleur de la journée.',
-  'Le terrain est favorable à une initiative sincère.',
-  "Les astres invitent à ralentir avant d'avancer.",
+  'Le ciel vous ouvre une porte aujourd’hui — à vous de la pousser.',
+  'Une journée à avancer à votre rythme, sans attendre le bon moment.',
+  'Les astres demandent de la patience, pas de l’attentisme.',
+  'Un vent nouveau souffle sur vos projets : c’est le moment d’en relancer un.',
+  'Le ciel est clair : c’est le moment de trancher.',
+  'Une clarté inattendue s’impose — agissez tant qu’elle est là.',
+  "L'instant présent mérite une vraie décision, pas juste votre attention.",
+  'Un pas de côté aujourd’hui révèle la meilleure décision à prendre.',
+  'Le ciel récompense ceux qui agissent sur leur instinct.',
+  'Un déclic discret : les astres indiquent le bon moment pour se décider.',
+  'Le terrain est favorable à une initiative sincère — lancez-la.',
+  "Les astres invitent à ralentir une minute avant d'avancer, pour mieux décider.",
 ];
 
 const AMOUR_FR = [
@@ -93,22 +93,20 @@ const CONSEILS_FR = [
   'Écoutez ce que votre corps essaie de vous dire depuis un moment.',
 ];
 
-const COULEURS_FR = ['Or', 'Bleu nuit', 'Lilas', 'Corail', 'Vert sauge', 'Bordeaux', 'Argent', 'Turquoise', 'Terracotta', 'Ivoire', 'Prune', 'Ambre'];
-const TALISMANS_FR = ['une clé', 'une bougie', 'une plume', 'une étoile', 'une boussole', 'un galet', 'une coquille', 'un ruban', 'une pierre polie', 'un carnet', 'une lanterne', 'un fil rouge'];
 
 const HEADLINES_EN = [
-  'The sky opens a quiet door for you.',
-  'A day to move forward at your own pace.',
-  'The stars are calling for patience.',
-  'A fresh wind is blowing through your plans.',
-  'The moment is right to decide.',
-  'An unexpected clarity lights your path.',
-  'The present moment deserves your full attention.',
-  'A step sideways reveals a better view.',
-  'The day rewards those who trust their instinct.',
-  'A quiet click of the mind changes the tone of the day.',
-  'The ground is favorable for a sincere initiative.',
-  'The stars invite you to slow down before moving on.',
+  'The sky opens a door for you today — go through it.',
+  "A day to move forward at your own pace, without waiting for the perfect moment.",
+  'The stars ask for patience, not passive waiting.',
+  "A fresh wind blows through your plans: it's time to revive one.",
+  "The sky is clear: it's the moment to decide.",
+  "An unexpected clarity appears — act while it's here.",
+  'The present moment deserves a real decision, not just your attention.',
+  'A step sideways today reveals the best decision to make.',
+  'The sky rewards those who act on instinct.',
+  'A quiet click of the mind: the stars point to the right moment to decide.',
+  'The ground is favorable for a sincere initiative — launch it.',
+  'The stars invite you to slow down for a minute before moving on, to decide better.',
 ];
 
 const AMOUR_EN = [
@@ -171,22 +169,20 @@ const CONSEILS_EN = [
   'Listen to what your body has been trying to tell you for a while.',
 ];
 
-const COULEURS_EN = ['Gold', 'Midnight blue', 'Lilac', 'Coral', 'Sage green', 'Burgundy', 'Silver', 'Turquoise', 'Terracotta', 'Ivory', 'Plum', 'Amber'];
-const TALISMANS_EN = ['a key', 'a candle', 'a feather', 'a star', 'a compass', 'a pebble', 'a seashell', 'a ribbon', 'a polished stone', 'a notebook', 'a lantern', 'a red thread'];
 
 const HEADLINES_ES = [
-  'El cielo te abre una puerta discreta.',
-  'Un día para avanzar a tu propio ritmo.',
-  'Los astros piden paciencia.',
-  'Un viento nuevo sopla sobre tus proyectos.',
-  'Es un buen momento para decidir.',
-  'Una claridad inesperada ilumina tu camino.',
-  'El instante presente merece toda tu atención.',
-  'Un paso al lado revela una mejor vista.',
-  'El día recompensa a quienes escuchan su instinto.',
-  'Un clic discreto cambia el color del día.',
-  'El terreno es favorable para una iniciativa sincera.',
-  'Los astros invitan a bajar el ritmo antes de avanzar.',
+  'El cielo te abre una puerta hoy — atrévete a cruzarla.',
+  'Un día para avanzar a tu ritmo, sin esperar el momento perfecto.',
+  'Los astros piden paciencia, no espera pasiva.',
+  'Un viento nuevo sopla sobre tus proyectos: es hora de retomar uno.',
+  'El cielo está despejado: es el momento de decidir.',
+  'Una claridad inesperada aparece — actúa mientras está ahí.',
+  'El momento presente merece una decisión real, no solo tu atención.',
+  'Un paso al lado hoy revela la mejor decisión a tomar.',
+  'El cielo recompensa a quienes actúan por instinto.',
+  'Un clic discreto: los astros señalan el momento de decidir.',
+  'El terreno es favorable para una iniciativa sincera — lánzala.',
+  'Los astros invitan a bajar el ritmo un minuto antes de avanzar, para decidir mejor.',
 ];
 
 const AMOUR_ES = [
@@ -249,8 +245,6 @@ const CONSEILS_ES = [
   'Escucha lo que tu cuerpo lleva tiempo intentando decirte.',
 ];
 
-const COULEURS_ES = ['Dorado', 'Azul noche', 'Lila', 'Coral', 'Verde salvia', 'Burdeos', 'Plateado', 'Turquesa', 'Terracota', 'Marfil', 'Ciruela', 'Ámbar'];
-const TALISMANS_ES = ['una llave', 'una vela', 'una pluma', 'una estrella', 'una brújula', 'un guijarro', 'una concha', 'una cinta', 'una piedra pulida', 'un cuaderno', 'una linterna', 'un hilo rojo'];
 
 // Exportées : réutilisées par lib/social.ts pour le mode démo du contenu
 // réseaux sociaux, sur le même principe (hash déterministe -> choix stable).
@@ -306,9 +300,9 @@ function pickDistinct<T>(varyKey: string, field: string, signKey: string, arr: T
 }
 
 const BANQUES_PAR_LANGUE = {
-  fr: { headlines: HEADLINES_FR, amour: AMOUR_FR, travail: TRAVAIL_FR, energie: ENERGIE_FR, conseils: CONSEILS_FR, couleurs: COULEURS_FR, talismans: TALISMANS_FR },
-  en: { headlines: HEADLINES_EN, amour: AMOUR_EN, travail: TRAVAIL_EN, energie: ENERGIE_EN, conseils: CONSEILS_EN, couleurs: COULEURS_EN, talismans: TALISMANS_EN },
-  es: { headlines: HEADLINES_ES, amour: AMOUR_ES, travail: TRAVAIL_ES, energie: ENERGIE_ES, conseils: CONSEILS_ES, couleurs: COULEURS_ES, talismans: TALISMANS_ES },
+  fr: { headlines: HEADLINES_FR, amour: AMOUR_FR, travail: TRAVAIL_FR, energie: ENERGIE_FR, conseils: CONSEILS_FR },
+  en: { headlines: HEADLINES_EN, amour: AMOUR_EN, travail: TRAVAIL_EN, energie: ENERGIE_EN, conseils: CONSEILS_EN },
+  es: { headlines: HEADLINES_ES, amour: AMOUR_ES, travail: TRAVAIL_ES, energie: ENERGIE_ES, conseils: CONSEILS_ES },
 } as const;
 
 export function fallbackHoroscope(signKey: string, dateISO: string, locale: 'fr' | 'en' | 'es' = 'fr') {
@@ -323,9 +317,6 @@ export function fallbackHoroscope(signKey: string, dateISO: string, locale: 'fr'
     scoreAmour: range(rng, 35, 97),
     scoreTravail: range(rng, 35, 97),
     scoreEnergie: range(rng, 35, 97),
-    couleur: pickDistinct(dateISO, 'couleur', signKey, banks.couleurs),
-    chiffre: range(rng, 1, 49),
-    talisman: pickDistinct(dateISO, 'talisman', signKey, banks.talismans),
   };
 }
 
@@ -358,9 +349,6 @@ const CONSEILS_VIE = [
   "Faites confiance au rythme qui est le vôtre, même quand il ne ressemble pas à celui des autres.",
   "Un thème astral n'est pas un destin figé : c'est une carte, pas un itinéraire imposé.",
 ];
-const PIERRES = ['Améthyste', 'Œil de tigre', 'Quartz rose', 'Pierre de lune'];
-const SYMBOLES = ['une clé ancienne', 'un compas', 'une lanterne', 'une vague'];
-
 export function fallbackAstralChart(signKey: string, seedKey: string) {
   const rng = mulberry32(hashStr(signKey + '::' + seedKey));
   return {
@@ -374,8 +362,6 @@ export function fallbackAstralChart(signKey: string, seedKey: string) {
     scoreCarriere: range(rng, 40, 95),
     scoreSpiritualite: range(rng, 40, 95),
     conseilDeVie: pick(rng, CONSEILS_VIE),
-    pierrePorteBonheur: pick(rng, PIERRES),
-    symboleCle: pick(rng, SYMBOLES),
   };
 }
 

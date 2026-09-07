@@ -1,6 +1,6 @@
 import { useTranslations } from 'next-intl';
 import BrandMark from '@/components/BrandMark';
-import { Field, Meter, Lucky, SignCircle } from '@/components/CardParts';
+import { Field, Meter, SignCircle } from '@/components/CardParts';
 
 export type Reading = {
   headline: string;
@@ -11,9 +11,6 @@ export type Reading = {
   scoreAmour: number;
   scoreTravail: number;
   scoreEnergie: number;
-  couleur: string;
-  chiffre: number;
-  talisman: string;
   // Présents uniquement pour l'horoscope personnalisé, quand l'heure et le
   // lieu de naissance ont pu être résolus en thème natal réel (voir
   // lib/natal.ts) — jamais approximés.
@@ -27,7 +24,7 @@ type SignInfo = { nom: string; symbole: string; dates: string };
 // Carte de lecture complète — utilisée à la fois pour le résultat fraîchement
 // généré (Dashboard) et pour chaque entrée de l'historique (/app/historique),
 // afin que l'utilisateur retrouve exactement la même chose que le jour où il
-// a payé : titre, amour/travail/énergie, jauges, conseil, et objets porte-bonheur.
+// a payé : titre, amour/travail/énergie, jauges, et l'action du jour.
 export default function ReadingCard({
   reading,
   signInfo,
@@ -108,15 +105,9 @@ export default function ReadingCard({
         <Meter label={t('energy')} value={reading.scoreEnergie} color="var(--sauge)" />
       </div>
 
-      <div style={{ background: 'var(--brume)', border: '1px dashed var(--trait)', borderRadius: 14, padding: '13px 16px', marginBottom: 18 }}>
+      <div style={{ background: 'var(--brume)', border: '1px dashed var(--trait)', borderRadius: 14, padding: '13px 16px' }}>
         <div style={{ fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--lever-profond)', marginBottom: 4 }}>{t('adviceOfDay')}</div>
         <p style={{ margin: 0, fontSize: '0.92rem' }}>{reading.conseil}</p>
-      </div>
-
-      <div className="lucky-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', borderTop: '1px solid var(--trait)', paddingTop: 14 }}>
-        <Lucky label={t('color')} value={reading.couleur} />
-        <Lucky label={t('number')} value={String(reading.chiffre)} mono divider />
-        <Lucky label={t('talisman')} value={reading.talisman} divider />
       </div>
     </div>
   );

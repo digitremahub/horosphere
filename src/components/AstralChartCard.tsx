@@ -1,6 +1,6 @@
 import { useTranslations } from 'next-intl';
 import BrandMark from '@/components/BrandMark';
-import { Field, Meter, Lucky, SignCircle } from '@/components/CardParts';
+import { Field, Meter, SignCircle } from '@/components/CardParts';
 
 export type AstralChart = {
   portrait: string;
@@ -13,8 +13,6 @@ export type AstralChart = {
   scoreCarriere: number;
   scoreSpiritualite: number;
   conseilDeVie: string;
-  pierrePorteBonheur: string;
-  symboleCle: string;
   // Présents uniquement quand l'heure et le lieu de naissance ont pu être
   // résolus en thème natal réel (voir lib/natal.ts) — jamais approximés.
   ascendantSigne?: { nom: string; symbole: string };
@@ -122,14 +120,9 @@ export default function AstralChartCard({
         <Meter label={t('innerBalance')} value={chart.scoreSpiritualite} color="var(--sauge)" />
       </div>
 
-      <div style={{ background: 'var(--brume)', border: '1px dashed var(--trait)', borderRadius: 14, padding: '13px 16px', marginBottom: 18 }}>
+      <div style={{ background: 'var(--brume)', border: '1px dashed var(--trait)', borderRadius: 14, padding: '13px 16px' }}>
         <div style={{ fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--lever-profond)', marginBottom: 4 }}>{t('deepAdvice')}</div>
         <p style={{ margin: 0, fontSize: '0.92rem' }}>{chart.conseilDeVie}</p>
-      </div>
-
-      <div className="lucky-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', borderTop: '1px solid var(--trait)', paddingTop: 14 }}>
-        <Lucky label={t('stone')} value={chart.pierrePorteBonheur} />
-        <Lucky label={t('keySymbol')} value={chart.symboleCle} divider />
       </div>
     </div>
   );
