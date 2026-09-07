@@ -150,12 +150,12 @@ async function imagesDuJour(dateISO: string, legendeDuJour?: string): Promise<{ 
 // ===== Mode démo (sans clé Anthropic) =====
 
 const IG_LEGENDES = [
-  "✨ {phase} ce soir. {influence}\n\nVotre action du jour vous attend sur Horosphère — pas juste une prédiction, une vraie décision à prendre.",
+  "✨ {phase} ce soir. {influence}\n\nUne vraie décision à prendre vous attend sur Horosphère.",
   "🌙 Aujourd'hui : {phase}.\n{influence}\n\nUne lecture, une action : découvrez ce qu'il y a à faire aujourd'hui sur Horosphère.",
   "Le ciel de ce {jour} : {phase}. {influence}\n\nDeux minutes pour comprendre, une action pour avancer — sur Horosphère.",
 ];
 const FB_LEGENDES = [
-  "Aujourd'hui, la lune est en {phase}. {influence}\n\nHorosphère traduit ça en une action concrète pour votre journée — basée sur votre profil de naissance, pas un horoscope générique. À découvrir sur horosphere.fr.",
+  "Aujourd'hui, la lune est en {phase}. {influence}\n\nHorosphère traduit ça en une action concrète pour votre journée, ajustée à votre profil de naissance. À découvrir sur horosphere.fr.",
   "{phase} ce {jour} — {influence}\n\nChaque matin, Horosphère vous donne une lecture claire ET une action à mener pour avancer. Premiers crédits offerts à l'inscription.",
 ];
 const TIKTOK_HOOKS = [
@@ -211,17 +211,17 @@ export async function generateDailySocialContent(date: Date = new Date()): Promi
   const moon = moonPhaseInfo(date);
   const prochainEvenement = nextEventLabel(dateISO);
   const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
-  const prompt = `Tu es le community manager d'Horosphère, une application française de développement personnel par les astres (thème astral basé sur la date, l'heure et le lieu de naissance — pas un horoscope-divertissement générique par signe). Écris le contenu marketing du jour pour trois réseaux sociaux, en français.
+  const prompt = `Tu es le community manager d'Horosphère, une application française de développement personnel par les astres (thème astral basé sur la date, l'heure et le lieu de naissance). Écris le contenu marketing du jour pour trois réseaux sociaux, en français.
 
 Contexte du jour (${dateISO}) : phase lunaire réelle = ${moon.label} (${moon.illumination}% d'illumination). ${prochainEvenement ? `Prochain événement du ciel : ${prochainEvenement}.` : ''}
 
-Ton de marque : direct, chaleureux, jamais fataliste ni anxiogène. Horosphère n'est pas un horoscope-divertissement passif : c'est un outil d'action. Chaque post doit relier la donnée astrologique du jour à ce qu'elle permet de FAIRE, pas seulement de savoir — donner envie d'agir, pas seulement de lire. N'invente jamais de contenu personnalisé pour un signe précis (ce post est public, pas adressé à un utilisateur) — reste sur la lune du jour, les événements du ciel, et la proposition de valeur d'Horosphère (une lecture ET une action concrète, thème natal réel, premiers crédits offerts).
+Ton de marque : direct, chaleureux, jamais fataliste ni anxiogène. Horosphère est un outil d'action : chaque post relie la donnée astrologique du jour à ce qu'elle permet de faire, pour donner envie d'agir. Ce post est public (pas adressé à un utilisateur précis) : n'invente aucun contenu personnalisé pour un signe donné — reste sur la lune du jour, les événements du ciel, et la proposition de valeur d'Horosphère (une lecture ET une action concrète, thème natal réel, premiers crédits offerts).
 
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
 {
   "instagram": { "legende": "légende Instagram, 2 à 4 phrases courtes, ton chaleureux, emojis avec parcimonie, se termine par une invitation à passer à l'action sur Horosphère", "hashtags": "8 à 12 hashtags pertinents séparés par des espaces, en français et anglais mélangés" },
   "facebook": { "legende": "légende Facebook, un peu plus longue et conversationnelle qu'Instagram, moins d'emojis, mentionne la personnalisation réelle (date/heure/lieu de naissance) et l'action concrète qui en découle", "hashtags": "3 à 5 hashtags, moins dense que sur Instagram" },
-  "tiktok": { "accroche": "1 phrase choc pour les 3 premières secondes de la vidéo, orientée vers ce qu'il y a à faire, pas juste à savoir", "script": "script court en 3 temps (accroche / démonstration de l'app / chute+appel à l'action), pensé pour être filmé par une personne réelle, pas pour une vidéo générée", "legende": "légende TikTok courte et punchy", "hashtags": "5 à 8 hashtags TikTok pertinents dont #pourtoi #fyp" }
+  "tiktok": { "accroche": "1 phrase choc pour les 3 premières secondes de la vidéo, orientée vers l'action à mener", "script": "script court en 3 temps (accroche / démonstration de l'app / chute+appel à l'action), pensé pour un tournage simple par une vraie personne", "legende": "légende TikTok courte et punchy", "hashtags": "5 à 8 hashtags TikTok pertinents dont #pourtoi #fyp" }
 }`;
 
   try {

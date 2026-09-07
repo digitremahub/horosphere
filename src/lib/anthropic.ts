@@ -61,7 +61,7 @@ export type HoroscopeReading = {
 // description de ce qui se passe autour d'elle. Partagée par tous les
 // générateurs ci-dessous plutôt que répétée dans chaque prompt.
 const DIRECTIVE_TON =
-  "Ton : direct, chaleureux, jamais fataliste ni passif. Tu t'adresses à quelqu'un qui croit sincèrement au pouvoir des astres, mais qui vient chercher un guide pour AGIR, pas une prédiction à subir passivement. Chaque phrase doit relier une réalité astrologique à une implication concrète pour la personne (agir, décider, structurer, avancer) — jamais une observation isolée sans conséquence pratique. Bannis les formules de destin figé (\"les astres vous révèlent votre destin\", \"il est écrit que...\") au profit d'un vocabulaire de clarté et d'action.";
+  "Ton : direct, chaleureux, jamais fataliste ni passif. Tu t'adresses à quelqu'un qui croit sincèrement au pouvoir des astres et qui vient chercher de quoi agir aujourd'hui. Chaque phrase relie une réalité astrologique à une implication concrète pour la personne : ce qu'elle peut comprendre, décider ou changer. Bannis les formules de destin figé (\"les astres vous révèlent votre destin\", \"il est écrit que...\") au profit d'un vocabulaire de clarté et d'action.";
 
 export type AstralChart = {
   portrait: string;
@@ -174,11 +174,11 @@ ${contexte}
 ${DIRECTIVE_TON} Phrases courtes, une émotion à la fois, jamais culpabilisant ni anxiogène. Évite les répétitions d'un jour à l'autre.
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
 {
-  "headline": "phrase d'accroche de 5 à 9 mots, orientée vers ce qu'il y a à faire ou décider — pas une simple ambiance",
+  "headline": "phrase d'accroche de 5 à 9 mots, qui donne une direction pour la journée",
   "amour": "1 à 2 phrases sur le plan sentimental, se terminant par ce que ça implique concrètement aujourd'hui",
   "travail": "1 à 2 phrases sur le plan professionnel, se terminant par ce que ça implique concrètement aujourd'hui",
   "energie": "1 à 2 phrases sur la forme physique et mentale, se terminant par ce que ça implique concrètement aujourd'hui",
-  "conseil": "une phrase impérative courte, l'action principale à mener aujourd'hui — c'est le cœur de la lecture, pas un ajout",
+  "conseil": "une phrase impérative courte : l'action principale à mener aujourd'hui, le cœur de la lecture",
   "scoreAmour": nombre entier entre 30 et 98,
   "scoreTravail": nombre entier entre 30 et 98,
   "scoreEnergie": nombre entier entre 30 et 98
@@ -242,7 +242,7 @@ export async function generateAstralChart(opts: AstralOptions): Promise<AstralCh
 ${contexteNaissance}
 ${natalTxt}
 ${consigneNatal}
-${DIRECTIVE_TON} Dense mais accessible, valorisant sans flatterie vide. Portrait de fond, pas une prédiction du jour — mais chaque axe (forces, défis, amour, carrière, équilibre intérieur) doit éclairer une décision ou un ajustement possible, jamais rester une simple description de personnalité.
+${DIRECTIVE_TON} Dense mais accessible, valorisant sans flatterie vide. Un portrait de fond sur la durée : chaque axe (forces, défis, amour, carrière, équilibre intérieur) doit éclairer une décision ou un ajustement possible.
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
 {
   "portrait": "3 à 5 phrases de portrait de personnalité général, basé sur le signe",
@@ -254,7 +254,7 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
   "scoreAmour": nombre entier entre 30 et 98,
   "scoreCarriere": nombre entier entre 30 et 98,
   "scoreSpiritualite": nombre entier entre 30 et 98,
-  "conseilDeVie": "un conseil de fond, actionnable, valable sur la durée — pas une simple observation"
+  "conseilDeVie": "un conseil de fond, actionnable, valable sur la durée"
 }${consigneLangue(langue)}`;
   const parsed = await callClaude(apiKey, model, prompt, 1200);
   return {
@@ -515,7 +515,7 @@ export async function generateGrandeAnalyse(opts: {
     : 'Ne prétends jamais calculer une position astronomique précise (pas d\'ascendant, de maison ou de transit inventés) — reste qualitatif, basé sur le signe solaire et les informations fournies.';
   const prompt = `Tu écris une grande analyse personnalisée pour l'application Horosphère, pour le signe ${opts.sign.nom} (élément ${opts.sign.element}, planète maîtresse ${opts.sign.planete}). ${contexteNaissance}
 ${natalTxt}
-C'est le bilan le plus complet proposé par l'application : couvre tous les grands axes de vie (amour, carrière, finances, santé, famille, évolution personnelle), pas seulement un portrait de fond. ${consigneNatal}
+C'est le bilan le plus complet proposé par l'application : il couvre tous les grands axes de vie (amour, carrière, finances, santé, famille, évolution personnelle). ${consigneNatal}
 ${DIRECTIVE_TON} Dense, structuré, valorisant sans flatterie vide.
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
 {
@@ -530,7 +530,7 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
   "scoreCarriere": nombre entier entre 30 et 98,
   "scoreSante": nombre entier entre 30 et 98,
   "scoreFinances": nombre entier entre 30 et 98,
-  "conseilPrincipal": "l'action centrale de cette analyse, 1 phrase — pas une simple observation",
+  "conseilPrincipal": "l'action centrale de cette analyse, formulée en 1 phrase impérative",
   "periodeCle": "une expression courte de période, ex: 'les quatre prochaines semaines'"
 }${consigneLangue(langue)}`;
   const parsed = await callClaude(apiKey, model, prompt, 1400);
