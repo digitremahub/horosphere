@@ -13,9 +13,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Non autorisé.' }, { status: 401 });
   }
 
+  const body = await req.json().catch(() => ({}));
+  const dateISO = typeof body.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.date) ? body.date : new Date().toISOString().slice(0, 10);
+
   try {
-    const draft = await generateSkyNews();
-    return NextResponse.json({ ok: true, ...draft });
+    const draft = await generateSkyNews(new Date(dateISO));
+    return NextResponse.json({ ok: true, date: dateISO, ...draft });
   } catch (err) {
     console.error('generateSkyNews failed', err);
     return NextResponse.json({ error: "La génération de l'article a échoué." }, { status: 502 });
