@@ -75,9 +75,9 @@ const OUVERTURES = [
   "Voici ce qui se dessine dans le ciel ces prochains jours.",
 ];
 const CLOTURES = [
-  "Comme toujours, ces mouvements du ciel ne dictent rien — ils éclairent. À chacun d'y trouver ce qui lui parle.",
-  "Rien n'est écrit d'avance : ces repères sont une lecture du ciel, pas une prédiction.",
-  "Une invitation à observer, plus qu'à anticiper.",
+  "Comme toujours, ces mouvements du ciel ne dictent rien — ils éclairent des choix à faire. À chacun d'en tirer une action concrète pour sa semaine.",
+  "Rien n'est écrit d'avance : ces repères sont une lecture du ciel, à traduire en décisions plutôt qu'à subir.",
+  "Une invitation à comprendre, pour mieux agir cette semaine.",
 ];
 
 function retrogradesTxt(retrogrades: { nom: string }[]): string {
@@ -175,7 +175,7 @@ ${
   precedent
     ? `Un nouvel article n'a de sens que s'il y a une vraie PÉRIODE DE CHANGEMENT à raconter depuis l'article précédent : une nouvelle phase de lune, le Soleil qui entre dans un nouveau signe, une planète qui démarre ou termine sa rétrogradation, un nouvel événement qui approche. Compare mentalement les données ci-dessus au contenu de l'article précédent, et ouvre sur ce qui a RÉELLEMENT changé. Si un fait (par exemple une rétrogradation en cours) était déjà le point fort de l'article précédent et n'a pas changé depuis, NE LE REMETS PAS EN AVANT : mentionne-le en une phrase si besoin, mais construis l'article autour de ce qui est nouveau cette semaine. Choisis dans tous les cas un titre et un angle clairement différents de l'article précédent — un lecteur qui lit les deux ne doit jamais avoir l'impression de lire deux fois le même article.`
     : `Si au moins une planète est rétrograde, fais-en un point fort de l'article (c'est le type d'information la plus recherchée) — explique ce que ça change concrètement, sans dramatiser.`
-} Termine l'article par un court paragraphe ou une liste nommant ces 3 signes et l'influence de leur aspect (conjonction = concerné en premier, opposition = tension à équilibrer, carré = friction qui pousse à ajuster) — sans inventer d'autres signes ni d'autres aspects que ceux donnés. Ne prétends jamais calculer un ascendant, une maison ou un transit précis non fourni ci-dessus — reste sur les données données. Ton : chaleureux, curieux, jamais fataliste ni anxiogène, un peu poétique sans être vague. Longueur : 200 à 300 mots pour le contenu.
+} Termine l'article par un court paragraphe ou une liste nommant ces 3 signes et l'influence de leur aspect (conjonction = concerné en premier, opposition = tension à équilibrer, carré = friction qui pousse à ajuster) — sans inventer d'autres signes ni d'autres aspects que ceux donnés. Ne prétends jamais calculer un ascendant, une maison ou un transit précis non fourni ci-dessus — reste sur les données données. Ton : chaleureux, curieux, jamais fataliste ni anxiogène, un peu poétique sans être vague — Horosphère aborde l'astrologie comme un outil de développement personnel, pas comme du divertissement passif : explique la cohérence du ciel (le "pourquoi"), mais que chaque section débouche sur ce que ça change concrètement pour le lecteur cette semaine, pas seulement une observation. Longueur : 200 à 300 mots pour le contenu.
 
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
 {
