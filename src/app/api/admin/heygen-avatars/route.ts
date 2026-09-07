@@ -18,26 +18,29 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'HEYGEN_API_KEY non configurée.' }, { status: 500 });
   }
 
-  try {
-    const [avatarsRes, groupsRes] = await Promise.all([
-      fetch('https://api.heygen.com/v2/avatars', { headers: { 'x-api-key': apiKey }, cache: 'no-store' }),
-      fetch('https://api.heygen.com/v2/avatar_group.list', { headers: { 'x-api-key': apiKey }, cache: 'no-store' }),
-    ]);
-    const avatarsData = await avatarsRes.json().catch(() => null);
-    const groupsData = await groupsRes.json().catch(() => null);
+  const groupId = searchParams.get('groupId');
 
-    const talkingPhotos = avatarsData?.data?.talking_photos ?? [];
-    const avatars = avatarsData?.data?.avatars ?? [];
+  try {
+    if (groupId) {
+      // Détail d'un groupe d'avatars personnalisé (ex. "Lya", "Elian") :
+      // renvoie les looks/avatar_id concrets utilisables par soumettreAvatarVideo.
+      const res = await fetch(`https://api.heygen.com/v2/avatar_group/${encodeURIComponent(groupId)}/avatars`, {
+        headers: { 'x-api-key': apiKey },
+        cache: 'no-store',
+      });
+      const data = await res.json().catch(() => null);
+      return NextResponse.json({ ok: true, groupId, avatars: data?.data?.avatar_list ?? data?.data ?? data });
+    }
+
+    const groupsRes = await fetch('https://api.heygen.com/v2/avatar_group.list', { headers: { 'x-api-key': apiKey }, cache: 'no-store' });
+    const groupsData = await groupsRes.json().catch(() => null);
 
     return NextResponse.json({
       ok: true,
-      // Les avatars "personnalisés" (créés par l'utilisateur, photo ou
-      // instant avatar) apparaissent ici — un avatar de stock générique a
-      // premium=false et n'est pas lié à un groupe personnel.
-      talkingPhotos: talkingPhotos.map((t: { talking_photo_id: string; talking_photo_name: string }) => ({ id: t.talking_photo_id, nom: t.talking_photo_name })),
+      // Les avatars personnalisés créés par l'utilisateur (photo ou instant
+      // avatar) apparaissent comme des groupes ici — le stock générique
+      // (des milliers d'entrées) n'est volontairement pas renvoyé.
       avatarGroups: (groupsData?.data?.avatar_group_list ?? []).map((g: { id: string; name: string; group_type?: string }) => ({ id: g.id, nom: g.name, type: g.group_type })),
-      avatarsCount: avatars.length,
-      premiersAvatars: avatars.slice(0, 5).map((a: { avatar_id: string; avatar_name: string; premium: boolean }) => ({ id: a.avatar_id, nom: a.avatar_name, premium: a.premium })),
     });
   } catch (err) {
     return NextResponse.json({ error: 'Lecture HeyGen échouée.', detail: String(err) }, { status: 502 });
