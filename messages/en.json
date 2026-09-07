@@ -1,7 +1,7 @@
 {
   "Metadata": {
-    "title": "Horosphère — your daily ritual",
-    "description": "AI-personalized daily horoscope. A moment of calm and clarity, every day."
+    "title": "Horosphère — personal growth, guided by the stars",
+    "description": "Every day, a short astrological reading and one concrete action to move forward. AI-generated, personalized to your profile."
   },
   "Nav": {
     "home": "Home",
@@ -14,7 +14,7 @@
     "login": "Log in"
   },
   "Footer": {
-    "tagline": "A daily ritual, built to last.",
+    "tagline": "A daily ritual, to move forward every day.",
     "legalNotice": "Legal notice",
     "terms": "Terms",
     "privacy": "Privacy"
@@ -267,20 +267,20 @@
       "guidance": "Themed guidance"
     },
     "features": {
-      "horoscope_quotidien": { "nom": "Daily horoscope", "description": "A daily reading to guide your day." },
-      "vision_hebdomadaire": { "nom": "Weekly outlook", "description": "A clear view of your week ahead." },
-      "snapshot_natal": { "nom": "Natal Snapshot", "description": "A quick read of your birth chart." },
-      "horoscope_personnalise": { "nom": "Personalized horoscope", "description": "Based on your birth date, time and place." },
-      "analyse_sentimentale": { "nom": "Mood analysis", "description": "What your heart is going through this week." },
-      "compatibilite_amoureuse": { "nom": "Love compatibility", "description": "Compare two signs in detail." },
-      "theme_astral_complet": { "nom": "Full birth chart", "description": "Your sky map at the moment you were born." },
-      "grande_analyse": { "nom": "In-depth personalized analysis", "description": "A long-format overview, every area of life." },
-      "cycle_lunaire": { "nom": "Lunar cycle", "description": "Sync yourself with the moon's phases." },
-      "transits_planetaires": { "nom": "Planetary transits", "description": "Analysis of the transits currently active on your chart." },
-      "horoscope_carriere": { "nom": "Career horoscope", "description": "Let the stars light up your professional path." },
-      "horoscope_amoureux": { "nom": "Love horoscope", "description": "Discover the astral influences on your love life." },
-      "aide_decision": { "nom": "Decision-making help", "description": "Astrological insight for your important choices." },
-      "guidance_spirituelle": { "nom": "Spiritual guidance", "description": "A deep reading for your spiritual growth." }
+      "horoscope_quotidien": { "nom": "Daily horoscope", "description": "A short reading every day, and the action to take to move forward." },
+      "vision_hebdomadaire": { "nom": "Weekly outlook", "description": "What matters this week, and how to organize around it." },
+      "snapshot_natal": { "nom": "Natal Snapshot", "description": "A quick read of your birth chart, and what it changes for you." },
+      "horoscope_personnalise": { "nom": "Personalized horoscope", "description": "Based on your birth date, time and place — an action truly tailored to you." },
+      "analyse_sentimentale": { "nom": "Mood analysis", "description": "What's at play in your love life this week, and how to respond to it." },
+      "compatibilite_amoureuse": { "nom": "Love compatibility", "description": "What works between you two, and what to work on." },
+      "theme_astral_complet": { "nom": "Full birth chart", "description": "Your birth chart, to understand your natural strengths and put them to use." },
+      "grande_analyse": { "nom": "In-depth personalized analysis", "description": "A full overview, every area of life, with an action for each." },
+      "cycle_lunaire": { "nom": "Lunar cycle", "description": "Align your actions with the moon's phases, week after week." },
+      "transits_planetaires": { "nom": "Planetary transits", "description": "What the current planetary movements concretely change for you." },
+      "horoscope_carriere": { "nom": "Career horoscope", "description": "What to decide or adjust in your career, lit up by the stars." },
+      "horoscope_amoureux": { "nom": "Love horoscope", "description": "What it means for your love life, and how to act on it." },
+      "aide_decision": { "nom": "Decision-making help", "description": "Astrological insight to help you settle an important decision." },
+      "guidance_spirituelle": { "nom": "Spiritual guidance", "description": "A deep reading, with a concrete practice to move forward on your inner path." }
     },
     "packs": {
       "initiation": { "nom": "Initiation", "accroche": "Discover Horosphère" },

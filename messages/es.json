@@ -1,7 +1,7 @@
 {
   "Metadata": {
-    "title": "Horosphère — tu ritual diario",
-    "description": "Horóscopo diario personalizado con IA. Un momento de calma y claridad, cada día."
+    "title": "Horosphère — desarrollo personal a través de los astros",
+    "description": "Cada día, una lectura astrológica breve y una acción concreta para avanzar. Generado con IA, personalizado a tu perfil."
   },
   "Nav": {
     "home": "Inicio",
@@ -14,7 +14,7 @@
     "login": "Iniciar sesión"
   },
   "Footer": {
-    "tagline": "Un ritual diario, pensado para durar.",
+    "tagline": "Un ritual diario, para avanzar cada día.",
     "legalNotice": "Aviso legal",
     "terms": "Condiciones",
     "privacy": "Privacidad"
@@ -267,20 +267,20 @@
       "guidance": "Guía temática"
     },
     "features": {
-      "horoscope_quotidien": { "nom": "Horóscopo del día", "description": "Una lectura diaria para guiar tu jornada." },
-      "vision_hebdomadaire": { "nom": "Visión semanal", "description": "Una visión clara de tu semana por venir." },
-      "snapshot_natal": { "nom": "Snapshot Natal", "description": "Un análisis rápido de tu carta natal." },
-      "horoscope_personnalise": { "nom": "Horóscopo personalizado", "description": "Basado en tu fecha, hora y lugar de nacimiento." },
-      "analyse_sentimentale": { "nom": "Análisis sentimental", "description": "Lo que atraviesa tu corazón esta semana." },
-      "compatibilite_amoureuse": { "nom": "Compatibilidad amorosa", "description": "Compara dos signos en detalle." },
-      "theme_astral_complet": { "nom": "Carta natal completa", "description": "Tu mapa del cielo en el momento de tu nacimiento." },
-      "grande_analyse": { "nom": "Gran análisis personalizado", "description": "Un balance de formato largo, todos los ámbitos." },
-      "cycle_lunaire": { "nom": "Ciclo lunar", "description": "Sincronízate con las fases de la luna." },
-      "transits_planetaires": { "nom": "Tránsitos planetarios", "description": "Análisis de los tránsitos activos en tu carta." },
-      "horoscope_carriere": { "nom": "Horóscopo de carrera", "description": "Deja que los astros iluminen tu camino profesional." },
-      "horoscope_amoureux": { "nom": "Horóscopo amoroso", "description": "Descubre las influencias astrales en tu vida sentimental." },
-      "aide_decision": { "nom": "Ayuda para decidir", "description": "Claridad astrológica para tus decisiones importantes." },
-      "guidance_spirituelle": { "nom": "Guía espiritual", "description": "Una lectura profunda para tu crecimiento espiritual." }
+      "horoscope_quotidien": { "nom": "Horóscopo del día", "description": "Una lectura breve cada día, y la acción a seguir para avanzar." },
+      "vision_hebdomadaire": { "nom": "Visión semanal", "description": "Lo que importa esta semana, y cómo organizarte en consecuencia." },
+      "snapshot_natal": { "nom": "Snapshot Natal", "description": "Un vistazo rápido a tu carta natal, y lo que cambia para ti." },
+      "horoscope_personnalise": { "nom": "Horóscopo personalizado", "description": "Basado en tu fecha, hora y lugar de nacimiento — una acción realmente ajustada a ti." },
+      "analyse_sentimentale": { "nom": "Análisis sentimental", "description": "Lo que se juega en tu vida afectiva esta semana, y cómo responder." },
+      "compatibilite_amoureuse": { "nom": "Compatibilidad amorosa", "description": "Lo que funciona entre ustedes dos, y en qué trabajar." },
+      "theme_astral_complet": { "nom": "Carta natal completa", "description": "Tu carta natal, para entender tus fortalezas naturales y aprovecharlas." },
+      "grande_analyse": { "nom": "Gran análisis personalizado", "description": "Un balance completo, todos los ámbitos de vida, con una acción para cada uno." },
+      "cycle_lunaire": { "nom": "Ciclo lunar", "description": "Alinea tus acciones con las fases de la luna, semana tras semana." },
+      "transits_planetaires": { "nom": "Tránsitos planetarios", "description": "Lo que los movimientos planetarios actuales cambian concretamente para ti." },
+      "horoscope_carriere": { "nom": "Horóscopo de carrera", "description": "Lo que hay que decidir o ajustar en tu carrera, iluminado por los astros." },
+      "horoscope_amoureux": { "nom": "Horóscopo amoroso", "description": "Lo que implica para tu vida sentimental, y cómo actuar en consecuencia." },
+      "aide_decision": { "nom": "Ayuda para decidir", "description": "Claridad astrológica para zanjar una decisión importante." },
+      "guidance_spirituelle": { "nom": "Guía espiritual", "description": "Una lectura profunda, con una práctica concreta para avanzar en tu camino interior." }
     },
     "packs": {
       "initiation": { "nom": "Iniciación", "accroche": "Descubre Horosphère" },

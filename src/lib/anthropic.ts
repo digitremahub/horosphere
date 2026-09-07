@@ -325,10 +325,10 @@ ${DIRECTIVE_TON} Introspectif, une seule idée par phrase.
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
 {
   "titre": "titre court de 3 à 6 mots pour cette semaine",
-  "dominante": "1 à 2 phrases sur l'émotion ou le besoin dominant de la semaine",
-  "enJeu": "1 à 2 phrases sur ce qui se joue ou se transforme intérieurement",
-  "relations": "1 à 2 phrases sur l'impact dans les relations proches",
-  "conseil": "une phrase impérative courte, actionnable cette semaine",
+  "dominante": "1 à 2 phrases sur l'émotion ou le besoin dominant de la semaine, se terminant par ce que ça implique concrètement",
+  "enJeu": "1 à 2 phrases sur ce qui se joue ou se transforme intérieurement, se terminant par ce que ça implique concrètement",
+  "relations": "1 à 2 phrases sur l'impact dans les relations proches, se terminant par ce que ça implique concrètement",
+  "conseil": "une phrase impérative courte, l'action principale à mener cette semaine",
   "scoreClarte": nombre entier entre 30 et 98,
   "scoreIntensite": nombre entier entre 20 et 95,
   "motCle": "un seul mot résumant la semaine (${motLangue(langue)})"
@@ -429,11 +429,11 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
 {
   "scoreGlobal": nombre entier entre 35 et 98,
   "resume": "1 à 2 phrases de résumé de cette entente",
-  "pointsForts": "1 à 2 phrases sur les points forts du duo",
-  "pointsFriction": "1 à 2 phrases sur le principal point de friction, formulé avec bienveillance",
-  "amour": "1 à 2 phrases sur la dynamique amoureuse spécifique",
-  "communication": "1 à 2 phrases sur la façon dont ce duo communique le mieux",
-  "conseil": "un conseil concret pour faire durer cette relation"
+  "pointsForts": "1 à 2 phrases sur les points forts du duo, et comment s'en servir activement",
+  "pointsFriction": "1 à 2 phrases sur le principal point de friction, formulé avec bienveillance, et un premier geste pour le désamorcer",
+  "amour": "1 à 2 phrases sur la dynamique amoureuse spécifique, se terminant par une implication concrète",
+  "communication": "1 à 2 phrases sur la façon dont ce duo communique le mieux, formulé comme une pratique à adopter",
+  "conseil": "l'action concrète principale pour faire durer cette relation"
 }${consigneLangue(langue)}`;
   const parsed = await callClaude(apiKey, model, prompt, 700);
   return {
@@ -520,17 +520,17 @@ ${DIRECTIVE_TON} Dense, structuré, valorisant sans flatterie vide.
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
 {
   "synthese": "3 à 4 phrases de synthèse générale de la période",
-  "amour": "1 à 2 phrases sur l'axe amoureux",
-  "carriere": "1 à 2 phrases sur l'axe carrière",
-  "finances": "1 à 2 phrases sur l'axe financier",
-  "sante": "1 à 2 phrases sur l'axe santé/énergie",
-  "famille": "1 à 2 phrases sur l'axe famille/entourage",
-  "evolutionPersonnelle": "1 à 2 phrases sur l'évolution personnelle",
+  "amour": "1 à 2 phrases sur l'axe amoureux, se terminant par une implication concrète",
+  "carriere": "1 à 2 phrases sur l'axe carrière, se terminant par une implication concrète",
+  "finances": "1 à 2 phrases sur l'axe financier, se terminant par une implication concrète",
+  "sante": "1 à 2 phrases sur l'axe santé/énergie, se terminant par une implication concrète",
+  "famille": "1 à 2 phrases sur l'axe famille/entourage, se terminant par une implication concrète",
+  "evolutionPersonnelle": "1 à 2 phrases sur l'évolution personnelle, se terminant par un premier pas concret",
   "scoreAmour": nombre entier entre 30 et 98,
   "scoreCarriere": nombre entier entre 30 et 98,
   "scoreSante": nombre entier entre 30 et 98,
   "scoreFinances": nombre entier entre 30 et 98,
-  "conseilPrincipal": "le conseil central de cette analyse, 1 phrase",
+  "conseilPrincipal": "l'action centrale de cette analyse, 1 phrase — pas une simple observation",
   "periodeCle": "une expression courte de période, ex: 'les quatre prochaines semaines'"
 }${consigneLangue(langue)}`;
   const parsed = await callClaude(apiKey, model, prompt, 1400);
@@ -605,9 +605,9 @@ ${DIRECTIVE_TON}
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
 {
   "titre": "titre court de 3 à 7 mots",
-  "texte": "2 à 4 phrases sur cet axe précis",
-  "pointAttention": "1 phrase sur un point à surveiller ou à ne pas négliger",
-  "conseil": "une phrase impérative courte, actionnable",
+  "texte": "2 à 4 phrases sur cet axe précis, se terminant par une implication concrète",
+  "pointAttention": "1 phrase sur un point à surveiller, formulée comme un ajustement à faire plutôt qu'une simple mise en garde",
+  "conseil": "une phrase impérative courte, l'action principale à mener",
   "score": nombre entier entre 30 et 98
 }${consigneLangue(langue)}`;
   const parsed = await callClaude(apiKey, model, prompt, 500);
@@ -675,8 +675,8 @@ ${DIRECTIVE_TON} Contemplatif sur la lecture, mais toujours concret sur l'implic
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
 {
   "titre": "titre court de 3 à 6 mots",
-  "interpretation": "2 à 3 phrases reliant cette phase lunaire réelle au signe de l'utilisateur",
-  "conseil": "une phrase impérative courte, actionnable, en lien avec cette phase"
+  "interpretation": "2 à 3 phrases reliant cette phase lunaire réelle au signe de l'utilisateur, se terminant par une implication concrète",
+  "conseil": "une phrase impérative courte, l'action à mener en lien avec cette phase"
 }${consigneLangue(langue)}`;
   const parsed = await callClaude(apiKey, model, prompt, 400);
   return {
@@ -761,8 +761,8 @@ ${DIRECTIVE_TON} Évite le jargon technique (pas d'aspects en degrés).
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
 {
   "titre": "titre court de 3 à 6 mots",
-  "interpretation": "2 à 3 phrases reliant ces positions réelles au signe de l'utilisateur",
-  "conseil": "une phrase impérative courte, actionnable"
+  "interpretation": "2 à 3 phrases reliant ces positions réelles au signe de l'utilisateur, se terminant par une implication concrète",
+  "conseil": "une phrase impérative courte, l'action à mener"
 }${consigneLangue(langue)}`;
   const parsed = await callClaude(apiKey, model, prompt, 450);
   return {
