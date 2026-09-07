@@ -180,10 +180,10 @@ export async function POST(req: NextRequest) {
           reading = await generateGrandeAnalyse({ sign, naissance, langue });
           break;
         case 'cycle_lunaire':
-          reading = await generateLunarCycle({ sign, naissance, langue });
+          reading = await generateLunarCycle({ sign, naissance, langue, dateISO });
           break;
         case 'transits_planetaires':
-          reading = await generateTransits({ sign, naissance, langue });
+          reading = await generateTransits({ sign, naissance, langue, dateISO });
           break;
         default:
           reading = await generateHoroscope({ feature, sign, dateISO, naissance, langue });

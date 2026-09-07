@@ -646,9 +646,15 @@ export async function generateLunarCycle(opts: {
   sign: Sign;
   naissance?: { date: string; heure?: string; lieu?: string; latitude?: number | null; longitude?: number | null; timezone?: string | null };
   langue?: Langue;
+  // Date ciblée par la lecture (YYYY-MM-DD). Par défaut la date du jour —
+  // à préciser explicitement pour une génération anticipée (ex. contenu
+  // préparé la veille pour le lendemain), afin que la phase lunaire décrite
+  // soit bien celle de la date visée, pas celle de l'instant de génération.
+  dateISO?: string;
 }): Promise<LunarCycleReading> {
   const langue = opts.langue ?? 'fr';
-  const moon = moonPhaseInfo(new Date(), langue);
+  const dateCible = opts.dateISO ? new Date(opts.dateISO) : new Date();
+  const moon = moonPhaseInfo(Number.isNaN(dateCible.getTime()) ? new Date() : dateCible, langue);
   const { naissance } = opts;
   const themeNatal =
     naissance?.heure && naissance.latitude != null && naissance.longitude != null && naissance.timezone
@@ -722,9 +728,16 @@ export async function generateTransits(opts: {
   sign: Sign;
   naissance?: { date: string; heure?: string; lieu?: string; latitude?: number | null; longitude?: number | null; timezone?: string | null };
   langue?: Langue;
+  // Date ciblée par la lecture (YYYY-MM-DD). Par défaut la date du jour —
+  // à préciser explicitement pour une génération anticipée (ex. contenu
+  // préparé la veille pour le lendemain), afin que les positions
+  // planétaires décrites soient bien celles de la date visée, pas celles
+  // de l'instant de génération.
+  dateISO?: string;
 }): Promise<TransitsReading> {
   const langue = opts.langue ?? 'fr';
-  const positions = currentPlanetPositions();
+  const dateCible = opts.dateISO ? new Date(opts.dateISO) : new Date();
+  const positions = currentPlanetPositions(Number.isNaN(dateCible.getTime()) ? new Date() : dateCible);
   const byKey = new Map(positions.map((p) => [p.key, p]));
   const rulerKey = RULER_TO_PLANET_KEY[opts.sign.planete];
   const focusKeys = Array.from(new Set(['soleil', 'lune', rulerKey && byKey.has(rulerKey) ? rulerKey : 'mercure']));
