@@ -188,14 +188,14 @@ function interpole(texte: string, vars: Record<string, string>): string {
  * renvoyé est à interroger via /api/social/reel-status (provider "heygen")
  * pour récupérer l'URL finale.
  *
- * Volontairement DÉSACTIVÉ tant que HEYGEN_AVATAR_ID n'est pas configurée
- * explicitement : sans cette variable, lib/heygen.ts retomberait sur un
- * avatar de stock générique, alors que la marque utilise ses propres
- * avatars ("Lya"/"Elian", en cours de finalisation). Pas de vidéo
- * quotidienne automatique pour l'instant — à réactiver simplement en
- * configurant HEYGEN_AVATAR_ID une fois l'avatar à utiliser décidé. */
+ * Volontairement DÉSACTIVÉ par défaut, et via un interrupteur DÉDIÉ
+ * (HEYGEN_TIKTOK_AUTO=true), indépendant de HEYGEN_AVATAR_ID/HEYGEN_VOICE_ID
+ * — ces deux dernières variables servent à choisir l'avatar du récap vidéo
+ * du dimanche (lib/reels.ts, genererRecapDimanche) et NE DOIVENT PAS
+ * réactiver la génération quotidienne par effet de bord : décision
+ * explicite de l'utilisateur ("HeyGen actif que pour dimanche soir"). */
 async function soumettreVideoAvatarTiktok(script: string): Promise<string | null> {
-  if (!process.env.HEYGEN_API_KEY || !process.env.HEYGEN_AVATAR_ID) return null;
+  if (!process.env.HEYGEN_API_KEY || process.env.HEYGEN_TIKTOK_AUTO !== 'true') return null;
   try {
     return await soumettreAvatarVideo(script);
   } catch (err) {

@@ -199,8 +199,13 @@ groupes d'avatars personnalisés sur le compte connecté ("Lya",
 `/api/admin/heygen-avatars` (route de diagnostic temporaire). L'envoi
 automatique du script TikTok marketing quotidien vers HeyGen
 (`soumettreVideoAvatarTiktok` dans `lib/social.ts`) est câblé mais
-volontairement **désactivé** tant que `HEYGEN_AVATAR_ID` n'est pas
-configurée : l'utilisateur veut décider quel persona utiliser où
+volontairement **désactivé par défaut**, derrière un interrupteur dédié
+(`HEYGEN_TIKTOK_AUTO=true`) — **décision explicite de l'utilisateur :
+HeyGen ne doit tourner que pour le récap du dimanche**, jamais pour le
+TikTok quotidien, même une fois `HEYGEN_AVATAR_ID`/`HEYGEN_VOICE_ID`
+configurées pour le récap (ces deux variables ne doivent pas réactiver
+la génération quotidienne par effet de bord — d'où l'interrupteur
+séparé). L'utilisateur veut décider quel persona utiliser pour le récap
 (actualisation des avatars en cours côté HeyGen — "nouvelles vues" à
 venir) avant d'activer une génération automatique quotidienne.
 
