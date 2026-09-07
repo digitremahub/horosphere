@@ -26,17 +26,17 @@ export type Subscription = {
 };
 
 export const CREDIT_PACKS: CreditPack[] = [
-  { slug: 'initiation', emoji: '🌙', nom: 'Premier Pas', prixCentimes: 299, credits: 3, accroche: 'Découvrir Horosphère', envKey: 'STRIPE_PRICE_PACK_INITIATION' },
-  { slug: 'eveil', emoji: '✨', nom: 'Élan', prixCentimes: 699, credits: 10, accroche: 'Petit usage ponctuel', envKey: 'STRIPE_PRICE_PACK_EVEIL' },
-  { slug: 'connexion', emoji: '🔮', nom: 'Rythme', prixCentimes: 1299, credits: 25, accroche: 'Utilisateur régulier', envKey: 'STRIPE_PRICE_PACK_CONNEXION' },
-  { slug: 'illumination', emoji: '🌌', nom: 'Cap', prixCentimes: 1999, credits: 50, accroche: 'Gros pack', envKey: 'STRIPE_PRICE_PACK_ILLUMINATION' },
-  { slug: 'eternite', emoji: '👑', nom: 'Horizon', prixCentimes: 3499, credits: 100, accroche: 'Meilleur rapport volume', envKey: 'STRIPE_PRICE_PACK_ETERNITE' },
+  { slug: 'initiation', emoji: '🌱', nom: 'Premier Pas', prixCentimes: 299, credits: 3, accroche: 'Découvrir Horosphère', envKey: 'STRIPE_PRICE_PACK_INITIATION' },
+  { slug: 'eveil', emoji: '🚀', nom: 'Élan', prixCentimes: 699, credits: 10, accroche: 'Petit usage ponctuel', envKey: 'STRIPE_PRICE_PACK_EVEIL' },
+  { slug: 'connexion', emoji: '🔄', nom: 'Rythme', prixCentimes: 1299, credits: 25, accroche: 'Utilisateur régulier', envKey: 'STRIPE_PRICE_PACK_CONNEXION' },
+  { slug: 'illumination', emoji: '🧭', nom: 'Cap', prixCentimes: 1999, credits: 50, accroche: 'Gros pack', envKey: 'STRIPE_PRICE_PACK_ILLUMINATION' },
+  { slug: 'eternite', emoji: '🌅', nom: 'Horizon', prixCentimes: 3499, credits: 100, accroche: 'Meilleur rapport volume', envKey: 'STRIPE_PRICE_PACK_ETERNITE' },
 ];
 
 export const SUBSCRIPTIONS: Subscription[] = [
-  { slug: 'essentiel', emoji: '🌙', nom: 'Horosphère', prixCentimesParMois: 999, creditsParMois: 80, avantage: 'Tarif préférentiel', envKey: 'STRIPE_PRICE_SUB_ESSENTIEL' },
-  { slug: 'premium', emoji: '✨', nom: 'Horosphère Suivi', prixCentimesParMois: 1999, creditsParMois: 200, avantage: 'Un accompagnement renforcé, au quotidien', envKey: 'STRIPE_PRICE_SUB_PREMIUM', misEnAvant: true },
-  { slug: 'vip', emoji: '👑', nom: 'Horosphère Guidance', prixCentimesParMois: 3499, creditsParMois: 400, avantage: "L'accompagnement le plus complet", envKey: 'STRIPE_PRICE_SUB_VIP' },
+  { slug: 'essentiel', emoji: '⭐', nom: 'Horosphère', prixCentimesParMois: 999, creditsParMois: 80, avantage: 'Tarif préférentiel', envKey: 'STRIPE_PRICE_SUB_ESSENTIEL' },
+  { slug: 'premium', emoji: '☀️', nom: 'Horosphère Suivi', prixCentimesParMois: 1999, creditsParMois: 200, avantage: 'Un accompagnement renforcé, au quotidien', envKey: 'STRIPE_PRICE_SUB_PREMIUM', misEnAvant: true },
+  { slug: 'vip', emoji: '🌠', nom: 'Horosphère Guidance', prixCentimesParMois: 3499, creditsParMois: 400, avantage: "L'accompagnement le plus complet", envKey: 'STRIPE_PRICE_SUB_VIP' },
 ];
 
 // Combien coûte chaque fonctionnalité, en crédits.
