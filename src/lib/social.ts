@@ -183,12 +183,19 @@ function interpole(texte: string, vars: Record<string, string>): string {
 
 /** Soumet le script TikTok à HeyGen pour générer la vidéo avatar (voir
  * lib/heygen.ts) — jamais bloquant : renvoie `null` sans lever d'erreur si
- * HEYGEN_API_KEY n'est pas configurée ou si la soumission échoue, le script
- * texte restant de toute façon disponible dans le brouillon Airtable. Le
- * rendu est asynchrone : l'identifiant renvoyé est à interroger via
- * /api/social/reel-status (provider "heygen") pour récupérer l'URL finale. */
+ * la soumission échoue, le script texte restant de toute façon disponible
+ * dans le brouillon Airtable. Le rendu est asynchrone : l'identifiant
+ * renvoyé est à interroger via /api/social/reel-status (provider "heygen")
+ * pour récupérer l'URL finale.
+ *
+ * Volontairement DÉSACTIVÉ tant que HEYGEN_AVATAR_ID n'est pas configurée
+ * explicitement : sans cette variable, lib/heygen.ts retomberait sur un
+ * avatar de stock générique, alors que la marque utilise ses propres
+ * avatars ("Lya"/"Elian", en cours de finalisation). Pas de vidéo
+ * quotidienne automatique pour l'instant — à réactiver simplement en
+ * configurant HEYGEN_AVATAR_ID une fois l'avatar à utiliser décidé. */
 async function soumettreVideoAvatarTiktok(script: string): Promise<string | null> {
-  if (!process.env.HEYGEN_API_KEY) return null;
+  if (!process.env.HEYGEN_API_KEY || !process.env.HEYGEN_AVATAR_ID) return null;
   try {
     return await soumettreAvatarVideo(script);
   } catch (err) {

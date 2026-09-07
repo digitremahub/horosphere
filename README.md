@@ -114,17 +114,58 @@ Les scénarios Make.com associés (déjà créés dans le compte Make relié) :
 - **Horosphère — Newsletter hebdomadaire** — une fois par semaine, appelle
   `/api/newsletter/send-weekly`.
 
-## Roadmap — Émission Elian & Lya (phase 2, à partir de 100 abonnés)
+## Roadmap contenu & produit — Elian & Lya, chatbot, marketplace
 
-Idée mise en attente explicitement par l'utilisateur ("garde ça pour la
-phase 2 de développement, une fois que nous aurons 100 abonnés") — pas
-implémentée, spec conservée ici pour ne pas la perdre. Ne pas commencer le
-travail d'analyse/implémentation tant que ce seuil n'est pas atteint et
-que l'utilisateur ne relance pas explicitement le sujet.
+Vision stratégique communiquée par l'utilisateur, conservée ici pour
+cohérence des futures demandes de développement — **pas à développer
+immédiatement, sauf demande explicite** pour chaque brique ci-dessous.
 
-Mini émission quotidienne vidéo avec deux personnages IA générés via
-HeyGen (voir `lib/heygen.ts`, déjà utilisé pour le récap dominical) :
-**Elian** et **Lya**. Cohérent avec le positionnement "développement
+**Contexte marché** : l'astro-coaching (consultations individuelles,
+45 €–300 €+ la séance) existe déjà en France mais reste artisanal, cher,
+non scalable. Les apps horoscope existantes (Co-Star, The Pattern, apps
+françaises) restent purement descriptives/prédictives, sans dimension
+actionnable. Horosphère se positionne comme le pont entre ces deux
+mondes : l'astro-coaching rendu quotidien et accessible (abonnement à
+partir de 9,99 €/mois) — argument à exploiter dans la copy marketing,
+sans jamais prétendre remplacer entièrement l'accompagnement humain.
+
+**Phase 1 (actuelle)** :
+- Publications quotidiennes Instagram (texte/image), ton "développement
+  personnel par les astres" — déjà en place (`lib/social.ts`), sans
+  Elian/Lya visuellement pour l'instant (public pas encore familier des
+  deux personas).
+- Chatbot Instagram à voix unique (pas encore le split Elian/Lya) — pas
+  implémenté. Double objectif : acquisition (teaser personnalisé en DM
+  → redirection site) et rétention (engagement entre les publications).
+
+**Phase 2 (à venir)** :
+- Vidéo hebdomadaire, **dimanche uniquement** pour l'instant : récap de
+  la semaine avec Elian et Lya en duo (voir personas et formats
+  ci-dessous), générée via HeyGen (`lib/heygen.ts`, `lib/reels.ts`).
+- Une vidéo "programme de la semaine à venir" le lundi a été envisagée
+  puis **mise de côté pour raison de coût** : le récap dominical consomme
+  à lui seul ~70 crédits HeyGen sur un forfait mensuel de 529 — à
+  reconsidérer si le forfait est ajusté à la hausse.
+- Vidéo promo mensuelle (offres du mois, packs crédits) à intégrer au
+  calendrier de contenu.
+
+**Version 3 (bien plus tard, en complément de l'offre actuelle, pas un
+remplacement)** :
+- Elian/Lya en consultation virtuelle interactive — nécessite un vrai
+  moteur conversationnel avec mémoire et personnalisation (chantier
+  complexe, pas de brique existante à réutiliser).
+- Marketplace d'astro-coachs indépendants intervenant via le site,
+  notation bidirectionnelle façon Uber (coach et client), monétisation
+  par **commission** (modèle préféré à un tarif fixe ou un abonnement
+  d'affichage seul). Objectif espéré : à 1000 abonnés mensuels, ~10% de
+  demandes de mise en relation avec un coach humain. Le chatbot Instagram
+  (une fois en place) pourrait servir de qualification naturelle vers
+  cette marketplace, en détectant les besoins qui dépassent le quotidien.
+
+### Personas Elian & Lya (vidéo hebdo, futur chatbot)
+
+Mini émission vidéo avec deux personnages IA générés via HeyGen (voir
+`lib/heygen.ts`). Cohérent avec le positionnement "développement
 personnel par les astres" (voir plus haut) : l'astro comme langage,
 l'action comme finalité.
 
@@ -150,6 +191,18 @@ arbitrairement) :**
 3. **Tension** (désaccord Lya/Elian → résolution en fin d'épisode) —
    transit introspectif/rétrograde ou aspect tendu (carré, opposition) ;
    à utiliser occasionnellement, pas systématiquement sur ces transits.
+
+**Avatars déjà créés côté HeyGen** : les deux personas existent déjà comme
+groupes d'avatars personnalisés sur le compte connecté ("Lya",
+`7d62100aa9b54ec080492deb1ec67e02` ; "Elian",
+`d834d67e44e749c28407524b9f303c52`) — trouvables via
+`/api/admin/heygen-avatars` (route de diagnostic temporaire). L'envoi
+automatique du script TikTok marketing quotidien vers HeyGen
+(`soumettreVideoAvatarTiktok` dans `lib/social.ts`) est câblé mais
+volontairement **désactivé** tant que `HEYGEN_AVATAR_ID` n'est pas
+configurée : l'utilisateur veut décider quel persona utiliser où
+(actualisation des avatars en cours côté HeyGen — "nouvelles vues" à
+venir) avant d'activer une génération automatique quotidienne.
 
 **Travail demandé le moment venu** (voir le brief complet dans l'historique
 de session si besoin de le retrouver mot pour mot) :
