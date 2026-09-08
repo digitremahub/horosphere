@@ -223,8 +223,11 @@ arbitrairement) :**
 **Avatars déjà créés côté HeyGen** : les deux personas existent déjà comme
 groupes d'avatars personnalisés sur le compte connecté ("Lya",
 `7d62100aa9b54ec080492deb1ec67e02` ; "Elian",
-`d834d67e44e749c28407524b9f303c52`) — trouvables via
-`/api/admin/heygen-avatars` (route de diagnostic temporaire). L'envoi
+`85e1e66562804042a11123d359912765` — a déjà changé une fois, le groupe a
+dû être recréé côté HeyGen ; ces IDs sont centralisés dans
+`GROUPE_AVATAR_ELIAN`/`GROUPE_AVATAR_LYA`, lib/heygen.ts) — retrouvables
+via `/api/admin/heygen-avatars` (route de diagnostic temporaire, liste
+sans paramètre `groupId`) en cas de nouveau changement. L'envoi
 automatique du script TikTok marketing quotidien vers HeyGen
 (`soumettreVideoAvatarTiktok` dans `lib/social.ts`) est câblé mais
 volontairement **désactivé par défaut**, derrière un interrupteur dédié

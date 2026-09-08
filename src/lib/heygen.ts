@@ -112,9 +112,12 @@ export async function resoudrePremierAvatarDuGroupe(apiKey: string, groupId: str
 }
 
 // Groupes d'avatars personnalisés Elian/Lya, déjà créés côté HeyGen par
-// l'utilisateur (voir README, section Elian & Lya) — identifiants stables,
-// partagés par toute génération du récap hebdomadaire duo.
-export const GROUPE_AVATAR_ELIAN = 'd834d67e44e749c28407524b9f303c52';
+// l'utilisateur (voir README, section Elian & Lya) — partagés par toute
+// génération du récap hebdomadaire duo. L'ID d'Elian a changé une fois
+// déjà (le groupe a dû être recréé côté HeyGen) : si "Avatar group not
+// found" réapparaît, revérifier via /api/admin/heygen-avatars (liste sans
+// groupId) plutôt que de supposer ces valeurs figées.
+export const GROUPE_AVATAR_ELIAN = '85e1e66562804042a11123d359912765';
 export const GROUPE_AVATAR_LYA = '7d62100aa9b54ec080492deb1ec67e02';
 // Voix française de secours si HEYGEN_VOICE_ELIAN/HEYGEN_VOICE_LYA ne sont
 // pas configurées — même voix pour les deux personas dans ce cas (pas
