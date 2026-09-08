@@ -9,6 +9,7 @@ import { moonPhaseInfo } from '../components/MoonPhase';
 import { getUpcomingSkyEvents } from './skyEvents';
 import { callClaude, generateHoroscope } from './anthropic';
 import { genererIllustrationSociale, genererIllustrationTotem } from './openaiImage';
+import { imageFixeSigne } from './signImages';
 import { soumettreAvatarVideo } from './heygen';
 import { SIGNS, type Sign } from './zodiac';
 import { mulberry32, hashStr, pick } from './fallback-generator';
@@ -193,11 +194,24 @@ async function genererPostInstagramSigne(date: Date): Promise<SocialDraft> {
     `Chaque signe a son jour sur Horosphère — découvre le tien sur horosphere.fr.`,
   ].join('\n');
 
+  // Illustration EXCLUSIVEMENT tirée des visuels fixes fournis par
+  // l'utilisateur (voir lib/signImages.ts) — composée avec le texte du
+  // jour via /api/og/signe-post (bandeau sous l'image, jamais superposé
+  // sur la scène elle-même, qui porte déjà le nom du signe et la marque).
+  // La génération IA (genererIllustrationTotem) ne sert plus que de filet
+  // de sécurité si un visuel venait à manquer pour un signe.
   let imageUrl: string | null = null;
-  try {
-    imageUrl = await genererIllustrationTotem(sign.nom, `${dateISO}-ig-${sign.key}`);
-  } catch (err) {
-    console.error('genererPostInstagramSigne: illustration IA échouée, repli visuel statique', err);
+  const cheminFixe = imageFixeSigne(sign.key);
+  if (cheminFixe) {
+    const base = (process.env.NEXT_PUBLIC_SITE_URL || 'https://horosphere.fr').replace(/\/$/, '');
+    const params = new URLSearchParams({ signe: sign.key, headline: reading.headline, conseil: reading.conseil });
+    imageUrl = `${base}/api/og/signe-post?${params.toString()}`;
+  } else {
+    try {
+      imageUrl = await genererIllustrationTotem(sign.nom, `${dateISO}-ig-${sign.key}`);
+    } catch (err) {
+      console.error('genererPostInstagramSigne: illustration IA échouée, repli visuel statique', err);
+    }
   }
   if (!imageUrl) imageUrl = visuelInstagramDuJour(dateISO);
 
