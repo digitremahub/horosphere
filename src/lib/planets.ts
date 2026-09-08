@@ -17,7 +17,8 @@ export type PlanetPosition = {
 
 // Le Soleil et la Lune n'ont jamais de rétrogradation apparente réelle —
 // seules les 5 planètes "errantes" classiques peuvent sembler reculer sur
-// le zodiaque, vues depuis la Terre.
+// le zodiaque, vues depuis la Terre (voir aussi PEUT_RETROGRADER_TRANSP
+// ci-dessous pour les 3 transpersonnelles, gérées à part).
 const PEUT_RETROGRADER = new Set(['mercure', 'venus', 'mars', 'jupiter', 'saturne']);
 
 const PLANETES: { body: Body; key: string; nom: string; glyphe: string; couleur: string }[] = [
@@ -28,6 +29,19 @@ const PLANETES: { body: Body; key: string; nom: string; glyphe: string; couleur:
   { body: Body.Mars, key: 'mars', nom: 'Mars', glyphe: '♂', couleur: 'var(--lever-profond)' },
   { body: Body.Jupiter, key: 'jupiter', nom: 'Jupiter', glyphe: '♃', couleur: 'var(--sauge)' },
   { body: Body.Saturn, key: 'saturne', nom: 'Saturne', glyphe: '♄', couleur: 'var(--ombre)' },
+];
+
+// Transpersonnelles — volontairement EXCLUES de currentPlanetPositions()
+// (qui alimente la roue de la homepage et /api/og/astrolabe, conçues pour
+// les 7 planètes traditionnelles) mais nécessaires au récap hebdomadaire
+// (voir lib/weeklyHighlight.ts) : leurs rétrogradations et changements de
+// signe, rares, sont justement les plus notables sur une semaine. Fonction
+// séparée plutôt qu'un ajout à PLANETES, pour ne rien changer aux visuels
+// existants déjà validés.
+const PLANETES_TRANSPERSONNELLES: { body: Body; key: string; nom: string; glyphe: string; couleur: string }[] = [
+  { body: Body.Uranus, key: 'uranus', nom: 'Uranus', glyphe: '♅', couleur: 'var(--lever)' },
+  { body: Body.Neptune, key: 'neptune', nom: 'Neptune', glyphe: '♆', couleur: 'var(--prune)' },
+  { body: Body.Pluto, key: 'pluton', nom: 'Pluton', glyphe: '♇', couleur: 'var(--ombre)' },
 ];
 
 function normalizeDeg(deg: number): number {
@@ -69,4 +83,23 @@ export function currentPlanetPositions(date: Date = new Date()): PlanetPosition[
 
 export function zodiacSignAt(longitude: number) {
   return SIGNS[Math.floor(normalizeDeg(longitude) / 30)];
+}
+
+/** Position des 3 planètes transpersonnelles (Uranus, Neptune, Pluton) —
+ * séparée de currentPlanetPositions() pour ne rien changer aux visuels
+ * existants (voir le commentaire sur PLANETES_TRANSPERSONNELLES). Toutes
+ * les trois peuvent rétrograder. */
+export function outerPlanetPositions(date: Date = new Date()): PlanetPosition[] {
+  return PLANETES_TRANSPERSONNELLES.map((p) => {
+    const geo = GeoVector(p.body, date, true);
+    const ecl = Ecliptic(geo);
+    return {
+      key: p.key,
+      nom: p.nom,
+      glyphe: p.glyphe,
+      couleur: p.couleur,
+      longitude: normalizeDeg(ecl.elon),
+      retrograde: estRetrograde(p.body, date),
+    };
+  });
 }
