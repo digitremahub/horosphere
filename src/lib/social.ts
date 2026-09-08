@@ -7,9 +7,10 @@
 
 import { moonPhaseInfo } from '../components/MoonPhase';
 import { getUpcomingSkyEvents } from './skyEvents';
-import { callClaude } from './anthropic';
+import { callClaude, generateHoroscope } from './anthropic';
 import { genererIllustrationSociale } from './openaiImage';
 import { soumettreAvatarVideo } from './heygen';
+import { SIGNS, type Sign } from './zodiac';
 import { mulberry32, hashStr, pick } from './fallback-generator';
 
 export type SocialDraft = {
@@ -135,34 +136,98 @@ function sujetIllustrationDuJour(dateISO: string, legendeDuJour?: string): strin
   return `${base}\n\nLe post que cette image accompagne dit, en substance : "${legendeDuJour.slice(0, 220)}" — que l'ambiance de l'image évoque cette idée précise (jamais de texte, lettres ou mots visibles dans l'image).`;
 }
 
-/** Résout les visuels du jour pour Facebook et Instagram : tente une
- * illustration IA fraîche (gpt-image-1, partagée entre les deux plateformes
- * puisqu'elles acceptent toutes les deux du JPEG 1536x1024), et retombe sur
- * la rotation de visuels statiques du site en cas d'échec ou d'absence de
- * clé OPENAI_API_KEY — jamais de blocage du pipeline de publication.
- * `legendeDuJour` (la légende Instagram déjà écrite pour ce post) est
- * transmise à GPT pour que le visuel illustre le contenu réel du jour, pas
- * seulement la phase lunaire générique. */
-async function imagesDuJour(dateISO: string, legendeDuJour?: string): Promise<{ facebook: string; instagram: string }> {
+/** Résout le visuel Facebook du jour : tente une illustration IA fraîche
+ * (gpt-image-1), retombe sur la rotation de visuels statiques du site en
+ * cas d'échec ou d'absence de clé OPENAI_API_KEY — jamais de blocage du
+ * pipeline de publication. `legendeDuJour` (la légende déjà écrite pour ce
+ * post) est transmise à GPT pour que le visuel illustre le contenu réel du
+ * jour, pas seulement la phase lunaire générique. Instagram a son propre
+ * visuel, thématisé par signe (voir genererPostInstagramSigne). */
+async function imageFacebookDuJour(dateISO: string, legendeDuJour?: string): Promise<string> {
   try {
     const url = await genererIllustrationSociale(sujetIllustrationDuJour(dateISO, legendeDuJour), dateISO);
-    if (url) return { facebook: url, instagram: url };
+    if (url) return url;
   } catch (err) {
     console.error('genererIllustrationSociale a échoué, retombe sur les visuels statiques', err);
   }
-  return { facebook: visuelDuJour(dateISO), instagram: visuelInstagramDuJour(dateISO) };
+  return visuelDuJour(dateISO);
 }
 
-// ===== Mode démo (sans clé Anthropic) =====
+// ===== Instagram : horoscope complet gratuit, un signe différent chaque jour =====
+//
+// Contrairement à Facebook/TikTok (contenu marketing générique sur la lune
+// du jour), Instagram porte désormais un vrai contenu de valeur : la
+// lecture complète d'un signe, offerte, en rotation sur les 12 signes —
+// une raison concrète de revenir voir la page, et un post qui ne vend
+// rien plutôt que d'empiler les appels à l'action. Volontairement la
+// version GÉNÉRIQUE par signe (feature 'horoscope_quotidien', sans
+// naissance) : jamais la version personnalisée thème natal, qui reste
+// l'exclusivité de l'app.
 
-const IG_LEGENDES = [
-  "✨ {phase} ce soir. {influence}\n\nUne vraie décision à prendre vous attend sur Horosphère.",
-  "🌙 Aujourd'hui : {phase}.\n{influence}\n\nUne lecture, une action : découvrez ce qu'il y a à faire aujourd'hui sur Horosphère.",
-  "Le ciel de ce {jour} : {phase}. {influence}\n\nDeux minutes pour comprendre, une action pour avancer — sur Horosphère.",
-];
+/** Rotation continue sur l'année (jour de l'année % 12), pas seulement sur
+ * la semaine : contrairement aux reels (lundi-samedi), ce post sort tous
+ * les jours, week-end compris. */
+function signeDuJourInstagram(date: Date): Sign {
+  const debutAnnee = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  const jourAnnee = Math.floor((date.getTime() - debutAnnee.getTime()) / 86_400_000);
+  return SIGNS[jourAnnee % SIGNS.length];
+}
+
+const AMBIANCE_ELEMENT: Record<Sign['element'], string> = {
+  Feu: 'des couleurs chaudes et dynamiques, une lumière vive comme une flamme ou un lever de soleil',
+  Terre: 'des tons profonds et ancrés, une scène minérale ou végétale, stable et rassurante',
+  Air: 'une ambiance légère et aérienne, ciel dégagé, mouvement de vent ou de nuages',
+  Eau: 'une ambiance fluide et onirique, reflets sur l\'eau, brume douce, tons bleutés',
+};
+
+function sujetIllustrationSigneInstagram(sign: Sign): string {
+  return `Une scène symbolique pour le signe astrologique ${sign.nom} (élément ${sign.element}, planète maîtresse ${sign.planete}) : ${AMBIANCE_ELEMENT[sign.element]}. Jamais de texte, lettres ou mots visibles dans l'image, jamais le symbole du signe dessiné littéralement.`;
+}
+
+/** Construit le post Instagram du jour à partir d'une vraie lecture
+ * (generateHoroscope, qui a déjà son propre repli déterministe sans clé
+ * Anthropic — inutile de dupliquer cette logique ici). */
+async function genererPostInstagramSigne(date: Date): Promise<SocialDraft> {
+  const dateISO = date.toISOString().slice(0, 10);
+  const sign = signeDuJourInstagram(date);
+  const reading = await generateHoroscope({ feature: 'horoscope_quotidien', sign, dateISO, langue: 'fr' });
+
+  const legende = [
+    `${sign.symbole} ${sign.nom} — ${reading.headline}`,
+    '',
+    `💛 Amour : ${reading.amour}`,
+    `💼 Travail : ${reading.travail}`,
+    `⚡ Énergie : ${reading.energie}`,
+    '',
+    `✨ Action du jour : ${reading.conseil}`,
+    '',
+    `Chaque signe a son jour sur Horosphère — découvre le tien sur horosphere.fr.`,
+  ].join('\n');
+
+  let imageUrl: string | null = null;
+  try {
+    imageUrl = await genererIllustrationSociale(sujetIllustrationSigneInstagram(sign), `${dateISO}-ig-${sign.key}`);
+  } catch (err) {
+    console.error('genererPostInstagramSigne: illustration IA échouée, repli visuel statique', err);
+  }
+  if (!imageUrl) imageUrl = visuelInstagramDuJour(dateISO);
+
+  return {
+    legende,
+    hashtags: `${HASHTAGS_BASE} #${sign.key} #horoscope${sign.nom.replace(/\s/g, '')}`,
+    imageUrl,
+    scriptVideo: null,
+    mode: reading.mode,
+  };
+}
+
+// ===== Mode démo (sans clé Anthropic) — Facebook et TikTok uniquement,
+// Instagram étant géré par genererPostInstagramSigne ci-dessus. =====
+
 const FB_LEGENDES = [
   "Aujourd'hui, la lune est en {phase}. {influence}\n\nHorosphère traduit ça en une action concrète pour votre journée, ajustée à votre profil de naissance. À découvrir sur horosphere.fr.",
   "{phase} ce {jour} — {influence}\n\nChaque matin, Horosphère vous donne une lecture claire ET une action à mener pour avancer. Premiers crédits offerts à l'inscription.",
+  "Ce {jour}, le ciel est en {phase}. {influence}\n\nUne lecture par jour, une action à mener — c'est tout ce qu'Horosphère vous demande de temps.",
 ];
 const TIKTOK_HOOKS = [
   "Voici l'action à mener aujourd'hui selon TON signe 👀",
@@ -206,21 +271,19 @@ async function soumettreVideoAvatarTiktok(script: string): Promise<string | null
 
 const HASHTAGS_BASE = '#horoscope #astrologie #horosphere #signeastrologique #developpementpersonnel';
 
-async function fallbackSocialContent(dateISO: string): Promise<DailySocialContent> {
+async function genererFacebookTiktokDemo(dateISO: string): Promise<{ facebook: SocialDraft; tiktok: SocialDraft }> {
   const moon = moonPhaseInfo(new Date(dateISO));
   const jour = new Date(dateISO).toLocaleDateString('fr-FR', { weekday: 'long' });
   const vars = { phase: moon.label.toLowerCase(), influence: moon.influence, jour };
   const rng = mulberry32(hashStr('social::' + dateISO));
   const hook = pick(rng, TIKTOK_HOOKS);
-  const igLegende = interpole(pick(rng, IG_LEGENDES), vars);
   const fbLegende = interpole(pick(rng, FB_LEGENDES), vars);
-  const images = await imagesDuJour(dateISO, igLegende);
+  const imageFacebook = await imageFacebookDuJour(dateISO, fbLegende);
   const scriptTiktok = interpole(pick(rng, TIKTOK_SCRIPTS), { ...vars, hook });
   const heygenVideoId = await soumettreVideoAvatarTiktok(scriptTiktok);
 
   return {
-    instagram: { legende: igLegende, hashtags: HASHTAGS_BASE + ' #luneDuJour', imageUrl: images.instagram, scriptVideo: null, mode: 'demo' },
-    facebook: { legende: fbLegende, hashtags: HASHTAGS_BASE, imageUrl: images.facebook, scriptVideo: null, mode: 'demo' },
+    facebook: { legende: fbLegende, hashtags: HASHTAGS_BASE, imageUrl: imageFacebook, scriptVideo: null, mode: 'demo' },
     tiktok: {
       legende: `${hook} ${HASHTAGS_BASE}`,
       hashtags: HASHTAGS_BASE + ' #pourtoi #fyp',
@@ -234,62 +297,71 @@ async function fallbackSocialContent(dateISO: string): Promise<DailySocialConten
 
 // ===== Mode IA =====
 
-/** Génère le contenu du jour pour les trois plateformes en un seul appel.
- * Sans clé Anthropic configurée, retombe sur un contenu démo déterministe
- * (jamais de blocage du pipeline de publication). */
-export async function generateDailySocialContent(date: Date = new Date()): Promise<DailySocialContent> {
-  const dateISO = date.toISOString().slice(0, 10);
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    return fallbackSocialContent(dateISO);
-  }
-
-  const moon = moonPhaseInfo(date);
+async function genererFacebookTiktokIA(dateISO: string, apiKey: string): Promise<{ facebook: SocialDraft; tiktok: SocialDraft }> {
+  const moon = moonPhaseInfo(new Date(dateISO));
   const prochainEvenement = nextEventLabel(dateISO);
   const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
-  const prompt = `Tu es le community manager d'Horosphère, une application française de développement personnel par les astres (thème astral basé sur la date, l'heure et le lieu de naissance). Écris le contenu marketing du jour pour trois réseaux sociaux, en français.
+  const prompt = `Tu es le community manager d'Horosphère, une application française de développement personnel par les astres (thème astral basé sur la date, l'heure et le lieu de naissance). Écris le contenu marketing du jour pour Facebook et TikTok, en français.
 
 Contexte du jour (${dateISO}) : phase lunaire réelle = ${moon.label} (${moon.illumination}% d'illumination). ${prochainEvenement ? `Prochain événement du ciel : ${prochainEvenement}.` : ''}
 
 Ton de marque : direct, chaleureux, jamais fataliste ni anxiogène. Horosphère est un outil d'action : chaque post relie la donnée astrologique du jour à ce qu'elle permet de faire, pour donner envie d'agir. Ce post est public (pas adressé à un utilisateur précis) : n'invente aucun contenu personnalisé pour un signe donné — reste sur la lune du jour, les événements du ciel, et la proposition de valeur d'Horosphère (une lecture ET une action concrète, thème natal réel, premiers crédits offerts).
 
+Variété, important : ce post est généré chaque jour, et la phase lunaire ne change que tous les 2-3 jours — évite donc que la structure se répète d'un jour à l'autre. Concrètement :
+- Varie le point d'entrée : pas systématiquement "la lune est en [phase]" en première phrase — parfois commence par l'action à mener, un événement du ciel, ou une observation du quotidien.
+- Bannis la comparaison "des millions/milliards de [signe/personnes]" pour dénigrer l'horoscope générique — c'est une formule déjà beaucoup utilisée, trouve une autre façon de valoriser la personnalisation.
+- Bannis la question rhétorique "Mais comment savoir...?" comme pivot vers le pitch — varie la transition.
+- N'oblige pas chaque post à se terminer par un appel à l'action explicite : certains jours, une observation ou un conseil qui se suffit à lui-même est plus fort qu'un pitch systématique.
+
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
 {
-  "instagram": { "legende": "légende Instagram, 2 à 4 phrases courtes, ton chaleureux, emojis avec parcimonie, se termine par une invitation à passer à l'action sur Horosphère", "hashtags": "8 à 12 hashtags pertinents séparés par des espaces, en français et anglais mélangés" },
-  "facebook": { "legende": "légende Facebook, un peu plus longue et conversationnelle qu'Instagram, moins d'emojis, mentionne la personnalisation réelle (date/heure/lieu de naissance) et l'action concrète qui en découle", "hashtags": "3 à 5 hashtags, moins dense que sur Instagram" },
+  "facebook": { "legende": "légende Facebook, 2 à 4 phrases, conversationnelle, peu d'emojis, mentionne la personnalisation réelle (date/heure/lieu de naissance) quand c'est naturel", "hashtags": "3 à 5 hashtags" },
   "tiktok": { "script": "texte intégral à lire à voix haute par un avatar vidéo (15 à 25 secondes de parole, pas d'indication de tournage ni de mise en scène) : commence par une phrase choc, enchaîne sur la proposition de valeur, termine par un appel à l'action", "legende": "légende TikTok courte et punchy", "hashtags": "5 à 8 hashtags TikTok pertinents dont #pourtoi #fyp" }
 }`;
 
-  try {
-    const parsed = await callClaude(apiKey, model, prompt, 1200);
-    const images = await imagesDuJour(dateISO, String(parsed.instagram?.legende ?? ''));
-    const scriptTiktokIA = String(parsed.tiktok?.script ?? '').trim();
-    return {
-      instagram: {
-        legende: String(parsed.instagram?.legende ?? ''),
-        hashtags: String(parsed.instagram?.hashtags ?? HASHTAGS_BASE),
-        imageUrl: images.instagram,
-        scriptVideo: null,
-        mode: 'ia',
-      },
-      facebook: {
-        legende: String(parsed.facebook?.legende ?? ''),
-        hashtags: String(parsed.facebook?.hashtags ?? HASHTAGS_BASE),
-        imageUrl: images.facebook,
-        scriptVideo: null,
-        mode: 'ia',
-      },
-      tiktok: {
-        legende: String(parsed.tiktok?.legende ?? ''),
-        hashtags: String(parsed.tiktok?.hashtags ?? HASHTAGS_BASE),
-        imageUrl: null,
-        scriptVideo: scriptTiktokIA,
-        mode: 'ia',
-        heygenVideoId: scriptTiktokIA ? await soumettreVideoAvatarTiktok(scriptTiktokIA) : null,
-      },
-    };
-  } catch (err) {
-    console.error('generateDailySocialContent failed, fallback démo', err);
-    return fallbackSocialContent(dateISO);
+  const parsed = await callClaude(apiKey, model, prompt, 900);
+  const imageFacebook = await imageFacebookDuJour(dateISO, String(parsed.facebook?.legende ?? ''));
+  const scriptTiktokIA = String(parsed.tiktok?.script ?? '').trim();
+  return {
+    facebook: {
+      legende: String(parsed.facebook?.legende ?? ''),
+      hashtags: String(parsed.facebook?.hashtags ?? HASHTAGS_BASE),
+      imageUrl: imageFacebook,
+      scriptVideo: null,
+      mode: 'ia',
+    },
+    tiktok: {
+      legende: String(parsed.tiktok?.legende ?? ''),
+      hashtags: String(parsed.tiktok?.hashtags ?? HASHTAGS_BASE),
+      imageUrl: null,
+      scriptVideo: scriptTiktokIA,
+      mode: 'ia',
+      heygenVideoId: scriptTiktokIA ? await soumettreVideoAvatarTiktok(scriptTiktokIA) : null,
+    },
+  };
+}
+
+async function genererFacebookTiktok(dateISO: string): Promise<{ facebook: SocialDraft; tiktok: SocialDraft }> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (apiKey) {
+    try {
+      return await genererFacebookTiktokIA(dateISO, apiKey);
+    } catch (err) {
+      console.error('genererFacebookTiktokIA a échoué, repli démo', err);
+    }
   }
+  return genererFacebookTiktokDemo(dateISO);
+}
+
+/** Génère le contenu du jour pour les trois plateformes. Instagram
+ * (horoscope complet gratuit, signe du jour) et Facebook/TikTok (marketing)
+ * sont deux pipelines indépendants — chacun avec son propre repli
+ * déterministe, jamais de blocage du pipeline de publication. */
+export async function generateDailySocialContent(date: Date = new Date()): Promise<DailySocialContent> {
+  const dateISO = date.toISOString().slice(0, 10);
+  const [instagram, { facebook, tiktok }] = await Promise.all([
+    genererPostInstagramSigne(date),
+    genererFacebookTiktok(dateISO),
+  ]);
+  return { instagram, facebook, tiktok };
 }
