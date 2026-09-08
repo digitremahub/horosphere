@@ -119,10 +119,12 @@ export async function resoudrePremierAvatarDuGroupe(apiKey: string, groupId: str
 // groupId) plutôt que de supposer ces valeurs figées.
 export const GROUPE_AVATAR_ELIAN = '85e1e66562804042a11123d359912765';
 export const GROUPE_AVATAR_LYA = '7d62100aa9b54ec080492deb1ec67e02';
-// Voix française de secours si HEYGEN_VOICE_ELIAN/HEYGEN_VOICE_LYA ne sont
-// pas configurées — même voix pour les deux personas dans ce cas (pas
-// idéal, mais jamais bloquant) : à affiner une fois un premier rendu écouté.
-const VOIX_FRANCAISE_DEFAUT = '67375f26ab6e44ce8569cea3840ef594';
+// Voix choisies par l'utilisateur pour chaque persona (premier rendu de
+// test : les deux avaient la même voix par défaut, corrigé ici) —
+// surchargeables par HEYGEN_VOICE_ELIAN/HEYGEN_VOICE_LYA si besoin
+// d'ajuster encore sans redéployer.
+const VOIX_ELIAN_DEFAUT = 'bafe9c3dbd26476086f4baa7b93d4aba';
+const VOIX_LYA_DEFAUT = '10a50e2dc5bf432b8ca29f3ffd31c416';
 
 export type ScenePersona2 = { persona: 'elian' | 'lya'; texte: string };
 
@@ -135,8 +137,8 @@ export async function soumettreRecapDuo(scenes: ScenePersona2[]): Promise<string
     resoudrePremierAvatarDuGroupe(apiKey, GROUPE_AVATAR_ELIAN),
     resoudrePremierAvatarDuGroupe(apiKey, GROUPE_AVATAR_LYA),
   ]);
-  const voixElian = process.env.HEYGEN_VOICE_ELIAN || VOIX_FRANCAISE_DEFAUT;
-  const voixLya = process.env.HEYGEN_VOICE_LYA || VOIX_FRANCAISE_DEFAUT;
+  const voixElian = process.env.HEYGEN_VOICE_ELIAN || VOIX_ELIAN_DEFAUT;
+  const voixLya = process.env.HEYGEN_VOICE_LYA || VOIX_LYA_DEFAUT;
 
   return soumettreAvatarVideoMultiScenes(
     scenes.map((s) => ({
