@@ -8,7 +8,7 @@
 import { moonPhaseInfo } from '../components/MoonPhase';
 import { getUpcomingSkyEvents } from './skyEvents';
 import { callClaude, generateHoroscope } from './anthropic';
-import { genererIllustrationSociale } from './openaiImage';
+import { genererIllustrationSociale, genererIllustrationTotem } from './openaiImage';
 import { soumettreAvatarVideo } from './heygen';
 import { SIGNS, type Sign } from './zodiac';
 import { mulberry32, hashStr, pick } from './fallback-generator';
@@ -173,34 +173,6 @@ function signeDuJourInstagram(date: Date): Sign {
   return SIGNS[jourAnnee % SIGNS.length];
 }
 
-// Identité visuelle : chaque signe incarné par son totem (animal ou figure
-// archétypale du zodiaque), dans une posture motivée — sportif, guerrier,
-// chevalier — plutôt qu'une scène mystique abstraite (astrolabe, brume,
-// clair de lune). Un seul style pour les 12, volontairement large public :
-// proche d'une affiche de sport ou d'une mascotte esport, pas de l'imagerie
-// ésotérique classique.
-const STYLE_TOTEM =
-  "Illustration façon affiche de sport moderne ou mascotte esport : personnage stylisé, contours nets, pose dynamique et déterminée, couleurs vives et contrastées, énergie et motivation. Jamais mystique, ésotérique ou onirique. Fond simple et épuré qui met le personnage en valeur. Aucun texte, lettre ou mot visible dans l'image.";
-
-const TOTEM_PAR_SIGNE: Record<Sign['key'], string> = {
-  belier: 'un bélier guerrier musclé, cornes en avant, posture de charge, énergie de combattant',
-  taureau: 'un taureau athlète puissant, posture ancrée de lutteur, force tranquille et déterminée',
-  gemeaux: 'deux figures jumelles synchronisées en pleine action, dos à dos, agilité et vitesse',
-  cancer: 'un crabe chevalier à la carapace en armure, pinces levées en bouclier protecteur',
-  lion: 'un lion roi-guerrier à la crinière flamboyante, posture de champion victorieux',
-  vierge: "une archère précise et concentrée, posture de tir parfaitement maîtrisée",
-  balance: 'un ou une duelliste élégant·e tenant une balance en parfait équilibre, posture noble',
-  scorpion: 'un scorpion chevalier en armure sombre, dard levé comme une lame prête à frapper',
-  sagittaire: 'un centaure archer en plein galop, arc bandé, élan et liberté',
-  capricorne: 'une chèvre des montagnes escaladant un sommet rocheux, posture déterminée de grimpeur',
-  verseau: 'un ou une explorateur·rice visionnaire versant une eau lumineuse et transformatrice, posture futuriste',
-  poissons: 'un nageur-guerrier fluide et puissant, en pleine brasse, grâce et force',
-};
-
-function sujetIllustrationSigneInstagram(sign: Sign): string {
-  return `${STYLE_TOTEM} Sujet : ${TOTEM_PAR_SIGNE[sign.key]} — le totem du signe ${sign.nom}.`;
-}
-
 /** Construit le post Instagram du jour à partir d'une vraie lecture
  * (generateHoroscope, qui a déjà son propre repli déterministe sans clé
  * Anthropic — inutile de dupliquer cette logique ici). */
@@ -223,7 +195,7 @@ async function genererPostInstagramSigne(date: Date): Promise<SocialDraft> {
 
   let imageUrl: string | null = null;
   try {
-    imageUrl = await genererIllustrationSociale(sujetIllustrationSigneInstagram(sign), `${dateISO}-ig-${sign.key}`);
+    imageUrl = await genererIllustrationTotem(sign.nom, `${dateISO}-ig-${sign.key}`);
   } catch (err) {
     console.error('genererPostInstagramSigne: illustration IA échouée, repli visuel statique', err);
   }

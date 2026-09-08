@@ -87,16 +87,31 @@ type Options = {
   dateISO: string;
   naissance?: { date: string; heure?: string; lieu?: string; latitude?: number | null; longitude?: number | null; timezone?: string | null };
   langue?: Langue;
+  prenom?: string;
 };
 
 type AstralOptions = {
   sign: Sign;
   naissance: { date: string; heure?: string; lieu?: string; latitude?: number | null; longitude?: number | null; timezone?: string | null };
   langue?: Langue;
+  prenom?: string;
 };
 
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
 const clampScore = (n: unknown) => Math.max(0, Math.min(100, Math.round(Number(n) || 50)));
+
+/** Insère le prénom de l'utilisateur en apostrophe au début du texte
+ * d'ouverture d'une lecture ("Léa, le ciel vous ouvre une porte..."),
+ * plutôt qu'en préambule mécanique séparé ("Bonjour Léa,") — s'accorde
+ * avec le tutoiement/vouvoiement déjà présent dans le texte, IA comme
+ * démo. Ne fait rien sans prénom (ex: aperçu public anonyme de la
+ * homepage, ou horoscope envoyé par e-mail qui a déjà son propre
+ * "Bonjour {prénom}," — voir lib/dailyHoroscopeEmail.ts). */
+function avecPrenom(prenom: string | undefined, texte: string): string {
+  const nom = prenom?.trim();
+  if (!nom || !texte) return texte;
+  return `${nom}, ${texte.charAt(0).toLowerCase()}${texte.slice(1)}`;
+}
 
 /** Appelle l'API Anthropic avec un prompt donné et renvoie l'objet JSON
  * qu'elle a répondu. Partagé par generateHoroscope et generateAstralChart
@@ -156,7 +171,8 @@ export async function generateHoroscope(opts: Options): Promise<HoroscopeReading
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     // Mode démo : pas de clé configurée, on utilise le générateur local déterministe.
-    return { ...fallbackHoroscope(opts.sign.key, opts.dateISO, langue), ...natalExtra, mode: 'demo' };
+    const demo = fallbackHoroscope(opts.sign.key, opts.dateISO, langue);
+    return { ...demo, headline: avecPrenom(opts.prenom, demo.headline), ...natalExtra, mode: 'demo' };
   }
   const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
   const natalTxt = themeNatal
@@ -185,7 +201,7 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
 }${consigneLangue(langue)}`;
   const parsed = await callClaude(apiKey, model, prompt, 700);
   return {
-    headline: String(parsed.headline ?? '').slice(0, 200),
+    headline: avecPrenom(opts.prenom, String(parsed.headline ?? '').slice(0, 200)),
     amour: String(parsed.amour ?? ''),
     travail: String(parsed.travail ?? ''),
     energie: String(parsed.energie ?? ''),
@@ -220,7 +236,8 @@ export async function generateAstralChart(opts: AstralOptions): Promise<AstralCh
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return { ...fallbackAstralChart(opts.sign.key, opts.naissance.date + opts.naissance.lieu), ...natalExtra, mode: 'demo' };
+    const demo = fallbackAstralChart(opts.sign.key, opts.naissance.date + opts.naissance.lieu);
+    return { ...demo, portrait: avecPrenom(opts.prenom, demo.portrait), ...natalExtra, mode: 'demo' };
   }
   const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
   const contexteNaissance =
@@ -258,7 +275,7 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
 }${consigneLangue(langue)}`;
   const parsed = await callClaude(apiKey, model, prompt, 1200);
   return {
-    portrait: String(parsed.portrait ?? ''),
+    portrait: avecPrenom(opts.prenom, String(parsed.portrait ?? '')),
     forces: String(parsed.forces ?? ''),
     defis: String(parsed.defis ?? ''),
     amour: String(parsed.amour ?? ''),
@@ -298,6 +315,7 @@ export async function generateSentiment(opts: {
   weekKey: string;
   naissance?: { date: string; heure?: string; lieu?: string; latitude?: number | null; longitude?: number | null; timezone?: string | null };
   langue?: Langue;
+  prenom?: string;
 }): Promise<SentimentReading> {
   const langue = opts.langue ?? 'fr';
   const { naissance } = opts;
@@ -314,7 +332,8 @@ export async function generateSentiment(opts: {
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return { ...fallbackSentiment(opts.sign.key, opts.weekKey), ...natalExtra, mode: 'demo' };
+    const demo = fallbackSentiment(opts.sign.key, opts.weekKey);
+    return { ...demo, dominante: avecPrenom(opts.prenom, demo.dominante), ...natalExtra, mode: 'demo' };
   }
   const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
   const natalTxt = themeNatal
@@ -336,7 +355,7 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
   const parsed = await callClaude(apiKey, model, prompt, 500);
   return {
     titre: String(parsed.titre ?? ''),
-    dominante: String(parsed.dominante ?? ''),
+    dominante: avecPrenom(opts.prenom, String(parsed.dominante ?? '')),
     enJeu: String(parsed.enJeu ?? ''),
     relations: String(parsed.relations ?? ''),
     conseil: String(parsed.conseil ?? ''),
@@ -479,6 +498,7 @@ export async function generateGrandeAnalyse(opts: {
   sign: Sign;
   naissance: { date: string; heure?: string; lieu?: string; latitude?: number | null; longitude?: number | null; timezone?: string | null };
   langue?: Langue;
+  prenom?: string;
 }): Promise<GrandeAnalyse> {
   const langue = opts.langue ?? 'fr';
   const { naissance } = opts;
@@ -495,7 +515,8 @@ export async function generateGrandeAnalyse(opts: {
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return { ...fallbackGrandeAnalyse(opts.sign.key, opts.naissance.date + opts.naissance.lieu), ...natalExtra, mode: 'demo' };
+    const demo = fallbackGrandeAnalyse(opts.sign.key, opts.naissance.date + opts.naissance.lieu);
+    return { ...demo, synthese: avecPrenom(opts.prenom, demo.synthese), ...natalExtra, mode: 'demo' };
   }
   const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
   const contexteNaissance =
@@ -535,7 +556,7 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
 }${consigneLangue(langue)}`;
   const parsed = await callClaude(apiKey, model, prompt, 1400);
   return {
-    synthese: String(parsed.synthese ?? ''),
+    synthese: avecPrenom(opts.prenom, String(parsed.synthese ?? '')),
     amour: String(parsed.amour ?? ''),
     carriere: String(parsed.carriere ?? ''),
     finances: String(parsed.finances ?? ''),
@@ -576,6 +597,7 @@ export async function generateThematic(opts: {
   seedKey: string;
   naissance?: { date: string; heure?: string; lieu?: string; latitude?: number | null; longitude?: number | null; timezone?: string | null };
   langue?: Langue;
+  prenom?: string;
 }): Promise<ThematicReading> {
   const langue = opts.langue ?? 'fr';
   const meta = THEMES[opts.theme];
@@ -593,7 +615,8 @@ export async function generateThematic(opts: {
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return { titre: meta.titreCard, ...fallbackThematic(opts.theme, opts.sign.key, opts.seedKey), ...natalExtra, mode: 'demo' };
+    const demo = fallbackThematic(opts.theme, opts.sign.key, opts.seedKey);
+    return { titre: meta.titreCard, ...demo, texte: avecPrenom(opts.prenom, demo.texte), ...natalExtra, mode: 'demo' };
   }
   const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
   const natalTxt = themeNatal
@@ -613,7 +636,7 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
   const parsed = await callClaude(apiKey, model, prompt, 500);
   return {
     titre: String(parsed.titre ?? meta.titreCard),
-    texte: String(parsed.texte ?? ''),
+    texte: avecPrenom(opts.prenom, String(parsed.texte ?? '')),
     pointAttention: String(parsed.pointAttention ?? ''),
     conseil: String(parsed.conseil ?? ''),
     score: clampScore(parsed.score),
@@ -651,6 +674,7 @@ export async function generateLunarCycle(opts: {
   // préparé la veille pour le lendemain), afin que la phase lunaire décrite
   // soit bien celle de la date visée, pas celle de l'instant de génération.
   dateISO?: string;
+  prenom?: string;
 }): Promise<LunarCycleReading> {
   const langue = opts.langue ?? 'fr';
   const dateCible = opts.dateISO ? new Date(opts.dateISO) : new Date();
@@ -669,7 +693,8 @@ export async function generateLunarCycle(opts: {
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return { titre: 'Cycle lunaire', ...fallbackLunarCycle(opts.sign.key, moon.label), phase: moon.phase, phaseLabel: moon.label, illumination: moon.illumination, ...natalExtra, mode: 'demo' };
+    const demo = fallbackLunarCycle(opts.sign.key, moon.label);
+    return { titre: 'Cycle lunaire', ...demo, interpretation: avecPrenom(opts.prenom, demo.interpretation), phase: moon.phase, phaseLabel: moon.label, illumination: moon.illumination, ...natalExtra, mode: 'demo' };
   }
   const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
   const natalTxt = themeNatal
@@ -687,7 +712,7 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
   const parsed = await callClaude(apiKey, model, prompt, 400);
   return {
     titre: String(parsed.titre ?? 'Cycle lunaire'),
-    interpretation: String(parsed.interpretation ?? ''),
+    interpretation: avecPrenom(opts.prenom, String(parsed.interpretation ?? '')),
     conseil: String(parsed.conseil ?? ''),
     phase: moon.phase,
     phaseLabel: moon.label,
@@ -734,6 +759,7 @@ export async function generateTransits(opts: {
   // planétaires décrites soient bien celles de la date visée, pas celles
   // de l'instant de génération.
   dateISO?: string;
+  prenom?: string;
 }): Promise<TransitsReading> {
   const langue = opts.langue ?? 'fr';
   const dateCible = opts.dateISO ? new Date(opts.dateISO) : new Date();
@@ -762,7 +788,8 @@ export async function generateTransits(opts: {
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return { titre: 'Transits planétaires', ...fallbackTransits(opts.sign.key, contexte), planetesEnFocus, ...natalExtra, mode: 'demo' };
+    const demo = fallbackTransits(opts.sign.key, contexte);
+    return { titre: 'Transits planétaires', ...demo, interpretation: avecPrenom(opts.prenom, demo.interpretation), planetesEnFocus, ...natalExtra, mode: 'demo' };
   }
   const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
   const natalTxt = themeNatal
@@ -780,7 +807,7 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
   const parsed = await callClaude(apiKey, model, prompt, 450);
   return {
     titre: String(parsed.titre ?? 'Transits planétaires'),
-    interpretation: String(parsed.interpretation ?? ''),
+    interpretation: avecPrenom(opts.prenom, String(parsed.interpretation ?? '')),
     conseil: String(parsed.conseil ?? ''),
     planetesEnFocus,
     ...natalExtra,

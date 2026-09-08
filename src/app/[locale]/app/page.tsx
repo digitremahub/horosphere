@@ -88,7 +88,7 @@ export default async function AppPage() {
 
       <div className="container">
         <Dashboard
-          userName={session!.user!.name || session!.user!.email || 'vous'}
+          userName={profile?.prenom || session!.user!.name || session!.user!.email || 'vous'}
           userSign={userSign}
           ascendant={ascendant ? { nom: localizedSign(ascendant, locale).nom, symbole: ascendant.symbole } : null}
           initialBalance={balance}

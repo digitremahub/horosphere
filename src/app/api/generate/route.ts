@@ -144,14 +144,14 @@ export async function POST(req: NextRequest) {
   let reading;
   try {
     if (isThemeKey(feature)) {
-      reading = await generateThematic({ theme: feature, sign, seedKey: dateISO, naissance, langue });
+      reading = await generateThematic({ theme: feature, sign, seedKey: dateISO, naissance, langue, prenom: profile.prenom });
     } else {
       switch (feature) {
         case 'theme_astral_complet':
-          reading = await generateAstralChart({ sign, naissance, langue });
+          reading = await generateAstralChart({ sign, naissance, langue, prenom: profile.prenom });
           break;
         case 'analyse_sentimentale':
-          reading = await generateSentiment({ sign, weekKey: isoWeekKey(new Date()), naissance, langue });
+          reading = await generateSentiment({ sign, weekKey: isoWeekKey(new Date()), naissance, langue, prenom: profile.prenom });
           break;
         case 'compatibilite_amoureuse': {
           const compat = await generateCompatibility({
@@ -177,16 +177,16 @@ export async function POST(req: NextRequest) {
           break;
         }
         case 'grande_analyse':
-          reading = await generateGrandeAnalyse({ sign, naissance, langue });
+          reading = await generateGrandeAnalyse({ sign, naissance, langue, prenom: profile.prenom });
           break;
         case 'cycle_lunaire':
-          reading = await generateLunarCycle({ sign, naissance, langue, dateISO });
+          reading = await generateLunarCycle({ sign, naissance, langue, dateISO, prenom: profile.prenom });
           break;
         case 'transits_planetaires':
-          reading = await generateTransits({ sign, naissance, langue, dateISO });
+          reading = await generateTransits({ sign, naissance, langue, dateISO, prenom: profile.prenom });
           break;
         default:
-          reading = await generateHoroscope({ feature, sign, dateISO, naissance, langue });
+          reading = await generateHoroscope({ feature, sign, dateISO, naissance, langue, prenom: profile.prenom });
       }
     }
   } catch (err) {
