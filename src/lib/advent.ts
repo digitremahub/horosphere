@@ -181,3 +181,12 @@ export async function reclamerCadeauAvent(userId: number): Promise<ReclamationAv
     }
   }
 }
+
+/** Script de la vidéo avatar du 25 décembre : annonce le gagnant du tirage
+ * au sort et souhaite un joyeux Noël à tous — soumise automatiquement par
+ * /api/admin/tirage-avent juste après le tirage (voir soumettreAvatarVideo,
+ * lib/heygen.ts). Pas besoin d'IA ici : un seul texte, une fois par an,
+ * jamais republié ni comparé à une version précédente. */
+export function scriptVideoNoel(prenomGagnant: string): string {
+  return `Joyeux Noël à toute la communauté Horosphère ! Cette année encore, les astres ont brillé pour beaucoup d'entre vous, et aujourd'hui, c'est le grand jour du tirage au sort de notre calendrier de l'avent. Et le grand gagnant, celui ou celle qui remporte une année d'abonnement offerte, c'est... ${prenomGagnant} ! Félicitations ! Merci à toutes celles et ceux qui ont participé, jour après jour, tout au long de ce mois de décembre. Que cette nouvelle année soit pleine de clarté, d'action, et de belles surprises. Joyeux Noël, et à très vite sur Horosphère.`;
+}

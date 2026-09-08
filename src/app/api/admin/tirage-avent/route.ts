@@ -8,11 +8,19 @@
 // gagnant — pas de virement ni de geste manuel supplémentaire à faire.
 // tirage_gagnants (year en clé primaire) empêche de rejouer le tirage deux
 // fois par erreur pour la même année.
+//
+// Soumet aussi, dans la foulée, la vidéo avatar HeyGen du 25 décembre qui
+// annonce le gagnant et souhaite un joyeux Noël (voir scriptVideoNoel,
+// lib/advent.ts) — jamais bloquant : un échec HeyGen n'empêche jamais le
+// vrai prix (le coupon Stripe) d'être accordé. Le statut se suit ensuite
+// via /api/social/reel-status?provider=heygen&id=...
 
 import { NextRequest, NextResponse } from 'next/server';
 import { hasValidAutomationSecret } from '@/lib/automationAuth';
 import { requireDb, dbConfigured } from '@/lib/db';
 import { stripeClient, stripeConfigured } from '@/lib/stripe';
+import { scriptVideoNoel } from '@/lib/advent';
+import { soumettreAvatarVideo } from '@/lib/heygen';
 
 export async function GET(req: NextRequest) {
   const bySecretParam = new URL(req.url).searchParams.get('secret');
@@ -69,5 +77,16 @@ export async function GET(req: NextRequest) {
     VALUES (${annee}, ${gagnantUserId}, ${coupon.id})
   `;
 
-  return NextResponse.json({ ok: true, annee, gagnantUserId, stripeCouponId: coupon.id });
+  let heygenVideoId: string | null = null;
+  if (process.env.HEYGEN_API_KEY) {
+    try {
+      const profil = await sql<{ prenom: string }[]>`SELECT prenom FROM profiles WHERE user_id = ${gagnantUserId}`;
+      const prenomGagnant = profil[0]?.prenom || 'notre gagnant ou notre gagnante';
+      heygenVideoId = await soumettreAvatarVideo(scriptVideoNoel(prenomGagnant));
+    } catch (err) {
+      console.error("Soumission de la vidéo de Noël échouée (le prix reste accordé)", err);
+    }
+  }
+
+  return NextResponse.json({ ok: true, annee, gagnantUserId, stripeCouponId: coupon.id, heygenVideoId });
 }
