@@ -111,6 +111,39 @@ export async function resoudrePremierAvatarDuGroupe(apiKey: string, groupId: str
   return avatarId;
 }
 
+// Groupes d'avatars personnalisés Elian/Lya, déjà créés côté HeyGen par
+// l'utilisateur (voir README, section Elian & Lya) — identifiants stables,
+// partagés par toute génération du récap hebdomadaire duo.
+export const GROUPE_AVATAR_ELIAN = 'd834d67e44e749c28407524b9f303c52';
+export const GROUPE_AVATAR_LYA = '7d62100aa9b54ec080492deb1ec67e02';
+// Voix française de secours si HEYGEN_VOICE_ELIAN/HEYGEN_VOICE_LYA ne sont
+// pas configurées — même voix pour les deux personas dans ce cas (pas
+// idéal, mais jamais bloquant) : à affiner une fois un premier rendu écouté.
+const VOIX_FRANCAISE_DEFAUT = '67375f26ab6e44ce8569cea3840ef594';
+
+export type ScenePersona2 = { persona: 'elian' | 'lya'; texte: string };
+
+/** Résout les avatars Elian/Lya et soumet le récap hebdomadaire duo en une
+ * seule vidéo à scènes multiples — point d'entrée unique pour toute
+ * génération (manuelle ou automatique) de ce format. */
+export async function soumettreRecapDuo(scenes: ScenePersona2[]): Promise<string> {
+  const apiKey = requireApiKey();
+  const [avatarElian, avatarLya] = await Promise.all([
+    resoudrePremierAvatarDuGroupe(apiKey, GROUPE_AVATAR_ELIAN),
+    resoudrePremierAvatarDuGroupe(apiKey, GROUPE_AVATAR_LYA),
+  ]);
+  const voixElian = process.env.HEYGEN_VOICE_ELIAN || VOIX_FRANCAISE_DEFAUT;
+  const voixLya = process.env.HEYGEN_VOICE_LYA || VOIX_FRANCAISE_DEFAUT;
+
+  return soumettreAvatarVideoMultiScenes(
+    scenes.map((s) => ({
+      avatarId: s.persona === 'elian' ? avatarElian : avatarLya,
+      voiceId: s.persona === 'elian' ? voixElian : voixLya,
+      texte: s.texte,
+    }))
+  );
+}
+
 export async function etatAvatarVideo(videoId: string): Promise<HeygenVideoStatus> {
   const apiKey = requireApiKey();
   const res = await fetch(`${HEYGEN_API_BASE}/v1/video_status.get?video_id=${encodeURIComponent(videoId)}`, {
