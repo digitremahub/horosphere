@@ -19,8 +19,24 @@ export async function GET(req: NextRequest) {
   }
 
   const groupId = searchParams.get('groupId');
+  const voix = searchParams.get('voices');
 
   try {
+    if (voix) {
+      // Voix françaises disponibles (stock) — pour choisir deux voix
+      // distinctes pour Elian/Lya, actuellement sur la même voix par
+      // défaut (voir HEYGEN_VOICE_ELIAN/HEYGEN_VOICE_LYA, lib/heygen.ts).
+      const res = await fetch('https://api.heygen.com/v2/voices', { headers: { 'x-api-key': apiKey }, cache: 'no-store' });
+      const data = await res.json().catch(() => null);
+      const toutes: { voice_id: string; name: string; language?: string; gender?: string }[] = data?.data?.voices ?? [];
+      const francaises = toutes.filter((v) => (v.language || '').toLowerCase().includes('french'));
+      return NextResponse.json({
+        ok: true,
+        total: toutes.length,
+        francaises: francaises.map((v) => ({ id: v.voice_id, nom: v.name, genre: v.gender })),
+      });
+    }
+
     if (groupId) {
       // Détail d'un groupe d'avatars personnalisé (ex. "Lya", "Elian") :
       // renvoie les looks/avatar_id concrets utilisables par soumettreAvatarVideo.
