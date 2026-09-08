@@ -9,18 +9,18 @@
 import type { Sign } from './zodiac';
 
 const IMAGES_SIGNES: Record<Sign['key'], string> = {
-  belier: '/images/signs/belier.webp',
-  taureau: '/images/signs/taureau.webp',
-  gemeaux: '/images/signs/gemeaux.webp',
-  cancer: '/images/signs/cancer.webp',
-  lion: '/images/signs/lion.webp',
-  vierge: '/images/signs/vierge.webp',
-  balance: '/images/signs/balance.webp',
-  scorpion: '/images/signs/scorpion.webp',
-  sagittaire: '/images/signs/sagittaire.webp',
-  capricorne: '/images/signs/capricorne.webp',
-  verseau: '/images/signs/verseau.webp',
-  poissons: '/images/signs/poissons.webp',
+  belier: '/images/signs/belier.jpg',
+  taureau: '/images/signs/taureau.jpg',
+  gemeaux: '/images/signs/gemeaux.jpg',
+  cancer: '/images/signs/cancer.jpg',
+  lion: '/images/signs/lion.jpg',
+  vierge: '/images/signs/vierge.jpg',
+  balance: '/images/signs/balance.jpg',
+  scorpion: '/images/signs/scorpion.jpg',
+  sagittaire: '/images/signs/sagittaire.jpg',
+  capricorne: '/images/signs/capricorne.jpg',
+  verseau: '/images/signs/verseau.jpg',
+  poissons: '/images/signs/poissons.jpg',
 };
 
 /** Chemin public de l'illustration fixe d'un signe, ou `null` si elle n'a
