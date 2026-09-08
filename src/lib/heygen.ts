@@ -66,6 +66,51 @@ export async function soumettreAvatarVideo(script: string): Promise<string> {
   return data.data.video_id as string;
 }
 
+export type ScenePersona = { avatarId: string; voiceId: string; texte: string };
+
+/** Soumet une vidéo à SCÈNES MULTIPLES (plusieurs personnages qui se
+ * succèdent, ex. le duo Elian/Lya du récap hebdomadaire) — chaque scène du
+ * tableau `video_inputs` de l'API HeyGen a son propre avatar/voix/texte,
+ * concaténées dans l'ordre en une seule vidéo. Complément de
+ * soumettreAvatarVideo (un seul avatar) pour les formats à deux voix. */
+export async function soumettreAvatarVideoMultiScenes(scenes: ScenePersona[]): Promise<string> {
+  const apiKey = requireApiKey();
+  const res = await fetch(`${HEYGEN_API_BASE}/v2/video/generate`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-api-key': apiKey },
+    body: JSON.stringify({
+      video_inputs: scenes.map((s) => ({
+        character: { type: 'avatar', avatar_id: s.avatarId, avatar_style: 'normal' },
+        voice: { type: 'text', input_text: s.texte, voice_id: s.voiceId },
+        background: { type: 'color', value: '#0b0b1a' },
+      })),
+      dimension: { width: 1080, height: 1920 },
+    }),
+    cache: 'no-store',
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data?.data?.video_id) {
+    throw new Error(`Soumission de la vidéo HeyGen (multi-scènes) échouée (${res.status}): ${JSON.stringify(data).slice(0, 300)}`);
+  }
+  return data.data.video_id as string;
+}
+
+/** Résout le premier avatar_id concret d'un groupe d'avatars personnalisé
+ * (ex. les groupes "Elian"/"Lya" créés par l'utilisateur sur HeyGen) — un
+ * groupe expose un ou plusieurs "looks", on prend le premier par défaut. */
+export async function resoudrePremierAvatarDuGroupe(apiKey: string, groupId: string): Promise<string> {
+  const res = await fetch(`${HEYGEN_API_BASE}/v2/avatar_group/${encodeURIComponent(groupId)}/avatars`, {
+    headers: { 'x-api-key': apiKey },
+    cache: 'no-store',
+  });
+  const data = await res.json().catch(() => null);
+  const liste = data?.data?.avatar_list ?? data?.data ?? [];
+  const premier = Array.isArray(liste) ? liste[0] : null;
+  const avatarId = premier?.avatar_id || premier?.id;
+  if (!avatarId) throw new Error(`Aucun avatar trouvé dans le groupe ${groupId} : ${JSON.stringify(data).slice(0, 200)}`);
+  return avatarId;
+}
+
 export async function etatAvatarVideo(videoId: string): Promise<HeygenVideoStatus> {
   const apiKey = requireApiKey();
   const res = await fetch(`${HEYGEN_API_BASE}/v1/video_status.get?video_id=${encodeURIComponent(videoId)}`, {

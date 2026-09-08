@@ -5,13 +5,14 @@
 // dessus : ces illustrations portent déjà le nom du signe et la marque en
 // bas de l'image elle-même, un texte superposé risquerait de les recouvrir.
 // Rendue via next/og (Satori), même technique que /api/og/astrolabe —
-// l'image source est lue localement et encodée en base64 (Satori ne sait
-// pas résoudre un chemin de fichier, seulement une URL ou une data URI).
+// l'image source est passée par son URL PUBLIQUE absolue (jamais lue sur
+// le disque local : les fichiers de public/ ne sont pas garantis présents
+// dans le bundle d'une fonction serverless Vercel, contrairement à leur
+// service en tant qu'asset statique — Satori sait charger une image
+// distante nativement, donc autant passer par là).
 
 import { ImageResponse } from 'next/og';
 import type { NextRequest } from 'next/server';
-import { readFile } from 'fs/promises';
-import { join } from 'path';
 import { imageFixeSigne } from '@/lib/signImages';
 import type { Sign } from '@/lib/zodiac';
 
@@ -27,6 +28,10 @@ const COULEURS = {
   creme: '#f3ead9',
 };
 
+function siteUrl(): string {
+  return (process.env.NEXT_PUBLIC_SITE_URL || 'https://horosphere.fr').replace(/\/$/, '');
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const signe = searchParams.get('signe') as Sign['key'] | null;
@@ -38,8 +43,7 @@ export async function GET(req: NextRequest) {
     return new Response("Illustration introuvable pour ce signe.", { status: 404 });
   }
 
-  const buffer = await readFile(join(process.cwd(), 'public', chemin.replace(/^\//, '')));
-  const dataUri = `data:image/webp;base64,${buffer.toString('base64')}`;
+  const imageUrl = `${siteUrl()}${chemin}`;
 
   return new ImageResponse(
     (
@@ -52,7 +56,7 @@ export async function GET(req: NextRequest) {
           background: COULEURS.fond,
         }}
       >
-        <img src={dataUri} style={{ width: IMG_WIDTH, height: IMG_HEIGHT, objectFit: 'cover' }} />
+        <img src={imageUrl} style={{ width: IMG_WIDTH, height: IMG_HEIGHT, objectFit: 'cover' }} />
         <div
           style={{
             width: IMG_WIDTH,
