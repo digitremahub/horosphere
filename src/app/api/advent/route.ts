@@ -32,5 +32,5 @@ export async function POST() {
     const message = resultat.raison === 'hors-periode' ? "Le calendrier n'est ouvert que du 1er au 24 décembre." : "Case déjà réclamée aujourd'hui.";
     return NextResponse.json({ error: message, raison: resultat.raison }, { status: 400 });
   }
-  return NextResponse.json({ ok: true, jour: resultat.jour, credits: resultat.credits });
+  return NextResponse.json(resultat);
 }

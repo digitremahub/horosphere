@@ -2,6 +2,7 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import { redirect, Link } from '@/i18n/navigation';
 import { auth } from '@/lib/auth';
 import { dbConfigured } from '@/lib/db';
+import { estPeriodeVisibleAvent } from '@/lib/advent';
 import AdventCalendar from '@/components/AdventCalendar';
 
 export default async function CalendrierAventPage() {
@@ -10,6 +11,11 @@ export default async function CalendrierAventPage() {
   const t = await getTranslations('Advent');
   if (!session?.user) {
     redirect({ href: '/connexion', locale });
+  }
+  // Caché (même par lien direct) avant le 20 novembre — le temps que la
+  // déco de Noël du site soit prête (voir lib/advent.ts).
+  if (!estPeriodeVisibleAvent()) {
+    redirect({ href: '/app', locale });
   }
 
   return (

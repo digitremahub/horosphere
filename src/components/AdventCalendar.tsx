@@ -4,14 +4,35 @@ import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 type Statut = { actif: boolean; jourDuJour: number; joursReclames: number[] };
+type Recompense = { type: 'credits'; credits: number } | { type: 'parrainage' } | { type: 'reduction' } | { type: 'tirage' };
+type Reclamation = { ok: true; jour: number; recompense: Recompense; lienParrainage?: string; codePromo?: string; consolation?: boolean };
 
 const JOURS = Array.from({ length: 24 }, (_, i) => i + 1);
+const POURCENTAGE_REDUCTION = 20; // doit rester aligné sur lib/advent.ts
+
+function messageReclamation(t: ReturnType<typeof useTranslations>, r: Reclamation): string {
+  if (r.consolation && r.recompense.type === 'credits') {
+    return t('claimSuccessConsolation', { credits: r.recompense.credits });
+  }
+  switch (r.recompense.type) {
+    case 'credits':
+      return t('claimSuccess', { credits: r.recompense.credits });
+    case 'parrainage':
+      return t('claimSuccessParrainage');
+    case 'reduction':
+      return t('claimSuccessReduction', { code: r.codePromo ?? '', percent: POURCENTAGE_REDUCTION });
+    case 'tirage':
+      return t('claimSuccessTirage');
+  }
+}
 
 export default function AdventCalendar() {
   const t = useTranslations('Advent');
   const [statut, setStatut] = useState<Statut | null>(null);
   const [claiming, setClaiming] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [lien, setLien] = useState<string | null>(null);
+  const [copie, setCopie] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -28,6 +49,7 @@ export default function AdventCalendar() {
     setClaiming(true);
     setError(null);
     setMessage(null);
+    setLien(null);
     try {
       const res = await fetch('/api/advent', { method: 'POST' });
       const data = await res.json();
@@ -35,13 +57,23 @@ export default function AdventCalendar() {
         setError(data.error || t('claimError'));
         return;
       }
-      setMessage(t('claimSuccess', { credits: data.credits }));
-      setStatut((prev) => (prev ? { ...prev, joursReclames: [...prev.joursReclames, data.jour] } : prev));
+      const resultat = data as Reclamation;
+      setMessage(messageReclamation(t, resultat));
+      if (resultat.lienParrainage) setLien(resultat.lienParrainage);
+      setStatut((prev) => (prev ? { ...prev, joursReclames: [...prev.joursReclames, resultat.jour] } : prev));
     } catch {
       setError(t('claimError'));
     } finally {
       setClaiming(false);
     }
+  }
+
+  function copierLien() {
+    if (!lien) return;
+    navigator.clipboard?.writeText(lien).then(() => {
+      setCopie(true);
+      setTimeout(() => setCopie(false), 2000);
+    });
   }
 
   if (error && !statut) {
@@ -63,8 +95,16 @@ export default function AdventCalendar() {
   return (
     <div>
       {message && (
-        <div className="pill" style={{ marginBottom: 16, borderColor: 'var(--sauge)', color: 'var(--sauge)' }}>
+        <div className="pill" style={{ marginBottom: 12, borderColor: 'var(--sauge)', color: 'var(--sauge)' }}>
           {message}
+        </div>
+      )}
+      {lien && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+          <code className="mono" style={{ fontSize: '0.78rem', background: 'var(--brume)', padding: '6px 10px', borderRadius: 8 }}>{lien}</code>
+          <button type="button" className="btn btn-ghost" style={{ padding: '6px 12px', fontSize: '0.76rem' }} onClick={copierLien}>
+            {copie ? t('linkCopied') : t('copyLink')}
+          </button>
         </div>
       )}
       {error && (

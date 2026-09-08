@@ -404,6 +404,12 @@
     "locked": "Not yet",
     "todayBadge": "Today",
     "claimSuccess": "🎉 +{credits} credits granted!",
+    "claimSuccessParrainage": "🎁 Your personal referral link — you'll both get credits as soon as a friend signs up with it.",
+    "claimSuccessReduction": "🎉 Promo code {code} — {percent}% off your subscription (limited to the first 20).",
+    "claimSuccessTirage": "🎉 You're entered in the grand prize draw: 1 free year of subscription!",
+    "claimSuccessConsolation": "This gift is subscriber-only — here are {credits} credits instead.",
+    "copyLink": "Copy link",
+    "linkCopied": "Link copied!",
     "claimError": "Couldn't claim this gift right now.",
     "dbNotConnected": "The database isn't connected yet."
   }

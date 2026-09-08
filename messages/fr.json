@@ -404,6 +404,12 @@
     "locked": "Pas encore",
     "todayBadge": "Aujourd'hui",
     "claimSuccess": "🎉 +{credits} crédits offerts !",
+    "claimSuccessParrainage": "🎁 Ton lien de parrainage personnel — vous recevrez tous les deux des crédits dès qu'un ami s'inscrit avec.",
+    "claimSuccessReduction": "🎉 Code promo {code} — {percent}% de réduction sur l'abonnement (offre limitée aux 20 premiers).",
+    "claimSuccessTirage": "🎉 Tu es inscrit(e) au tirage au sort du grand prix : 1 an d'abonnement offert !",
+    "claimSuccessConsolation": "Ce cadeau est réservé aux abonnés — voici quand même {credits} crédits offerts.",
+    "copyLink": "Copier le lien",
+    "linkCopied": "Lien copié !",
     "claimError": "Impossible de réclamer ce cadeau pour le moment.",
     "dbNotConnected": "La base de données n'est pas encore connectée."
   }

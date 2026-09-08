@@ -404,6 +404,12 @@
     "locked": "Todavía no",
     "todayBadge": "Hoy",
     "claimSuccess": "🎉 ¡+{credits} créditos ofrecidos!",
+    "claimSuccessParrainage": "🎁 Tu enlace de referido personal — ambos recibiréis créditos en cuanto un amigo se registre con él.",
+    "claimSuccessReduction": "🎉 Código promocional {code} — {percent}% de descuento en la suscripción (oferta limitada a los primeros 20).",
+    "claimSuccessTirage": "🎉 ¡Estás inscrito/a en el sorteo del gran premio: 1 año de suscripción gratis!",
+    "claimSuccessConsolation": "Este regalo es solo para suscriptores — aquí tienes {credits} créditos de todas formas.",
+    "copyLink": "Copiar enlace",
+    "linkCopied": "¡Enlace copiado!",
     "claimError": "No se pudo reclamar este regalo por ahora.",
     "dbNotConnected": "La base de datos aún no está conectada."
   }

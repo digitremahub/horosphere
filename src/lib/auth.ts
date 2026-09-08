@@ -7,6 +7,7 @@ import { Pool } from 'pg';
 import { sql } from './db';
 import { grantCredits } from './credits';
 import { creditsBienvenue } from './promotions';
+import { finaliserParrainageSiPresent } from './referral';
 
 declare global {
   // eslint-disable-next-line no-var
@@ -99,6 +100,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         await grantCredits(Number(user.id), credits, source, expirationJours);
       } catch (err) {
         console.error('Échec de l\'octroi des crédits de bienvenue', err);
+      }
+      // Parrainage (voir lib/referral.ts) : sans effet si aucune intention
+      // n'était en attente pour cet e-mail.
+      if (user.email) {
+        try {
+          await finaliserParrainageSiPresent(Number(user.id), user.email);
+        } catch (err) {
+          console.error('Échec de la finalisation du parrainage', err);
+        }
       }
     },
   },

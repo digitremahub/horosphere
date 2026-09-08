@@ -93,6 +93,40 @@ const PENDING_STATEMENTS: { name: string; sql: string }[] = [
       PRIMARY KEY (user_id, year, day)
     )`,
   },
+  {
+    name: 'parrainages_attente',
+    sql: `CREATE TABLE IF NOT EXISTS parrainages_attente (
+      email TEXT PRIMARY KEY,
+      parrain_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )`,
+  },
+  {
+    name: 'parrainages',
+    sql: `CREATE TABLE IF NOT EXISTS parrainages (
+      parrain_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      filleul_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE PRIMARY KEY,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )`,
+  },
+  {
+    name: 'tirage_avent',
+    sql: `CREATE TABLE IF NOT EXISTS tirage_avent (
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      year INTEGER NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (user_id, year)
+    )`,
+  },
+  {
+    name: 'tirage_gagnants',
+    sql: `CREATE TABLE IF NOT EXISTS tirage_gagnants (
+      year INTEGER PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      stripe_coupon_id TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )`,
+  },
 ];
 
 async function runPending(req: NextRequest): Promise<NextResponse> {

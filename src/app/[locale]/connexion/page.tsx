@@ -2,11 +2,13 @@ import { AuthError } from 'next-auth';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { redirect, getPathname } from '@/i18n/navigation';
 import { signIn, authConfigured, passwordAuthConfigured } from '@/lib/auth';
+import { dbConfigured } from '@/lib/db';
+import { enregistrerIntentionParrainage } from '@/lib/referral';
 import BrandMark from '@/components/BrandMark';
 
 const PHOTO_FOND = '/images/bg-connexion.png';
 
-export default async function ConnexionPage({ searchParams }: { searchParams: Promise<{ envoye?: string; erreur?: string; error?: string }> }) {
+export default async function ConnexionPage({ searchParams }: { searchParams: Promise<{ envoye?: string; erreur?: string; error?: string; parrain?: string }> }) {
   const params = await searchParams;
   const locale = await getLocale();
   const t = await getTranslations('Connexion');
@@ -36,6 +38,14 @@ export default async function ConnexionPage({ searchParams }: { searchParams: Pr
   async function connexionParLien(formData: FormData) {
     'use server';
     const email = String(formData.get('email') || '');
+    const parrain = String(formData.get('parrain') || '');
+    if (parrain && dbConfigured) {
+      try {
+        await enregistrerIntentionParrainage(email, parrain);
+      } catch (err) {
+        console.error("Échec de l'enregistrement de l'intention de parrainage", err);
+      }
+    }
     try {
       await signIn('resend', { email, redirectTo: appPath });
     } catch (err) {
@@ -134,6 +144,7 @@ export default async function ConnexionPage({ searchParams }: { searchParams: Pr
               )}
 
               <form action={connexionParLien} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {params?.parrain && <input type="hidden" name="parrain" value={params.parrain} />}
                 <input
                   type="email"
                   name="email"

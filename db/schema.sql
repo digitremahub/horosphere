@@ -251,3 +251,41 @@ CREATE TABLE IF NOT EXISTS advent_claims (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (user_id, year, day)
 );
+
+-- ===== Parrainage (mis en avant un jour du calendrier de l'avent, mais
+-- utilisable toute l'année via le même lien — voir lib/referral.ts) =====
+-- Intention enregistrée AVANT l'envoi du lien magique (on ne sait pas
+-- encore si l'e-mail correspond à un nouveau compte) ; finalisée dans
+-- l'événement createUser de NextAuth si le compte est bien nouveau.
+CREATE TABLE IF NOT EXISTS parrainages_attente (
+  email TEXT PRIMARY KEY,
+  parrain_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- filleul_user_id en clé primaire : personne ne peut être parrainé deux fois.
+CREATE TABLE IF NOT EXISTS parrainages (
+  parrain_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  filleul_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE PRIMARY KEY,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- ===== Tirage au sort du calendrier de l'avent (jour 24 : 1 an offert) =====
+-- Une entrée par abonné actif ayant ouvert la case du 24 décembre — voir
+-- lib/advent.ts (réservé aux abonnés) et /api/admin/tirage-avent (le
+-- tirage lui-même, déclenché à la main après le 24).
+CREATE TABLE IF NOT EXISTS tirage_avent (
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  year INTEGER NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, year)
+);
+
+-- Un seul gagnant par année (year en clé primaire) : empêche de rejouer le
+-- tirage une seconde fois par erreur (voir /api/admin/tirage-avent).
+CREATE TABLE IF NOT EXISTS tirage_gagnants (
+  year INTEGER PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  stripe_coupon_id TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);

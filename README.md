@@ -114,6 +114,34 @@ Les scénarios Make.com associés (déjà créés dans le compte Make relié) :
 - **Horosphère — Newsletter hebdomadaire** — une fois par semaine, appelle
   `/api/newsletter/send-weekly`.
 
+## Roadmap marketing saisonnier
+
+- **Promo Halloween** : à réfléchir à partir du 21 septembre (demande de
+  l'utilisateur, 08/09) — rien de défini pour l'instant (ni offre, ni
+  mécanique, ni date de lancement).
+- **Calendrier de l'avent** (`lib/advent.ts`, `/app/calendrier-de-lavent`) :
+  construit et fonctionnel, mais volontairement caché (lien de navigation
+  et accès direct) jusqu'au 20 novembre — le temps qu'une déco de Noël
+  soit ajoutée au site. Voir `estPeriodeVisibleAvent()`.
+  Programme des 24 jours (`PROGRAMME_AVENT`) : la plupart des jours sont de
+  simples crédits, mais quelques jours mettent en avant d'autres leviers :
+  - **Parrainage** (jours 5 et 15) : révèle le lien de parrainage
+    personnel de l'utilisateur (`lib/referral.ts`, valable toute l'année,
+    pas seulement en décembre) — 3 crédits au parrain + 2 au filleul, à la
+    création réelle du nouveau compte.
+  - **Réduction** (jours 10 et 19) : un code promo Stripe (`AVENT{année}`)
+    partagé par tout le monde, 20% de réduction — c'est Stripe
+    (`max_redemptions`) qui limite l'usage réel à 20, pas un compteur
+    maison.
+  - **Tirage au sort** (jour 24, grand prix) : réservé aux abonnés actifs
+    (sinon "1 an offert" n'a pas de sens) — inscrit dans `tirage_avent`,
+    consolation en crédits pour les non-abonnés. Le tirage lui-même se
+    déclenche à la main, une fois, après le 24 décembre :
+    `GET /api/admin/tirage-avent?secret=...` — choisit un gagnant au hasard
+    (`ORDER BY random()`), lui applique un coupon Stripe 100% pendant 12
+    mois sur son abonnement actif. `tirage_gagnants` empêche de rejouer le
+    tirage deux fois par erreur.
+
 ## Roadmap contenu & produit — Elian & Lya, chatbot, marketplace
 
 Vision stratégique communiquée par l'utilisateur, conservée ici pour
