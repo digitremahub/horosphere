@@ -8,6 +8,7 @@ import LanguageSwitcher from './LanguageSwitcher';
 export default async function SiteHeader() {
   const session = await auth();
   const t = await getTranslations('Nav');
+  const tAdvent = await getTranslations('Advent');
   const locale = await getLocale();
   const homePath = getPathname({ href: '/', locale });
 
@@ -28,6 +29,7 @@ export default async function SiteHeader() {
             <>
               <Link href="/app" style={{ textDecoration: 'none', color: 'var(--ombre)' }}>{t('mySpace')}</Link>
               <Link href="/app/historique" style={{ textDecoration: 'none', color: 'var(--ombre)' }}>{t('history')}</Link>
+              <Link href="/app/calendrier-de-lavent" aria-label={tAdvent('title')} title={tAdvent('title')} style={{ textDecoration: 'none', color: 'var(--ombre)' }}>🎄</Link>
               <Link href="/app/profil" style={{ textDecoration: 'none', color: 'var(--ombre)' }}>{t('profile')}</Link>
               <form
                 action={async () => {

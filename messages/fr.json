@@ -390,5 +390,21 @@
     "s7Title": "7. Vos droits",
     "s7Text1": "Conformément aux articles 15 à 21 du RGPD, vous disposez d'un droit d'accès, de rectification, d'effacement, de limitation, d'opposition et de portabilité sur vos données. Vous pouvez modifier votre profil et vos préférences de newsletter directement depuis <space>votre espace</space>, ou exercer l'un de ces droits — y compris la suppression complète de votre compte — en écrivant à <email>contact@horosphere.fr</email>.",
     "s7Text2": "Vous disposez également du droit d'introduire une réclamation auprès de la CNIL — <link>cnil.fr/fr/agir</link> — si vous estimez que le traitement de vos données n'est pas conforme à la réglementation."
+  },
+  "Advent": {
+    "backToSpace": "← Mon espace",
+    "title": "Calendrier de l'avent",
+    "subtitle": "Un cadeau chaque jour, du 1er au 24 décembre — connecte-toi et réclame ta case du jour.",
+    "offSeason": "Le calendrier ouvre le 1er décembre. Reviens à ce moment-là !",
+    "day": "Jour {day}",
+    "claim": "Réclamer",
+    "claiming": "…",
+    "claimed": "+{credits} crédits",
+    "missed": "Manqué",
+    "locked": "Pas encore",
+    "todayBadge": "Aujourd'hui",
+    "claimSuccess": "🎉 +{credits} crédits offerts !",
+    "claimError": "Impossible de réclamer ce cadeau pour le moment.",
+    "dbNotConnected": "La base de données n'est pas encore connectée."
   }
 }

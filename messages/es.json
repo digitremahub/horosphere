@@ -390,5 +390,21 @@
     "s7Title": "7. Tus derechos",
     "s7Text1": "De conformidad con los artículos 15 a 21 del RGPD, dispones de un derecho de acceso, rectificación, supresión, limitación, oposición y portabilidad sobre tus datos. Puedes modificar tu perfil y tus preferencias de boletín directamente desde <space>tu espacio</space>, o ejercer cualquiera de estos derechos — incluida la eliminación completa de tu cuenta — escribiendo a <email>contact@horosphere.fr</email>.",
     "s7Text2": "También tienes derecho a presentar una reclamación ante la CNIL — <link>cnil.fr/fr/agir</link> — si consideras que el tratamiento de tus datos no cumple con la normativa."
+  },
+  "Advent": {
+    "backToSpace": "← Mi espacio",
+    "title": "Calendario de adviento",
+    "subtitle": "Un regalo cada día, del 1 al 24 de diciembre — inicia sesión y reclama la casilla de hoy.",
+    "offSeason": "El calendario abre el 1 de diciembre. ¡Vuelve entonces!",
+    "day": "Día {day}",
+    "claim": "Reclamar",
+    "claiming": "…",
+    "claimed": "+{credits} créditos",
+    "missed": "Perdido",
+    "locked": "Todavía no",
+    "todayBadge": "Hoy",
+    "claimSuccess": "🎉 ¡+{credits} créditos ofrecidos!",
+    "claimError": "No se pudo reclamar este regalo por ahora.",
+    "dbNotConnected": "La base de datos aún no está conectada."
   }
 }

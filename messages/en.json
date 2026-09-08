@@ -390,5 +390,21 @@
     "s7Title": "7. Your rights",
     "s7Text1": "In accordance with Articles 15 to 21 of the GDPR, you have the right to access, rectify, erase, restrict, object to and port your data. You can update your profile and newsletter preferences directly from <space>your space</space>, or exercise any of these rights — including the complete deletion of your account — by writing to <email>contact@horosphere.fr</email>.",
     "s7Text2": "You also have the right to lodge a complaint with the CNIL — <link>cnil.fr/fr/agir</link> — if you believe your data is not being processed in compliance with the regulations."
+  },
+  "Advent": {
+    "backToSpace": "← My space",
+    "title": "Advent calendar",
+    "subtitle": "A gift every day, from December 1st to 24th — log in and claim today's box.",
+    "offSeason": "The calendar opens on December 1st. Come back then!",
+    "day": "Day {day}",
+    "claim": "Claim",
+    "claiming": "…",
+    "claimed": "+{credits} credits",
+    "missed": "Missed",
+    "locked": "Not yet",
+    "todayBadge": "Today",
+    "claimSuccess": "🎉 +{credits} credits granted!",
+    "claimError": "Couldn't claim this gift right now.",
+    "dbNotConnected": "The database isn't connected yet."
   }
 }

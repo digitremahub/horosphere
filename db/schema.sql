@@ -220,3 +220,34 @@ CREATE TABLE IF NOT EXISTS social_posts (
 );
 
 CREATE INDEX IF NOT EXISTS idx_social_posts_publie_le ON social_posts (publie_le DESC);
+
+-- ===== Cadeau d'anniversaire (remboursement silencieux, abonnés) =====
+-- Une fois par an, pendant le mois de naissance d'un abonné actif, la
+-- dernière facture payée de son abonnement est intégralement remboursée
+-- via Stripe (voir lib/birthdayRefund.ts, appelé par un cron quotidien) —
+-- jamais annoncé nulle part, sur demande explicite : c'est une surprise
+-- pure, pas un avantage marketing communiqué. (user_id, year) empêche tout
+-- double remboursement la même année, y compris en cas de nouvel essai du
+-- cron le lendemain.
+CREATE TABLE IF NOT EXISTS birthday_refunds (
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  year INTEGER NOT NULL,
+  stripe_refund_id TEXT,
+  amount_cents INTEGER,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, year)
+);
+
+-- ===== Calendrier de l'avent (acquisition, décembre) =====
+-- Une case par jour (1 au 24 décembre), réclamable une seule fois par
+-- utilisateur connecté — voir lib/advent.ts. Pas de rattrapage : une case
+-- non réclamée le jour même est perdue, comme un vrai calendrier de
+-- l'avent. (user_id, year, day) en clé primaire = idempotence naturelle.
+CREATE TABLE IF NOT EXISTS advent_claims (
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  year INTEGER NOT NULL,
+  day INTEGER NOT NULL,
+  credits INTEGER NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, year, day)
+);

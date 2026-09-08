@@ -71,6 +71,28 @@ const PENDING_STATEMENTS: { name: string; sql: string }[] = [
     name: 'idx_social_posts_publie_le',
     sql: `CREATE INDEX IF NOT EXISTS idx_social_posts_publie_le ON social_posts (publie_le DESC)`,
   },
+  {
+    name: 'birthday_refunds',
+    sql: `CREATE TABLE IF NOT EXISTS birthday_refunds (
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      year INTEGER NOT NULL,
+      stripe_refund_id TEXT,
+      amount_cents INTEGER,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (user_id, year)
+    )`,
+  },
+  {
+    name: 'advent_claims',
+    sql: `CREATE TABLE IF NOT EXISTS advent_claims (
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      year INTEGER NOT NULL,
+      day INTEGER NOT NULL,
+      credits INTEGER NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (user_id, year, day)
+    )`,
+  },
 ];
 
 async function runPending(req: NextRequest): Promise<NextResponse> {
