@@ -173,15 +173,32 @@ function signeDuJourInstagram(date: Date): Sign {
   return SIGNS[jourAnnee % SIGNS.length];
 }
 
-const AMBIANCE_ELEMENT: Record<Sign['element'], string> = {
-  Feu: 'des couleurs chaudes et dynamiques, une lumière vive comme une flamme ou un lever de soleil',
-  Terre: 'des tons profonds et ancrés, une scène minérale ou végétale, stable et rassurante',
-  Air: 'une ambiance légère et aérienne, ciel dégagé, mouvement de vent ou de nuages',
-  Eau: 'une ambiance fluide et onirique, reflets sur l\'eau, brume douce, tons bleutés',
+// Identité visuelle : chaque signe incarné par son totem (animal ou figure
+// archétypale du zodiaque), dans une posture motivée — sportif, guerrier,
+// chevalier — plutôt qu'une scène mystique abstraite (astrolabe, brume,
+// clair de lune). Un seul style pour les 12, volontairement large public :
+// proche d'une affiche de sport ou d'une mascotte esport, pas de l'imagerie
+// ésotérique classique.
+const STYLE_TOTEM =
+  "Illustration façon affiche de sport moderne ou mascotte esport : personnage stylisé, contours nets, pose dynamique et déterminée, couleurs vives et contrastées, énergie et motivation. Jamais mystique, ésotérique ou onirique. Fond simple et épuré qui met le personnage en valeur. Aucun texte, lettre ou mot visible dans l'image.";
+
+const TOTEM_PAR_SIGNE: Record<Sign['key'], string> = {
+  belier: 'un bélier guerrier musclé, cornes en avant, posture de charge, énergie de combattant',
+  taureau: 'un taureau athlète puissant, posture ancrée de lutteur, force tranquille et déterminée',
+  gemeaux: 'deux figures jumelles synchronisées en pleine action, dos à dos, agilité et vitesse',
+  cancer: 'un crabe chevalier à la carapace en armure, pinces levées en bouclier protecteur',
+  lion: 'un lion roi-guerrier à la crinière flamboyante, posture de champion victorieux',
+  vierge: "une archère précise et concentrée, posture de tir parfaitement maîtrisée",
+  balance: 'un ou une duelliste élégant·e tenant une balance en parfait équilibre, posture noble',
+  scorpion: 'un scorpion chevalier en armure sombre, dard levé comme une lame prête à frapper',
+  sagittaire: 'un centaure archer en plein galop, arc bandé, élan et liberté',
+  capricorne: 'une chèvre des montagnes escaladant un sommet rocheux, posture déterminée de grimpeur',
+  verseau: 'un ou une explorateur·rice visionnaire versant une eau lumineuse et transformatrice, posture futuriste',
+  poissons: 'un nageur-guerrier fluide et puissant, en pleine brasse, grâce et force',
 };
 
 function sujetIllustrationSigneInstagram(sign: Sign): string {
-  return `Une scène symbolique pour le signe astrologique ${sign.nom} (élément ${sign.element}, planète maîtresse ${sign.planete}) : ${AMBIANCE_ELEMENT[sign.element]}. Jamais de texte, lettres ou mots visibles dans l'image, jamais le symbole du signe dessiné littéralement.`;
+  return `${STYLE_TOTEM} Sujet : ${TOTEM_PAR_SIGNE[sign.key]} — le totem du signe ${sign.nom}.`;
 }
 
 /** Construit le post Instagram du jour à partir d'une vraie lecture

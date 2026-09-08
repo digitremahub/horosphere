@@ -57,7 +57,7 @@ export async function texteReelSigne(sign: Sign, date: Date): Promise<string> {
   if (apiKey) {
     try {
       const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
-      const prompt = `Écris un message court (1 à 2 phrases, 25 mots maximum) pour un reel Instagram/Facebook d'astrologie, destiné au signe ${sign.nom} (élément ${sign.element}, planète maîtresse ${sign.planete}). Contexte du jour : lune en ${moon.label.toLowerCase()}. Ton chaleureux, percutant, jamais générique ni fataliste — donne envie d'en savoir plus. Ne mentionne pas Horosphère (c'est déjà dans la légende du post). Réponds UNIQUEMENT avec un objet JSON {"texte": "..."}.`;
+      const prompt = `Écris un message court (1 à 2 phrases, 25 mots maximum) pour un reel Instagram/Facebook d'astrologie, destiné au signe ${sign.nom} (élément ${sign.element}, planète maîtresse ${sign.planete}). Contexte du jour : lune en ${moon.label.toLowerCase()}. Ton chaleureux, percutant, jamais générique ni fataliste — donne envie d'en savoir plus. Ne mentionne pas Horosphère (c'est déjà dans la légende du post). Réponds intégralement en français, sans aucun mot anglais. Réponds UNIQUEMENT avec un objet JSON {"texte": "..."}.`;
       const parsed = await callClaude(apiKey, model, prompt, 300);
       if (typeof parsed?.texte === 'string' && parsed.texte.trim()) return parsed.texte.trim();
     } catch (err) {
@@ -106,7 +106,7 @@ async function scriptRecapSemaine(date: Date): Promise<string> {
     try {
       const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
       const liste = SIGNS.map((s) => `${s.nom} (élément ${s.element}, planète ${s.planete})`).join(', ');
-      const prompt = `Écris le script d'une vidéo de récap hebdomadaire d'astrologie, à lire à voix haute par un avatar vidéo. Contexte : lune en ${moon.label.toLowerCase()} en ce moment. Pour chacun des 12 signes suivants, dans cet ordre, écris UNE phrase courte et chaleureuse (message de la semaine) : ${liste}. Commence par une phrase d'introduction générale (1 phrase), puis les 12 phrases signe par signe en commençant chacune par le nom du signe, puis termine par une phrase de clôture invitant à découvrir sa lecture complète sur Horosphère. Réponds UNIQUEMENT avec un objet JSON {"script": "texte complet, phrases séparées par des sauts de ligne"}.`;
+      const prompt = `Écris le script d'une vidéo de récap hebdomadaire d'astrologie, à lire à voix haute par un avatar vidéo. Contexte : lune en ${moon.label.toLowerCase()} en ce moment. Pour chacun des 12 signes suivants, dans cet ordre, écris UNE phrase courte et chaleureuse (message de la semaine) : ${liste}. Commence par une phrase d'introduction générale (1 phrase), puis les 12 phrases signe par signe en commençant chacune par le nom du signe, puis termine par une phrase de clôture invitant à découvrir sa lecture complète sur Horosphère. Réponds intégralement en français, sans aucun mot anglais. Réponds UNIQUEMENT avec un objet JSON {"script": "texte complet, phrases séparées par des sauts de ligne"}.`;
       const parsed = await callClaude(apiKey, model, prompt, 1200);
       if (typeof parsed?.script === 'string' && parsed.script.trim()) return parsed.script.trim();
     } catch (err) {
