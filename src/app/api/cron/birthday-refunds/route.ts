@@ -3,7 +3,7 @@ import { dbConfigured } from '@/lib/db';
 import { stripeConfigured } from '@/lib/stripe';
 import { rembourserAnniversairesDuMois } from '@/lib/birthdayRefund';
 
-// Cadeau d'anniversaire silencieux des abonnés (voir lib/birthdayRefund.ts)
+// Cadeau d'anniversaire des abonnés (voir lib/birthdayRefund.ts)
 // — appelée quotidiennement par Vercel Cron (voir vercel.json), protégée
 // par CRON_SECRET comme les autres tâches planifiées.
 export async function GET(req: NextRequest) {

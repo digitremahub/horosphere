@@ -7,7 +7,9 @@ import { dbConfigured } from '@/lib/db';
 import { signFromBirthdate } from '@/lib/zodiac';
 import { localizedSign } from '@/lib/zodiac-i18n';
 import { calculerThemeNatal } from '@/lib/natal';
+import { getSiteConfig, CLES_VIDEO } from '@/lib/siteConfig';
 import Dashboard from '@/components/Dashboard';
+import OnboardingVideoModal from '@/components/OnboardingVideoModal';
 
 export default async function AppPage() {
   const session = await auth();
@@ -76,8 +78,20 @@ export default async function AppPage() {
     balanceError = "La base de données n'est pas encore connectée — les crédits ne peuvent pas être suivis.";
   }
 
+  // Vidéo d'onboarding : une seule fois, dès que le profil (donc l'inscription
+  // complète) existe et n'a pas encore été vue — voir profiles.a_vu_onboarding.
+  let videoOnboarding: string | null = null;
+  if (dbConfigured && profile && !profile.a_vu_onboarding) {
+    try {
+      videoOnboarding = await getSiteConfig(CLES_VIDEO.onboarding);
+    } catch {
+      videoOnboarding = null;
+    }
+  }
+
   return (
     <main style={{ paddingBottom: 96 }}>
+      {videoOnboarding && <OnboardingVideoModal videoUrl={videoOnboarding} />}
       <div className="page-bandeau">
         <img
           src="/images/bg-dashboard.png"

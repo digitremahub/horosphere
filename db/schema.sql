@@ -221,14 +221,13 @@ CREATE TABLE IF NOT EXISTS social_posts (
 
 CREATE INDEX IF NOT EXISTS idx_social_posts_publie_le ON social_posts (publie_le DESC);
 
--- ===== Cadeau d'anniversaire (remboursement silencieux, abonnés) =====
+-- ===== Cadeau d'anniversaire (remboursement + e-mail, abonnés) =====
 -- Une fois par an, pendant le mois de naissance d'un abonné actif, la
 -- dernière facture payée de son abonnement est intégralement remboursée
--- via Stripe (voir lib/birthdayRefund.ts, appelé par un cron quotidien) —
--- jamais annoncé nulle part, sur demande explicite : c'est une surprise
--- pure, pas un avantage marketing communiqué. (user_id, year) empêche tout
--- double remboursement la même année, y compris en cas de nouvel essai du
--- cron le lendemain.
+-- via Stripe puis expliquée par e-mail (voir lib/birthdayRefund.ts, appelé
+-- par un cron quotidien). (user_id, year) empêche tout double
+-- remboursement (et double e-mail) la même année, y compris en cas de
+-- nouvel essai du cron le lendemain.
 CREATE TABLE IF NOT EXISTS birthday_refunds (
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   year INTEGER NOT NULL,
@@ -289,3 +288,18 @@ CREATE TABLE IF NOT EXISTS tirage_gagnants (
   stripe_coupon_id TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- ===== Vidéos du site (teaser homepage, récap hebdo, onboarding) =====
+-- Configuration clé/valeur volontairement minimale — voir lib/siteConfig.ts
+-- et /api/admin/site-config. Clés utilisées : teaser_video_url,
+-- weekly_video_url, onboarding_video_url. Les fichiers vidéo eux-mêmes sont
+-- générés une fois via HeyGen puis hébergés tels quels (Vercel Blob) —
+-- jamais de génération dynamique en direct sur une visite.
+CREATE TABLE IF NOT EXISTS site_config (
+  key TEXT PRIMARY KEY,
+  value TEXT,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Vidéo d'onboarding : affichée une seule fois, juste après l'inscription.
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS a_vu_onboarding BOOLEAN NOT NULL DEFAULT false;

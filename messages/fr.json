@@ -63,7 +63,13 @@
     "socialPill": "Sur les réseaux",
     "socialTitle": "Retrouvez Horosphère sur Instagram et Facebook",
     "freePreviewPill": "Aperçu gratuit",
-    "freeAtLogin": "Gratuit à la connexion — sans carte bancaire."
+    "freeAtLogin": "Gratuit à la connexion — sans carte bancaire.",
+    "teaserVideoCta": "Créer mon compte gratuitement",
+    "weeklyVideoPill": "Récap de la semaine",
+    "weeklyVideoTitle": "Ce que le ciel a préparé cette semaine",
+    "weeklyVideoCta": "Recevoir mon horoscope personnalisé",
+    "unmuteVideo": "🔇 Activer le son",
+    "mutedOffVideo": "🔊 Son activé"
   },
   "Connexion": {
     "imageAlt": "Un ciel étoilé, en fond de la page de connexion.",
@@ -412,5 +418,8 @@
     "linkCopied": "Lien copié !",
     "claimError": "Impossible de réclamer ce cadeau pour le moment.",
     "dbNotConnected": "La base de données n'est pas encore connectée."
+  },
+  "Onboarding": {
+    "skip": "Passer"
   }
 }

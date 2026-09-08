@@ -15,6 +15,7 @@ export type Profile = {
   telephone: string | null;
   newsletter_opt_in: boolean;
   horoscope_email_opt_in: boolean;
+  a_vu_onboarding: boolean;
 };
 
 // Les colonnes lieu_latitude/longitude/timezone n'existent que si
@@ -52,7 +53,8 @@ export async function getProfile(userId: number): Promise<Profile | null> {
   if (!(await hasLieuColumns())) {
     const rows = await sql<Omit<Profile, 'lieu_latitude' | 'lieu_longitude' | 'lieu_timezone'>[]>`
       SELECT user_id, prenom, nom, date_naissance::text AS date_naissance,
-        heure_naissance::text AS heure_naissance, lieu_naissance, telephone, newsletter_opt_in, horoscope_email_opt_in
+        heure_naissance::text AS heure_naissance, lieu_naissance, telephone, newsletter_opt_in, horoscope_email_opt_in,
+        a_vu_onboarding
       FROM profiles WHERE user_id = ${userId}
     `;
     const row = rows[0];
@@ -72,7 +74,8 @@ export async function getProfile(userId: number): Promise<Profile | null> {
       lieu_timezone,
       telephone,
       newsletter_opt_in,
-      horoscope_email_opt_in
+      horoscope_email_opt_in,
+      a_vu_onboarding
     FROM profiles
     WHERE user_id = ${userId}
   `;

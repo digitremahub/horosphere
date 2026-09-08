@@ -63,7 +63,13 @@
     "socialPill": "On social media",
     "socialTitle": "Find Horosphère on Instagram and Facebook",
     "freePreviewPill": "Free preview",
-    "freeAtLogin": "Free at sign-up — no card required."
+    "freeAtLogin": "Free at sign-up — no card required.",
+    "teaserVideoCta": "Create my free account",
+    "weeklyVideoPill": "This week's recap",
+    "weeklyVideoTitle": "What the sky had in store this week",
+    "weeklyVideoCta": "Get my personalized horoscope",
+    "unmuteVideo": "🔇 Unmute",
+    "mutedOffVideo": "🔊 Sound on"
   },
   "Connexion": {
     "imageAlt": "A starry sky, background of the login page.",
@@ -412,5 +418,8 @@
     "linkCopied": "Link copied!",
     "claimError": "Couldn't claim this gift right now.",
     "dbNotConnected": "The database isn't connected yet."
+  },
+  "Onboarding": {
+    "skip": "Skip"
   }
 }

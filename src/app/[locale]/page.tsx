@@ -4,6 +4,8 @@ import DegreeArc from '@/components/DegreeArc';
 import ZodiacWheelIllustration from '@/components/ZodiacWheelIllustration';
 import ScrollReveal from '@/components/ScrollReveal';
 import SocialCarousel from '@/components/SocialCarousel';
+import TeaserVideoSection from '@/components/TeaserVideoSection';
+import WeeklyRecapSection from '@/components/WeeklyRecapSection';
 import { Link } from '@/i18n/navigation';
 import { auth } from '@/lib/auth';
 import { dbConfigured } from '@/lib/db';
@@ -70,6 +72,10 @@ export default async function HomePage() {
         <img src="/images/accueil-bandeau-astrolabe.webp" alt={t('heroImageAlt')} loading="eager" />
       </div>
 
+      {/* 0.5 Vidéo teaser (Elian & Lya) — visiteurs non connectés
+         uniquement, n'apparaît que si un asset est configuré. */}
+      <TeaserVideoSection />
+
       {/* 1. Aperçu gratuit + présentation, côte à côte — la lune du jour a
          rejoint la page Actualités, pour ne plus être dupliquée à deux
          endroits. */}
@@ -131,7 +137,12 @@ export default async function HomePage() {
 
       <SectionDivider />
 
-      {/* 4.5 Carrousel des publications réseaux sociaux — n'apparaît que
+      {/* 4.5 Récap vidéo hebdomadaire (Elian & Lya) — visible par tous,
+         n'apparaît que si un asset est configuré (mis à jour chaque
+         dimanche). */}
+      <WeeklyRecapSection />
+
+      {/* 4.6 Carrousel des publications réseaux sociaux — n'apparaît que
          si des posts publiés existent déjà, voir SocialCarousel. */}
       <SocialCarousel />
 

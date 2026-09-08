@@ -127,6 +127,18 @@ const PENDING_STATEMENTS: { name: string; sql: string }[] = [
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     )`,
   },
+  {
+    name: 'site_config',
+    sql: `CREATE TABLE IF NOT EXISTS site_config (
+      key TEXT PRIMARY KEY,
+      value TEXT,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )`,
+  },
+  {
+    name: 'a_vu_onboarding',
+    sql: `ALTER TABLE profiles ADD COLUMN IF NOT EXISTS a_vu_onboarding BOOLEAN NOT NULL DEFAULT false`,
+  },
 ];
 
 async function runPending(req: NextRequest): Promise<NextResponse> {
