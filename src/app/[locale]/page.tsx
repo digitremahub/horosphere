@@ -11,16 +11,23 @@ import { Link } from '@/i18n/navigation';
 import { auth } from '@/lib/auth';
 import { dbConfigured } from '@/lib/db';
 import { getBalance, hasActiveSubscription } from '@/lib/credits';
-import { promoSeptembre2026Active } from '@/lib/promotions';
+import { getActivePromotion } from '@/lib/promotions';
+import { WELCOME_CREDITS } from '@/lib/pricing';
 
 // Photo réelle du rituel quotidien — voir la bannière tarifs et la
 // connexion pour les deux autres.
 const PHOTO_RITUEL = '/images/hero-accueil.png';
 
-async function etapes(promoActive: boolean) {
-  const t = await getTranslations('Home');
+async function etapes() {
+  const [t, promo] = await Promise.all([getTranslations('Home'), getActivePromotion().catch(() => null)]);
+  const promoBienvenue = promo?.creditsBienvenue != null && promo.creditsBienvenueJours != null ? promo : null;
   return [
-    { titre: t('step1Title'), texte: promoActive ? t('step1TextPromo') : t('step1Text') },
+    {
+      titre: t('step1Title'),
+      texte: promoBienvenue
+        ? t('step1TextPromo', { credits: promoBienvenue.creditsBienvenue!, defaut: WELCOME_CREDITS, jours: promoBienvenue.creditsBienvenueJours! })
+        : t('step1Text'),
+    },
     { titre: t('step2Title'), texte: t('step2Text') },
     { titre: t('step3Title'), texte: t('step3Text') },
   ];
@@ -65,7 +72,7 @@ function SectionDivider() {
 }
 
 export default async function HomePage() {
-  const [cta, ETAPES, t] = await Promise.all([resolveMainCta(), etapes(promoSeptembre2026Active()), getTranslations('Home')]);
+  const [cta, ETAPES, t] = await Promise.all([resolveMainCta(), etapes(), getTranslations('Home')]);
   return (
     <main>
       {/* 0. Bandeau d'ouverture, plein écran en largeur */}

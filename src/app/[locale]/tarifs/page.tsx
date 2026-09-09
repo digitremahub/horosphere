@@ -1,9 +1,10 @@
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { auth } from '@/lib/auth';
 import { dbConfigured } from '@/lib/db';
 import { stripeConfigured } from '@/lib/stripe';
-import { CREDIT_PACKS, SUBSCRIPTIONS, FEATURE_COSTS, FEATURE_LABELS, euros } from '@/lib/pricing';
-import { promoSeptembre2026Active, premiersAbonnesRestants } from '@/lib/promotions';
+import { CREDIT_PACKS, SUBSCRIPTIONS, FEATURE_COSTS, FEATURE_LABELS, WELCOME_CREDITS, euros } from '@/lib/pricing';
+import { getActivePromotion, bonusAbonnementRestant } from '@/lib/promotions';
+import { dateLocaleTag } from '@/i18n/dateLocale';
 import PricingButton from '@/components/PricingButton';
 import BrandMark from '@/components/BrandMark';
 import ScrollReveal from '@/components/ScrollReveal';
@@ -13,8 +14,10 @@ const PHOTO_BANNIERE = '/images/bg-tarifs.png';
 export default async function TarifsPage() {
   const session = await auth();
   const loggedIn = Boolean(session?.user);
-  const promoActive = promoSeptembre2026Active();
-  const placesRestantes = promoActive && dbConfigured ? await premiersAbonnesRestants() : 0;
+  const locale = await getLocale();
+  const promo = dbConfigured ? await getActivePromotion().catch(() => null) : null;
+  const placesRestantes = promo ? (await bonusAbonnementRestant(promo).catch(() => promo.bonusAbonnementQuota)) ?? 0 : 0;
+  const finLabel = promo ? promo.fin.toLocaleDateString(dateLocaleTag(locale), { day: 'numeric', month: 'long' }) : '';
   const t = await getTranslations('Pricing');
 
   return (
@@ -42,24 +45,33 @@ export default async function TarifsPage() {
         </p>
       </div>
 
-      {promoActive && (
+      {promo && (
         <div className="card" style={{ padding: '20px 22px', marginBottom: 48, borderColor: 'var(--lever)', background: 'var(--brume)' }}>
-          <div className="pill" style={{ marginBottom: 12, borderColor: 'var(--lever)', color: 'var(--lever-profond)' }}>{t('launchOfferPill')}</div>
+          <div className="pill" style={{ marginBottom: 12, borderColor: 'var(--lever)', color: 'var(--lever-profond)' }}>{promo.nom || t('launchOfferPill')}</div>
           <ul style={{ margin: 0, paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 6, fontSize: '0.92rem', color: 'var(--encre)' }}>
-            <li>{t('promo10')}</li>
-            <li>
-              {placesRestantes > 0
-                ? t('promoDoubleWithSlots', { n: placesRestantes })
-                : t('promoDoubleSoldOut')}
-            </li>
-            <li>{t('promoWelcomeCredits')}</li>
+            {promo.reductionPourcent != null && (
+              <li>{t('promo10', { pourcent: promo.reductionPourcent, date: finLabel })}</li>
+            )}
+            {promo.bonusAbonnementMultiplicateur != null && (
+              <li>
+                {promo.bonusAbonnementQuota == null
+                  ? t('promoDoubleUnlimited', { multiplicateur: promo.bonusAbonnementMultiplicateur })
+                  : placesRestantes > 0
+                  ? t('promoDoubleWithSlots', { multiplicateur: promo.bonusAbonnementMultiplicateur, n: placesRestantes })
+                  : t('promoDoubleSoldOut')}
+              </li>
+            )}
+            {promo.creditsBienvenue != null && promo.creditsBienvenueJours != null && (
+              <li>{t('promoWelcomeCredits', { credits: promo.creditsBienvenue, defaut: WELCOME_CREDITS, jours: promo.creditsBienvenueJours })}</li>
+            )}
           </ul>
         </div>
       )}
 
       <h2 style={{ fontSize: '1.3rem', marginBottom: 18 }}>{t('packsTitle')}</h2>
       <p style={{ color: 'var(--sourdine)', fontSize: '0.86rem', marginBottom: 22 }}>
-        {t('packsSubtitleBase')}{promoActive && t('packsSubtitlePromo')}
+        {t('packsSubtitleBase')}
+        {promo?.reductionPourcent != null && t('packsSubtitlePromo', { pourcent: promo.reductionPourcent, date: finLabel })}
       </p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 18, marginBottom: 60 }}>
         {CREDIT_PACKS.map((p, i) => (
@@ -86,7 +98,9 @@ export default async function TarifsPage() {
       <h2 style={{ fontSize: '1.3rem', marginBottom: 18 }}>{t('subscriptionsTitle')}</h2>
       <p style={{ color: 'var(--sourdine)', fontSize: '0.86rem', marginBottom: 22 }}>
         {t('subscriptionsSubtitleBase')}
-        {promoActive && placesRestantes > 0 && t('subscriptionsSubtitlePromo', { n: placesRestantes })}
+        {promo?.bonusAbonnementMultiplicateur != null &&
+          (promo.bonusAbonnementQuota == null || placesRestantes > 0) &&
+          t('subscriptionsSubtitlePromo', { multiplicateur: promo.bonusAbonnementMultiplicateur, n: placesRestantes })}
       </p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20, marginBottom: 64 }}>
         {SUBSCRIPTIONS.map((s, i) => (

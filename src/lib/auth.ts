@@ -6,7 +6,7 @@ import bcrypt from 'bcryptjs';
 import { Pool } from 'pg';
 import { sql } from './db';
 import { grantCredits } from './credits';
-import { creditsBienvenue } from './promotions';
+import { resolveWelcomeCredits } from './promotions';
 import { finaliserParrainageSiPresent } from './referral';
 import { envoyerLienMagique } from './authEmail';
 
@@ -97,11 +97,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   events: {
     // Crédits de bienvenue : promis sur la page d'accueil, accordés une
     // seule fois, au moment où l'adaptateur crée la ligne `users`. Voir
-    // lib/promotions.ts : 10 crédits (valables 7 jours) au lieu de 3
-    // pendant la promo de lancement de septembre 2026.
+    // lib/promotions.ts : la promotion active en backoffice peut surclasser
+    // les valeurs par défaut (ex. 10 crédits sur 7 jours au lieu de 3 sur 45).
     async createUser({ user }) {
       try {
-        const { credits, expirationJours, source } = creditsBienvenue();
+        const { credits, expirationJours, source } = await resolveWelcomeCredits();
         await grantCredits(Number(user.id), credits, source, expirationJours);
       } catch (err) {
         console.error('Échec de l\'octroi des crédits de bienvenue', err);

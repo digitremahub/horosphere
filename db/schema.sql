@@ -192,12 +192,45 @@ CREATE TABLE IF NOT EXISTS news_translations (
 );
 
 -- ===== Promo de lancement (septembre 2026) =====
--- Compte les bénéficiaires du bonus "100 premiers abonnés" (x2 crédits sur
--- le premier mois) — voir lib/promotions.ts. user_id en clé primaire :
--- un réabonnement ultérieur ne peut jamais redoubler les crédits deux fois.
+-- Ancienne table dédiée à la seule promo de lancement de septembre 2026,
+-- conservée pour ne pas perdre l'historique — voir lib/promotions.ts
+-- (ensureSchema) qui migre ses lignes vers promo_abonnement_beneficiaires
+-- une seule fois, à la création de la table `promotions` ci-dessous.
 CREATE TABLE IF NOT EXISTS promo_premiers_abonnes (
   user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
   granted_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Promotions éditables depuis le backoffice (/app/admin) — voir
+-- lib/promotions.ts. Au plus une active à la fois (fenêtre [debut, fin)
+-- courante) pilote la réduction sur les packs (coupon Stripe créé
+-- automatiquement), le cadeau de bienvenue et le bonus du premier mois
+-- d'abonnement — chaque effet reste optionnel (NULL = désactivé).
+CREATE TABLE IF NOT EXISTS promotions (
+  id SERIAL PRIMARY KEY,
+  nom TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  debut TIMESTAMPTZ NOT NULL,
+  fin TIMESTAMPTZ NOT NULL,
+  reduction_pourcent INTEGER,
+  stripe_coupon_id TEXT,
+  credits_bienvenue INTEGER,
+  credits_bienvenue_jours INTEGER,
+  bonus_abonnement_multiplicateur INTEGER,
+  bonus_abonnement_quota INTEGER,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Bénéficiaires du bonus abonnement, par promotion — généralise
+-- promo_premiers_abonnes (qui ne couvrait que l'ancienne promo unique) :
+-- clé (promotion_id, user_id), un réabonnement ultérieur ne peut jamais
+-- redoubler le bonus deux fois pour la même promotion.
+CREATE TABLE IF NOT EXISTS promo_abonnement_beneficiaires (
+  promotion_id INTEGER NOT NULL REFERENCES promotions(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (promotion_id, user_id)
 );
 
 -- ===== Publications réseaux sociaux (carrousel homepage) =====

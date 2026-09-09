@@ -14,8 +14,26 @@ import { getSiteConfig, setSiteConfig, CLES_VIDEO } from '@/lib/siteConfig';
 import { rembourserAnniversairesDuMois } from '@/lib/birthdayRefund';
 import { grantCredits } from '@/lib/credits';
 import { offrirMoisAbonnement } from '@/lib/adminSubscriptions';
-import { listConfiguredPromotions } from '@/lib/promotions';
+import { listPromotions, createPromotion, updatePromotion, deletePromotion, bonusAbonnementRestant, type PromotionInput } from '@/lib/promotions';
 import { SUBSCRIPTIONS, CREDIT_EXPIRY_DAYS } from '@/lib/pricing';
+
+function lireFormulairePromotion(formData: FormData): PromotionInput {
+  const nombreOuNull = (nom: string): number | null => {
+    const v = String(formData.get(nom) || '').trim();
+    return v ? Number(v) : null;
+  };
+  return {
+    nom: String(formData.get('nom') || '').trim(),
+    description: String(formData.get('description') || '').trim(),
+    debut: new Date(String(formData.get('debut'))),
+    fin: new Date(String(formData.get('fin'))),
+    reductionPourcent: nombreOuNull('reductionPourcent'),
+    creditsBienvenue: nombreOuNull('creditsBienvenue'),
+    creditsBienvenueJours: nombreOuNull('creditsBienvenueJours'),
+    bonusAbonnementMultiplicateur: nombreOuNull('bonusAbonnementMultiplicateur'),
+    bonusAbonnementQuota: nombreOuNull('bonusAbonnementQuota'),
+  };
+}
 
 const inputStyle: React.CSSProperties = {
   padding: '9px 12px',
@@ -81,6 +99,35 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     });
   }
 
+  async function creerPromotion(formData: FormData) {
+    'use server';
+    const session = await auth();
+    const email = (session?.user as { email?: string | null } | undefined)?.email;
+    if (!isAdminEmail(email)) return;
+    await createPromotion(lireFormulairePromotion(formData));
+    redirect({ href: { pathname: '/app/admin', query: { ok: 'promo-cree' } }, locale });
+  }
+
+  async function modifierPromotion(formData: FormData) {
+    'use server';
+    const session = await auth();
+    const email = (session?.user as { email?: string | null } | undefined)?.email;
+    if (!isAdminEmail(email)) return;
+    const id = Number(formData.get('id'));
+    await updatePromotion(id, lireFormulairePromotion(formData));
+    redirect({ href: { pathname: '/app/admin', query: { ok: 'promo-modifie' } }, locale });
+  }
+
+  async function supprimerPromotion(formData: FormData) {
+    'use server';
+    const session = await auth();
+    const email = (session?.user as { email?: string | null } | undefined)?.email;
+    if (!isAdminEmail(email)) return;
+    const id = Number(formData.get('id'));
+    await deletePromotion(id);
+    redirect({ href: { pathname: '/app/admin', query: { ok: 'promo-supprime' } }, locale });
+  }
+
   async function lancerRemboursementsAnniversaire() {
     'use server';
     const session = await auth();
@@ -97,7 +144,10 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   let users: Awaited<ReturnType<typeof listUsersAdmin>> = [];
   let videos: Record<string, string> = {};
   let loadError: string | null = null;
-  const promotions = await listConfiguredPromotions();
+  const promotions = dbConfigured ? await listPromotions().catch(() => []) : [];
+  const promotionsAffichage = await Promise.all(
+    promotions.map(async (p) => ({ promo: p, quotaRestant: await bonusAbonnementRestant(p).catch(() => p.bonusAbonnementQuota) }))
+  );
 
   if (dbConfigured) {
     try {
@@ -142,6 +192,21 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             </div>
           );
         })()}
+        {ok === 'promo-cree' && (
+          <div className="card" style={{ padding: '12px 16px', marginBottom: 20, fontSize: '0.84rem', color: 'var(--lever-profond)' }}>
+            Promotion créée.
+          </div>
+        )}
+        {ok === 'promo-modifie' && (
+          <div className="card" style={{ padding: '12px 16px', marginBottom: 20, fontSize: '0.84rem', color: 'var(--lever-profond)' }}>
+            Promotion mise à jour.
+          </div>
+        )}
+        {ok === 'promo-supprime' && (
+          <div className="card" style={{ padding: '12px 16px', marginBottom: 20, fontSize: '0.84rem', color: 'var(--lever-profond)' }}>
+            Promotion supprimée.
+          </div>
+        )}
         {ok?.startsWith('remb:') && (() => {
           const [, traites, rembourses, erreurs] = ok.split(':');
           return (
@@ -176,33 +241,140 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           </div>
         )}
 
-        {promotions.length > 0 && (
-          <div className="card" style={{ padding: '20px 22px', marginBottom: 28 }}>
-            <h2 style={{ fontSize: '1rem', marginBottom: 4 }}>Promotions</h2>
-            <p style={{ fontSize: '0.82rem', color: 'var(--sourdine)', marginBottom: 14 }}>
-              Configurées dans le code (lib/promotions.ts) — une nouvelle promotion s'y ajoute pour apparaître ici, pas encore de création depuis cette page.
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {promotions.map((p) => {
-                const couleur = p.statut === 'active' ? 'var(--sauge)' : p.statut === 'a_venir' ? 'var(--ambre)' : 'var(--sourdine)';
-                const statutLabel = p.statut === 'active' ? '● En cours' : p.statut === 'a_venir' ? '○ À venir' : '○ Terminée';
-                return (
-                  <div key={p.nom} style={{ padding: '12px 14px', borderRadius: 10, border: '1px solid var(--trait)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginBottom: 6, flexWrap: 'wrap' }}>
-                      <strong style={{ fontSize: '0.9rem' }}>{p.nom}</strong>
-                      <span className="mono" style={{ fontSize: '0.72rem', color: couleur }}>{statutLabel}</span>
-                    </div>
-                    <p style={{ margin: '0 0 6px', fontSize: '0.82rem', color: 'var(--ombre)' }}>{p.description}</p>
-                    <div className="mono" style={{ fontSize: '0.72rem', color: 'var(--sourdine)' }}>
-                      Du {p.debut.toLocaleDateString('fr-FR')} au {p.fin.toLocaleDateString('fr-FR')}
-                      {p.quotaTotal !== undefined && ` · ${p.quotaRestant}/${p.quotaTotal} places restantes`}
-                    </div>
+        <div className="card" style={{ padding: '20px 22px', marginBottom: 28 }}>
+          <h2 style={{ fontSize: '1rem', marginBottom: 4 }}>Promotions</h2>
+          <p style={{ fontSize: '0.82rem', color: 'var(--sourdine)', marginBottom: 14 }}>
+            Chaque champ est optionnel — laissez-le vide pour ne pas activer cet effet. Au plus une promotion active à la fois (celle dont les dates couvrent aujourd'hui) pilote automatiquement la réduction sur les packs, le cadeau de bienvenue et le bonus du premier mois d'abonnement.
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
+            {promotionsAffichage.map(({ promo: p, quotaRestant }) => {
+              const maintenant = new Date();
+              const statut = maintenant < p.debut ? 'a_venir' : maintenant < p.fin ? 'active' : 'terminee';
+              const couleur = statut === 'active' ? 'var(--sauge)' : statut === 'a_venir' ? 'var(--ambre)' : 'var(--sourdine)';
+              const statutLabel = statut === 'active' ? '● En cours' : statut === 'a_venir' ? '○ À venir' : '○ Terminée';
+              return (
+                <details key={p.id} style={{ padding: '12px 14px', borderRadius: 10, border: '1px solid var(--trait)' }}>
+                  <summary style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                    <strong style={{ fontSize: '0.9rem' }}>{p.nom}</strong>
+                    <span className="mono" style={{ fontSize: '0.72rem', color: couleur }}>{statutLabel}</span>
+                  </summary>
+                  <div className="mono" style={{ fontSize: '0.72rem', color: 'var(--sourdine)', margin: '8px 0 14px' }}>
+                    Du {p.debut.toLocaleDateString('fr-FR')} au {p.fin.toLocaleDateString('fr-FR')}
+                    {p.bonusAbonnementQuota != null && ` · ${quotaRestant}/${p.bonusAbonnementQuota} places restantes`}
                   </div>
-                );
-              })}
-            </div>
+                  <form action={modifierPromotion} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <input type="hidden" name="id" value={p.id} />
+                    <div>
+                      <label className="field-label">Nom</label>
+                      <input name="nom" defaultValue={p.nom} required style={inputStyle} />
+                    </div>
+                    <div>
+                      <label className="field-label">Description</label>
+                      <textarea name="description" defaultValue={p.description} rows={2} style={{ ...inputStyle, resize: 'vertical' }} />
+                    </div>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <div style={{ flex: 1 }}>
+                        <label className="field-label">Début</label>
+                        <input type="date" name="debut" defaultValue={p.debut.toISOString().slice(0, 10)} required style={inputStyle} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label className="field-label">Fin</label>
+                        <input type="date" name="fin" defaultValue={p.fin.toISOString().slice(0, 10)} required style={inputStyle} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="field-label">Réduction sur les packs (%)</label>
+                      <input type="number" name="reductionPourcent" min={1} max={90} defaultValue={p.reductionPourcent ?? ''} placeholder="ex. 10" style={inputStyle} />
+                    </div>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <div style={{ flex: 1 }}>
+                        <label className="field-label">Crédits de bienvenue</label>
+                        <input type="number" name="creditsBienvenue" min={1} max={100} defaultValue={p.creditsBienvenue ?? ''} placeholder="ex. 10" style={inputStyle} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label className="field-label">Valables (jours)</label>
+                        <input type="number" name="creditsBienvenueJours" min={1} max={90} defaultValue={p.creditsBienvenueJours ?? ''} placeholder="ex. 7" style={inputStyle} />
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <div style={{ flex: 1 }}>
+                        <label className="field-label">Multiplicateur 1er mois abonnement</label>
+                        <input type="number" name="bonusAbonnementMultiplicateur" min={2} max={10} defaultValue={p.bonusAbonnementMultiplicateur ?? ''} placeholder="ex. 2" style={inputStyle} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label className="field-label">Quota (vide = illimité)</label>
+                        <input type="number" name="bonusAbonnementQuota" min={1} defaultValue={p.bonusAbonnementQuota ?? ''} placeholder="ex. 100" style={inputStyle} />
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <button type="submit" className="btn btn-primary" style={{ fontSize: '0.82rem' }}>
+                        Enregistrer
+                      </button>
+                    </div>
+                  </form>
+                  <form action={supprimerPromotion} style={{ marginTop: 8 }}>
+                    <input type="hidden" name="id" value={p.id} />
+                    <button type="submit" className="btn btn-ghost" style={{ fontSize: '0.78rem', color: 'var(--lever-profond)' }}>
+                      Supprimer cette promotion
+                    </button>
+                  </form>
+                </details>
+              );
+            })}
           </div>
-        )}
+
+          <details>
+            <summary style={{ cursor: 'pointer', fontSize: '0.88rem', fontWeight: 600 }}>+ Créer une nouvelle promotion</summary>
+            <form action={creerPromotion} style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 14 }}>
+              <div>
+                <label className="field-label">Nom</label>
+                <input name="nom" required placeholder="ex. Soldes d'automne" style={inputStyle} />
+              </div>
+              <div>
+                <label className="field-label">Description</label>
+                <textarea name="description" rows={2} placeholder="Résumé affiché dans ce backoffice et sur /tarifs" style={{ ...inputStyle, resize: 'vertical' }} />
+              </div>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <div style={{ flex: 1 }}>
+                  <label className="field-label">Début</label>
+                  <input type="date" name="debut" required style={inputStyle} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label className="field-label">Fin</label>
+                  <input type="date" name="fin" required style={inputStyle} />
+                </div>
+              </div>
+              <div>
+                <label className="field-label">Réduction sur les packs (%)</label>
+                <input type="number" name="reductionPourcent" min={1} max={90} placeholder="ex. 10 — laisser vide si aucune" style={inputStyle} />
+              </div>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <div style={{ flex: 1 }}>
+                  <label className="field-label">Crédits de bienvenue</label>
+                  <input type="number" name="creditsBienvenue" min={1} max={100} placeholder="ex. 10" style={inputStyle} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label className="field-label">Valables (jours)</label>
+                  <input type="number" name="creditsBienvenueJours" min={1} max={90} placeholder="ex. 7" style={inputStyle} />
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <div style={{ flex: 1 }}>
+                  <label className="field-label">Multiplicateur 1er mois abonnement</label>
+                  <input type="number" name="bonusAbonnementMultiplicateur" min={2} max={10} placeholder="ex. 2" style={inputStyle} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label className="field-label">Quota (vide = illimité)</label>
+                  <input type="number" name="bonusAbonnementQuota" min={1} placeholder="ex. 100" style={inputStyle} />
+                </div>
+              </div>
+              <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start', fontSize: '0.84rem' }}>
+                Créer la promotion
+              </button>
+            </form>
+          </details>
+        </div>
 
         <div className="card" style={{ padding: '20px 22px', marginBottom: 28 }}>
           <h2 style={{ fontSize: '1rem', marginBottom: 4 }}>Actions rapides</h2>
