@@ -40,9 +40,13 @@
 //    fixes seuls, 1024×1536 soit ~0,67, avaient déjà été publiés avec
 //    succès). Corrigé en gardant la hauteur TOTALE à 1536 (même ratio que
 //    ce qui marche) : l'image est donc affichée en hauteur réduite
-//    (1536 - bandeau) avec un recadrage depuis le HAUT (objectPosition
-//    'bottom') pour ne jamais rogner le nom du signe ni la marque, déjà
-//    positionnés en bas de chaque illustration.
+//    (1536 - bandeau), recadrée en 'cover'. Un recadrage ancré en bas
+//    (objectPosition 'bottom', pour préserver le nom du signe et la
+//    marque) coupait trop sur le haut du personnage et déséquilibrait la
+//    composition ("pas centrée", retour utilisateur) — repassé au
+//    recadrage centré par défaut, qui rogne un peu de chaque côté sans
+//    jamais toucher au personnage ni au nom du signe (l'espace vide en
+//    bas de chaque illustration absorbe l'essentiel du recadrage).
 // 6) ratio corrigé, le scénario Make est passé au vert (aucune erreur) et
 //    Airtable marqué "Publié" — mais le post n'apparaissait toujours pas
 //    sur Instagram. Cause : `ImageResponse` (Satori/resvg) ne sait
@@ -121,10 +125,7 @@ export async function GET(req: NextRequest) {
           background: COULEURS.fond,
         }}
       >
-        <img
-          src={imageSrc}
-          style={{ width: IMG_WIDTH, height: IMG_HEIGHT, objectFit: 'cover', objectPosition: 'bottom' }}
-        />
+        <img src={imageSrc} style={{ width: IMG_WIDTH, height: IMG_HEIGHT, objectFit: 'cover' }} />
         <div
           style={{
             width: IMG_WIDTH,
