@@ -21,6 +21,17 @@
 //    (fetch côté serveur, avec le contrôle d'erreur qui va avec) et en
 //    les passant en data URI : plus aucune requête réseau pendant le
 //    rendu Satori lui-même.
+// 4) cause RÉELLE du 500 qui persistait malgré (1)-(3), confirmée en
+//    reproduisant l'appel directement (web_fetch_vercel_url, ce sandbox
+//    n'ayant pas d'accès sortant vers horosphere.fr) : l'emoji ✨ codé en
+//    dur dans le JSX. Satori ne sait pas résoudre les glyphes emoji sans
+//    police dédiée (contrairement à /api/og/astrolabe, qui n'en affiche
+//    aucun) — il lève une exception synchrone pendant la construction de
+//    l'arbre, hors de portée du try/catch autour du fetch de l'image, ce
+//    qui explique l'absence totale de log d'erreur applicatif (page
+//    d'erreur générique Next, x-matched-path "/500"). Retiré, et les
+//    paramètres dynamiques (headline/conseil, texte IA) sont
+//    défensivement nettoyés de tout emoji au cas où l'IA en placerait un.
 import { ImageResponse } from 'next/og';
 import type { NextRequest } from 'next/server';
 import { imageFixeSigne } from '@/lib/signImages';
@@ -42,11 +53,19 @@ function siteUrl(): string {
   return (process.env.NEXT_PUBLIC_SITE_URL || 'https://horosphere.fr').replace(/\/$/, '');
 }
 
+/** Retire tout emoji d'un texte avant de le confier à Satori, qui n'a pas
+ * de police pour ces glyphes et lève une exception non récupérable (voir
+ * point 4 en tête de fichier) — jamais de blocage du rendu pour un emoji
+ * qu'un texte généré par IA aurait pu contenir. */
+function sansEmoji(texte: string): string {
+  return texte.replace(/[\p{Extended_Pictographic}‍️]/gu, '').replace(/\s{2,}/g, ' ').trim();
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const signe = searchParams.get('signe') as Sign['key'] | null;
-  const headline = (searchParams.get('headline') || '').slice(0, 140);
-  const conseil = (searchParams.get('conseil') || '').slice(0, 160);
+  const headline = sansEmoji((searchParams.get('headline') || '').slice(0, 140));
+  const conseil = sansEmoji((searchParams.get('conseil') || '').slice(0, 160));
 
   const chemin = signe ? imageFixeSigne(signe) : null;
   if (!chemin) {
@@ -91,7 +110,7 @@ export async function GET(req: NextRequest) {
             {headline}
           </div>
           {conseil && (
-            <div style={{ fontSize: 26, color: COULEURS.creme, lineHeight: 1.4 }}>✨ {conseil}</div>
+            <div style={{ fontSize: 26, color: COULEURS.creme, lineHeight: 1.4 }}>{conseil}</div>
           )}
         </div>
       </div>
