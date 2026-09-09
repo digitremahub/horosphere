@@ -114,7 +114,7 @@ export default async function ActualitesPage({ searchParams }: { searchParams: P
 
         <div className="actu-en-direct" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, alignItems: 'center' }}>
           <div style={{ textAlign: 'center' }}>
-            <AstrolabeIllustration size={260} />
+            <AstrolabeIllustration size={260} legend />
             <p style={{ color: 'var(--ombre)', fontSize: '0.88rem', maxWidth: 400, margin: '16px auto 0' }}>
               {t('astrolabeText')}
             </p>

@@ -31,7 +31,7 @@ function toXY(angle: number, r: number, cx = 100, cy = 100) {
   return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
 }
 
-export default function AstrolabeIllustration({ size = 320 }: { size?: number }) {
+export default function AstrolabeIllustration({ size = 320, legend = false }: { size?: number; legend?: boolean }) {
   const armTip = toXY(38, 88);
   const planets = currentPlanetPositions();
   const ariaLabel = `Position actuelle des planètes sur le zodiaque : ${planets
@@ -45,7 +45,7 @@ export default function AstrolabeIllustration({ size = 320 }: { size?: number })
   // moment du rendu, plutôt que de toujours repartir de 0.
   const spinDelay = -((Date.now() / 1000) % SPIN_DURATION_S);
 
-  return (
+  const svg = (
     <svg width={size} height={size} viewBox="0 0 200 200" role="img" aria-label={ariaLabel}>
       <g
         className="astrolabe-spin"
@@ -115,5 +115,24 @@ export default function AstrolabeIllustration({ size = 320 }: { size?: number })
         <title>Terre — ce diagramme montre le ciel tel qu'observé depuis ce point.</title>
       </g>
     </svg>
+  );
+
+  if (!legend) return svg;
+
+  // Légende visible (pas seulement au survol via <title>, invisible sur
+  // mobile) — invite à repérer chaque glyphe sur l'instrument plutôt que de
+  // rester une simple image décorative.
+  return (
+    <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+      {svg}
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '6px 14px', maxWidth: 320 }}>
+        {planets.map((p) => (
+          <span key={p.key} className="mono" style={{ fontSize: '0.74rem', color: 'var(--sourdine)', whiteSpace: 'nowrap' }}>
+            <span style={{ color: p.couleur, marginRight: 4 }}>{p.glyphe}</span>
+            {p.nom}
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }

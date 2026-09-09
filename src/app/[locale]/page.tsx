@@ -4,6 +4,7 @@ import DegreeArc from '@/components/DegreeArc';
 import ZodiacWheelIllustration from '@/components/ZodiacWheelIllustration';
 import ScrollReveal from '@/components/ScrollReveal';
 import SocialCarousel from '@/components/SocialCarousel';
+import NewsTeaser from '@/components/NewsTeaser';
 import TeaserVideoSection from '@/components/TeaserVideoSection';
 import WeeklyRecapSection from '@/components/WeeklyRecapSection';
 import { Link } from '@/i18n/navigation';
@@ -145,6 +146,10 @@ export default async function HomePage() {
       {/* 4.6 Carrousel des publications réseaux sociaux — n'apparaît que
          si des posts publiés existent déjà, voir SocialCarousel. */}
       <SocialCarousel />
+
+      {/* 4.7 Aperçu des derniers articles "actualité du ciel" — jusqu'à 4,
+         avec un lien vers /actualites pour la lecture complète. */}
+      <NewsTeaser />
 
       <SectionDivider />
 

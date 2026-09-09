@@ -4,11 +4,18 @@
 // lune, nouvelle lune, éclipses). Les dates sont calculées côté serveur
 // (voir lib/skyEvents.ts) ; ce composant se contente de faire défiler le
 // temps restant, seconde par seconde, côté client.
+//
+// Regroupé par paire plutôt qu'aligné chronologiquement (nouvelle/pleine
+// lune sur une ligne, éclipses sur la suivante, chacune illustrée) : plus
+// compact qu'une bande de 4 cartes étirée sur toute la largeur, tout en
+// restant lisible d'un coup d'œil.
 
 import { useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import type { SkyEvent } from '@/lib/skyEvents';
 import { dateLocaleTag } from '@/i18n/dateLocale';
+import MoonPhase from './MoonPhase';
+import EclipseIcon from './EclipseIcon';
 
 const KEY_TO_MESSAGE: Record<string, string> = {
   'pleine-lune': 'nextFullMoon',
@@ -16,6 +23,18 @@ const KEY_TO_MESSAGE: Record<string, string> = {
   'eclipse-lunaire': 'nextLunarEclipse',
   'eclipse-solaire': 'nextSolarEclipse',
 };
+
+// Ordre volontairement fixe (pas l'ordre chronologique reçu) : les deux
+// phases de lune ensemble, puis les deux éclipses — voir le commentaire ci-dessus.
+const DISPLAY_ORDER = ['nouvelle-lune', 'pleine-lune', 'eclipse-lunaire', 'eclipse-solaire'];
+
+function icone(key: string) {
+  if (key === 'nouvelle-lune') return <MoonPhase phase={0} size={44} />;
+  if (key === 'pleine-lune') return <MoonPhase phase={0.5} size={44} />;
+  if (key === 'eclipse-lunaire') return <EclipseIcon kind="lunar" size={44} />;
+  if (key === 'eclipse-solaire') return <EclipseIcon kind="solar" size={44} />;
+  return null;
+}
 
 function splitRemaining(ms: number) {
   if (ms <= 0) return { j: 0, h: 0, m: 0, s: 0, passed: true };
@@ -43,12 +62,11 @@ export default function SkyCountdown({ events }: { events: SkyEvent[] }) {
     return () => clearInterval(id);
   }, []);
 
+  const ordered = DISPLAY_ORDER.map((key) => events.find((e) => e.key === key)).filter((e): e is SkyEvent => Boolean(e));
+
   return (
-    <div
-      className="sky-countdown"
-      style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}
-    >
-      {events.map((e) => {
+    <div className="sky-countdown" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(150px, 210px))', gap: 12, justifyContent: 'center' }}>
+      {ordered.map((e) => {
         const target = new Date(e.dateISO).getTime();
         const remaining = now !== null ? splitRemaining(target - now) : null;
         const dateLabel = new Date(e.dateISO).toLocaleDateString(dateLocaleTag(locale), {
@@ -59,17 +77,19 @@ export default function SkyCountdown({ events }: { events: SkyEvent[] }) {
         const messageKey = KEY_TO_MESSAGE[e.key];
 
         return (
-          <div key={e.key} className="card" style={{ padding: '18px 14px', textAlign: 'center', boxShadow: 'none' }}>
-            <div className="field-label" style={{ marginBottom: 10 }}>{messageKey ? t(messageKey) : e.label}</div>
-            <div className="mono" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--lever-profond)', minHeight: '1.4em' }}>
-              {remaining ? (remaining.passed ? t('now') : `${remaining.j}j ${pad(remaining.h)}h ${pad(remaining.m)}m ${pad(remaining.s)}s`) : '—'}
+          <div key={e.key} className="card" style={{ padding: '14px 12px', display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', boxShadow: 'none' }}>
+            <div style={{ flexShrink: 0 }}>{icone(e.key)}</div>
+            <div style={{ minWidth: 0 }}>
+              <div className="field-label" style={{ marginBottom: 4, fontSize: '0.66rem' }}>{messageKey ? t(messageKey) : e.label}</div>
+              <div className="mono" style={{ fontSize: '0.92rem', fontWeight: 600, color: 'var(--lever-profond)', minHeight: '1.3em' }}>
+                {remaining ? (remaining.passed ? t('now') : `${remaining.j}j ${pad(remaining.h)}h ${pad(remaining.m)}m ${pad(remaining.s)}s`) : '—'}
+              </div>
+              <div style={{ fontSize: '0.68rem', color: 'var(--sourdine)', marginTop: 2 }}>{dateLabel}</div>
             </div>
-            <div style={{ fontSize: '0.74rem', color: 'var(--sourdine)', marginTop: 8 }}>{dateLabel}</div>
           </div>
         );
       })}
       <style>{`
-        @media (max-width: 720px){ .sky-countdown{ grid-template-columns: repeat(2, 1fr) !important; } }
         @media (max-width: 420px){ .sky-countdown{ grid-template-columns: 1fr !important; } }
       `}</style>
     </div>
