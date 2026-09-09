@@ -122,6 +122,9 @@ export default async function ConnexionPage({ searchParams }: { searchParams: Pr
                       }}
                     />
                     <button type="submit" className="btn btn-primary">{t('login')}</button>
+                    <a href="#lien-magique" style={{ fontSize: '0.82rem', color: 'var(--ombre)', textDecoration: 'underline' }}>
+                      {t('forgotPassword')}
+                    </a>
                   </form>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }} aria-hidden="true">
@@ -143,7 +146,7 @@ export default async function ConnexionPage({ searchParams }: { searchParams: Pr
                 </p>
               )}
 
-              <form action={connexionParLien} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <form id="lien-magique" action={connexionParLien} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {params?.parrain && <input type="hidden" name="parrain" value={params.parrain} />}
                 <input
                   type="email"

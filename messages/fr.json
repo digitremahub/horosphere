@@ -82,6 +82,7 @@
     "emailPlaceholder": "vous@exemple.com",
     "passwordPlaceholder": "Mot de passe",
     "login": "Se connecter",
+    "forgotPassword": "Mot de passe oublié ?",
     "or": "ou",
     "magicLinkText": "Un e-mail suffit — pas de mot de passe à retenir. Nous vous envoyons un lien de connexion valable quelques minutes.",
     "magicLinkTextWithPassword": " Vous pourrez définir un mot de passe une fois connecté, depuis votre profil.",
