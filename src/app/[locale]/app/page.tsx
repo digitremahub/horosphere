@@ -1,12 +1,13 @@
 import { getLocale } from 'next-intl/server';
 import { redirect } from '@/i18n/navigation';
 import { auth } from '@/lib/auth';
-import { getBalance, hasActiveSubscription } from '@/lib/credits';
+import { getBalance, hasActiveSubscription, getGeneratedTodayFeatures } from '@/lib/credits';
 import { getProfile } from '@/lib/profile';
 import { dbConfigured } from '@/lib/db';
 import { signFromBirthdate } from '@/lib/zodiac';
 import { localizedSign } from '@/lib/zodiac-i18n';
 import { calculerThemeNatal } from '@/lib/natal';
+import type { FeatureKey } from '@/lib/pricing';
 import { getSiteConfig, CLES_VIDEO } from '@/lib/siteConfig';
 import { lienParrainage } from '@/lib/referral';
 import Dashboard from '@/components/Dashboard';
@@ -63,6 +64,7 @@ export default async function AppPage() {
   let balance = 0;
   let balanceError: string | null = null;
   let hasSubscription = false;
+  let generatedToday: FeatureKey[] = [];
 
   if (dbConfigured) {
     try {
@@ -74,6 +76,11 @@ export default async function AppPage() {
       hasSubscription = await hasActiveSubscription(userId);
     } catch {
       hasSubscription = false; // erreur de lecture transitoire : traiter comme non-abonné plutôt que bloquer l'affichage
+    }
+    try {
+      generatedToday = await getGeneratedTodayFeatures(userId);
+    } catch {
+      generatedToday = []; // erreur de lecture transitoire : aucun bouton grisé par erreur plutôt que bloquer l'affichage
     }
   } else {
     balanceError = "La base de données n'est pas encore connectée — les crédits ne peuvent pas être suivis.";
@@ -110,6 +117,7 @@ export default async function AppPage() {
           balanceError={balanceError}
           hasSubscription={hasSubscription}
           shareLink={lienParrainage(userId)}
+          initialGeneratedToday={generatedToday}
         />
       </div>
     </main>

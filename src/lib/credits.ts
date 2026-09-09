@@ -40,6 +40,20 @@ export async function hasGeneratedToday(userId: number, feature: FeatureKey): Pr
   return rows.length > 0;
 }
 
+/** Fonctionnalités déjà générées aujourd'hui (jour civil) — alimente l'état
+ * "grisé" du bouton de génération sur chaque lecture (voir Dashboard.tsx),
+ * en un seul aller-retour au chargement de la page plutôt qu'un
+ * hasGeneratedToday() par lecture. */
+export async function getGeneratedTodayFeatures(userId: number): Promise<FeatureKey[]> {
+  const sql = requireDb();
+  const rows = await sql<{ feature: string }[]>`
+    SELECT DISTINCT feature FROM credit_usage
+    WHERE user_id = ${userId}
+      AND created_at >= date_trunc('day', now())
+  `;
+  return rows.map((r) => r.feature as FeatureKey);
+}
+
 export async function getBalance(userId: number): Promise<number> {
   const sql = requireDb();
   const rows = await sql<{ total: string | null }[]>`

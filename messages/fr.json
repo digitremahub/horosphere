@@ -154,7 +154,15 @@
     "newPassword": "Nouveau mot de passe",
     "confirmPassword": "Confirmez le mot de passe",
     "updatePassword": "Mettre à jour",
-    "createPasswordBtn": "Créer mon mot de passe"
+    "createPasswordBtn": "Créer mon mot de passe",
+    "referralPill": "Parrainage",
+    "referralTitle": "Invitez vos proches",
+    "referralText": "Pour chaque personne qui s'inscrit via votre lien personnel, vous recevez {creditsParrain} crédits, et elle en reçoit {creditsFilleul} dès son inscription.",
+    "referralBannerTitle": "🎁 Votre lien de parrainage",
+    "referralBannerSubtitle": "Partagez-le où vous voulez — réseaux, message, e-mail.",
+    "referralButton": "🔗 Partager mon lien",
+    "referralCopied": "Lien copié !",
+    "referralShareText": "Rejoins-moi sur Horosphère ✨ Horoscopes et lectures personnalisées par IA — voici mon lien :"
   },
   "Historique": {
     "backToSpace": "← Mon espace",
@@ -243,6 +251,10 @@
     "viewPackages": "Voir les forfaits",
     "chooseReadingPlaceholder": "Choisissez une lecture, votre horoscope apparaîtra ici.",
     "closePopup": "Fermer",
+    "generateRowButton": "Générer ({cost} cr.)",
+    "generatedTodayBadge": "✓ Fait aujourd'hui",
+    "shareTitle": "✨ Partage ta lecture",
+    "shareSubtitle": "Fais découvrir Horosphère à tes proches — tu gagnes des crédits si ça se transforme en inscription.",
     "shareButton": "🔗 Partager",
     "shareCopied": "Lien copié !",
     "shareTextWithHighlight": "{highlight} — Découvre ta propre lecture sur Horosphère ✨",

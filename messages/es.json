@@ -154,7 +154,15 @@
     "newPassword": "Nueva contraseña",
     "confirmPassword": "Confirma la contraseña",
     "updatePassword": "Actualizar",
-    "createPasswordBtn": "Crear mi contraseña"
+    "createPasswordBtn": "Crear mi contraseña",
+    "referralPill": "Recomendación",
+    "referralTitle": "Invita a tus allegados",
+    "referralText": "Por cada persona que se registre a través de tu enlace personal, recibes {creditsParrain} créditos, y ella recibe {creditsFilleul} al inscribirse.",
+    "referralBannerTitle": "🎁 Tu enlace de recomendación",
+    "referralBannerSubtitle": "Compártelo donde quieras — redes, mensaje, correo.",
+    "referralButton": "🔗 Compartir mi enlace",
+    "referralCopied": "¡Enlace copiado!",
+    "referralShareText": "Únete a mí en Horosphère ✨ Horóscopos y lecturas personalizadas por IA — aquí está mi enlace:"
   },
   "Historique": {
     "backToSpace": "← Mi espacio",
@@ -243,6 +251,10 @@
     "viewPackages": "Ver los paquetes",
     "chooseReadingPlaceholder": "Elige una lectura, tu horóscopo aparecerá aquí.",
     "closePopup": "Cerrar",
+    "generateRowButton": "Generar ({cost} cr.)",
+    "generatedTodayBadge": "✓ Hecho hoy",
+    "shareTitle": "✨ Comparte tu lectura",
+    "shareSubtitle": "Da a conocer Horosphère a tus amigos — ganas créditos si se convierte en un registro.",
     "shareButton": "🔗 Compartir",
     "shareCopied": "¡Enlace copiado!",
     "shareTextWithHighlight": "{highlight} — Descubre tu propia lectura en Horosphère ✨",

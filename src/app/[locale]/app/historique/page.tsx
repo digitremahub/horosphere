@@ -9,6 +9,8 @@ import { THEMES } from '@/lib/themes';
 import { findSign } from '@/lib/zodiac';
 import { localizedSign } from '@/lib/zodiac-i18n';
 import { dateLocaleTag } from '@/i18n/dateLocale';
+import { lienParrainage } from '@/lib/referral';
+import { extraitAPartager } from '@/lib/shareTeaser';
 import ReadingCard, { type Reading } from '@/components/ReadingCard';
 import AstralChartCard, { type AstralChart } from '@/components/AstralChartCard';
 import SentimentCard from '@/components/SentimentCard';
@@ -18,6 +20,7 @@ import ThematicCard from '@/components/ThematicCard';
 import LunarCycleCard from '@/components/LunarCycleCard';
 import TransitsCard from '@/components/TransitsCard';
 import EmptyStateIllustration from '@/components/EmptyStateIllustration';
+import ShareButton from '@/components/ShareButton';
 import type { SentimentReading, CompatibilityReading, GrandeAnalyse, ThematicReading, LunarCycleReading, TransitsReading } from '@/lib/anthropic';
 
 const THEME_KEYS = new Set(Object.keys(THEMES));
@@ -27,11 +30,13 @@ export default async function HistoriquePage() {
   const locale = await getLocale();
   const th = await getTranslations('Historique');
   const tp = await getTranslations('Pricing');
+  const td = await getTranslations('Dashboard');
   if (!session?.user) {
     redirect({ href: '/connexion', locale });
   }
 
   const userId = Number((session!.user as { id?: string }).id);
+  const shareLink = lienParrainage(userId);
 
   // Profil de naissance obligatoire avant tout usage — voir /app/profil.
   if (dbConfigured) {
@@ -115,38 +120,23 @@ export default async function HistoriquePage() {
           const dateLabel = `${date}${featureNom ? ` · ${featureNom}` : ''}`;
           const signInfo = sign ? localizedSign({ nom: sign.nom, symbole: sign.symbole, dates: sign.dates, element: sign.element, planete: sign.planete, key: sign.key }, locale) : null;
 
+          let cardNode: React.ReactNode = null;
+
           if (entry.feature === 'theme_astral_complet') {
             const chart = rawReading as AstralChart | null;
             if (chart?.portrait) {
-              return (
-                <AstralChartCard
-                  key={entry.id}
-                  chart={chart}
-                  signInfo={signInfo}
-                  dateLabel={dateLabel}
-                  creditsSpent={entry.credits_spent}
-                />
-              );
+              cardNode = <AstralChartCard chart={chart} signInfo={signInfo} dateLabel={dateLabel} creditsSpent={entry.credits_spent} />;
             }
           } else if (entry.feature === 'analyse_sentimentale') {
             const sentiment = rawReading as SentimentReading | null;
             if (sentiment?.titre) {
-              return (
-                <SentimentCard
-                  key={entry.id}
-                  reading={sentiment}
-                  signInfo={signInfo}
-                  dateLabel={dateLabel}
-                  creditsSpent={entry.credits_spent}
-                />
-              );
+              cardNode = <SentimentCard reading={sentiment} signInfo={signInfo} dateLabel={dateLabel} creditsSpent={entry.credits_spent} />;
             }
           } else if (entry.feature === 'compatibilite_amoureuse') {
             const compat = rawReading as (CompatibilityReading & { autreSigne?: { key: string; nom: string; symbole: string; prenom?: string }; moiPrenom?: string }) | null;
             if (compat?.resume) {
-              return (
+              cardNode = (
                 <CompatibilityCard
-                  key={entry.id}
                   reading={compat}
                   signInfo={signInfo}
                   autreSigne={compat.autreSigne ?? null}
@@ -159,48 +149,23 @@ export default async function HistoriquePage() {
           } else if (entry.feature === 'grande_analyse') {
             const grande = rawReading as GrandeAnalyse | null;
             if (grande?.synthese) {
-              return (
-                <GrandeAnalyseCard
-                  key={entry.id}
-                  reading={grande}
-                  signInfo={signInfo}
-                  dateLabel={dateLabel}
-                  creditsSpent={entry.credits_spent}
-                />
-              );
+              cardNode = <GrandeAnalyseCard reading={grande} signInfo={signInfo} dateLabel={dateLabel} creditsSpent={entry.credits_spent} />;
             }
           } else if (entry.feature === 'cycle_lunaire') {
             const lunar = rawReading as LunarCycleReading | null;
             if (lunar?.interpretation) {
-              return (
-                <LunarCycleCard
-                  key={entry.id}
-                  reading={lunar}
-                  signInfo={signInfo}
-                  dateLabel={dateLabel}
-                  creditsSpent={entry.credits_spent}
-                />
-              );
+              cardNode = <LunarCycleCard reading={lunar} signInfo={signInfo} dateLabel={dateLabel} creditsSpent={entry.credits_spent} />;
             }
           } else if (entry.feature === 'transits_planetaires') {
             const transits = rawReading as TransitsReading | null;
             if (transits?.interpretation) {
-              return (
-                <TransitsCard
-                  key={entry.id}
-                  reading={transits}
-                  signInfo={signInfo}
-                  dateLabel={dateLabel}
-                  creditsSpent={entry.credits_spent}
-                />
-              );
+              cardNode = <TransitsCard reading={transits} signInfo={signInfo} dateLabel={dateLabel} creditsSpent={entry.credits_spent} />;
             }
           } else if (THEME_KEYS.has(entry.feature)) {
             const thematic = rawReading as ThematicReading | null;
             if (thematic?.texte) {
-              return (
+              cardNode = (
                 <ThematicCard
-                  key={entry.id}
                   reading={thematic}
                   signInfo={signInfo}
                   featureNom={featureNom ?? th('readingFallback')}
@@ -212,16 +177,28 @@ export default async function HistoriquePage() {
           } else {
             const reading = rawReading as Reading | null;
             if (reading?.headline) {
-              return (
-                <ReadingCard
-                  key={entry.id}
-                  reading={reading}
-                  signInfo={signInfo}
-                  dateLabel={dateLabel}
-                  creditsSpent={entry.credits_spent}
-                />
-              );
+              cardNode = <ReadingCard reading={reading} signInfo={signInfo} dateLabel={dateLabel} creditsSpent={entry.credits_spent} />;
             }
+          }
+
+          if (cardNode) {
+            const extrait = featureKey ? extraitAPartager(featureKey, rawReading as Record<string, unknown>) : null;
+            const texteAPartager = extrait
+              ? td('shareTextWithHighlight', { highlight: extrait.length > 140 ? `${extrait.slice(0, 140)}…` : extrait })
+              : td('shareTextFallback');
+            return (
+              <div key={entry.id}>
+                {cardNode}
+                <ShareButton
+                  shareText={texteAPartager}
+                  shareUrl={shareLink}
+                  title={td('shareTitle')}
+                  subtitle={td('shareSubtitle')}
+                  label={td('shareButton')}
+                  copiedLabel={td('shareCopied')}
+                />
+              </div>
+            );
           }
 
           // Lecture faite avant l'activation de l'historique : le contenu

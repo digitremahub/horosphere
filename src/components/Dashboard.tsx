@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { FEATURE_COSTS, FEATURE_LABELS, FEATURE_CATEGORIES, FeatureCategory, FeatureKey } from '@/lib/pricing';
 import { THEMES, type ThemeKey } from '@/lib/themes';
+import { extraitAPartager } from '@/lib/shareTeaser';
 import ReadingCard, { type Reading } from '@/components/ReadingCard';
 import AstralChartCard, { type AstralChart } from '@/components/AstralChartCard';
 import SentimentCard from '@/components/SentimentCard';
@@ -14,6 +15,7 @@ import ThematicCard from '@/components/ThematicCard';
 import LunarCycleCard from '@/components/LunarCycleCard';
 import TransitsCard from '@/components/TransitsCard';
 import EmptyStateIllustration from '@/components/EmptyStateIllustration';
+import ShareButton from '@/components/ShareButton';
 import { SignCircle } from '@/components/CardParts';
 import type { SentimentReading, CompatibilityReading, GrandeAnalyse, ThematicReading, LunarCycleReading, TransitsReading } from '@/lib/anthropic';
 
@@ -36,6 +38,7 @@ export default function Dashboard({
   balanceError,
   hasSubscription,
   shareLink,
+  initialGeneratedToday,
 }: {
   userName: string;
   userSign: UserSign;
@@ -44,6 +47,7 @@ export default function Dashboard({
   balanceError: string | null;
   hasSubscription: boolean;
   shareLink: string;
+  initialGeneratedToday: FeatureKey[];
 }) {
   const [feature, setFeature] = useState<FeatureKey>('horoscope_quotidien');
   const [balance, setBalance] = useState(initialBalance);
@@ -58,129 +62,131 @@ export default function Dashboard({
   const [signInfo, setSignInfo] = useState<ResultSignInfo | null>(null);
   const [autrePrenom, setAutrePrenom] = useState('');
   const [autreDateNaissance, setAutreDateNaissance] = useState('');
-  const [loading, setLoading] = useState(false);
+  // Une seule génération à la fois, identifiée par lecture plutôt qu'un
+  // simple booléen — chaque lecture porte maintenant son propre bouton
+  // (retour utilisateur : "mets le bouton sur chaque lecture"), il faut donc
+  // savoir PRÉCISÉMENT laquelle est en cours pour ne griser que celle-là.
+  const [loadingFeature, setLoadingFeature] = useState<FeatureKey | null>(null);
+  const [generatedToday, setGeneratedToday] = useState<Set<FeatureKey>>(new Set(initialGeneratedToday));
   const [error, setError] = useState<string | null>(null);
   const [showPopup, setShowPopup] = useState(false);
-  const [shareCopied, setShareCopied] = useState(false);
+  // Lectures avec des champs à renseigner (aujourd'hui : la compatibilité
+  // amoureuse) — la saisie se fait dans sa propre popup, comme le résultat,
+  // plutôt que dans une carte plantée en permanence dans la colonne.
+  const [showCompatModal, setShowCompatModal] = useState(false);
   const locale = useLocale();
   const t = useTranslations('Dashboard');
   const tp = useTranslations('Pricing');
 
-  const cost = FEATURE_COSTS[feature];
-  const needsAutrePersonne = feature === 'compatibilite_amoureuse';
-  const canGenerate = !needsAutrePersonne || (Boolean(autrePrenom.trim()) && Boolean(autreDateNaissance));
   const featureLocked = Boolean(FEATURE_LABELS[feature].subscriptionOnly) && !hasSubscription;
+  const canGenerateCompat = Boolean(autrePrenom.trim()) && Boolean(autreDateNaissance);
+  const compatCost = FEATURE_COSTS.compatibilite_amoureuse;
 
-  async function generate(confirmerRegeneration = false) {
+  async function generate(targetFeature: FeatureKey, confirmerRegeneration = false): Promise<boolean> {
     // Retour testeur (09/09) : un double-clic (notamment sur mobile, où le
     // bouton peut recevoir un deuxième tap avant que React n'applique
     // `disabled`) a déjà fait payer deux fois la même lecture — le bouton
     // seul ne suffit pas comme garde-fou, on bloque aussi ici. L'appel de
     // reconfirmation (voir plus bas) passe outre volontairement : il
-    // survient alors que `loading` est déjà à true depuis le premier appel.
-    if (!confirmerRegeneration && loading) return;
-    setLoading(true);
+    // survient alors qu'une génération est déjà "en cours" depuis le
+    // premier appel.
+    if (!confirmerRegeneration && loadingFeature) return false;
+    const needsAutre = targetFeature === 'compatibilite_amoureuse';
+    setFeature(targetFeature);
+    setLoadingFeature(targetFeature);
     setError(null);
+
+    let res: Response;
+    let data: { reading?: unknown; sign?: ResultSignInfo; balance?: number; error?: string; code?: string };
     try {
-      const res = await fetch('/api/generate', {
+      res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(
-          needsAutrePersonne
-            ? { feature, autrePrenom, autreDateNaissance, locale, confirmerRegeneration }
-            : { feature, locale, confirmerRegeneration }
+          needsAutre
+            ? { feature: targetFeature, autrePrenom, autreDateNaissance, locale, confirmerRegeneration }
+            : { feature: targetFeature, locale, confirmerRegeneration }
         ),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        // Lecture déjà générée aujourd'hui : plutôt qu'un blocage sec, on
-        // demande confirmation avant de vraiment consommer des crédits une
-        // deuxième fois pour un contenu qui a peu de chances d'avoir changé.
-        if (data.code === 'ALREADY_GENERATED_TODAY' && !confirmerRegeneration) {
-          if (window.confirm(data.error)) {
-            await generate(true);
-          } else {
-            setLoading(false);
-          }
-          return;
-        }
-        setError(data.error || t('genericError'));
-        setLoading(false);
-        return;
-      }
-      setReading(null);
-      setChart(null);
-      setSentiment(null);
-      setCompat(null);
-      setGrandeAnalyse(null);
-      setThematic(null);
-      setLunar(null);
-      setTransits(null);
-      if (feature === 'theme_astral_complet') setChart(data.reading);
-      else if (feature === 'analyse_sentimentale') setSentiment(data.reading);
-      else if (feature === 'compatibilite_amoureuse') setCompat(data.reading);
-      else if (feature === 'grande_analyse') setGrandeAnalyse(data.reading);
-      else if (feature === 'cycle_lunaire') setLunar(data.reading);
-      else if (feature === 'transits_planetaires') setTransits(data.reading);
-      else if (isThemeKey(feature)) setThematic(data.reading);
-      else setReading(data.reading);
-      setSignInfo(data.sign);
-      setBalance(data.balance);
-      // Retour testeur (09/09) : le résultat apparaît dans la colonne de
-      // droite, hors champ sur mobile — sans indice qu'il est arrivé, on
-      // clique une seconde fois sur "Générer" en pensant que rien ne s'est
-      // passé (et on paie deux fois). Affiché d'abord dans une mini popup,
-      // impossible à manquer quelle que soit la position de défilement.
-      setShowPopup(true);
+      data = await res.json();
     } catch {
       setError(t('networkError'));
-    } finally {
-      setLoading(false);
+      setLoadingFeature(null);
+      return false;
     }
+
+    if (!res.ok) {
+      // Lecture déjà générée aujourd'hui : plutôt qu'un blocage sec, on
+      // demande confirmation avant de vraiment consommer des crédits une
+      // deuxième fois pour un contenu qui a peu de chances d'avoir changé.
+      // Pas de finally ici : setLoadingFeature ne doit surtout pas être
+      // effacé pendant que l'appel de reconfirmation ci-dessous est en vol.
+      if (data.code === 'ALREADY_GENERATED_TODAY' && !confirmerRegeneration) {
+        if (window.confirm(data.error)) {
+          return generate(targetFeature, true);
+        }
+        setLoadingFeature(null);
+        return false;
+      }
+      setError(data.error || t('genericError'));
+      setLoadingFeature(null);
+      return false;
+    }
+
+    setReading(null);
+    setChart(null);
+    setSentiment(null);
+    setCompat(null);
+    setGrandeAnalyse(null);
+    setThematic(null);
+    setLunar(null);
+    setTransits(null);
+    if (targetFeature === 'theme_astral_complet') setChart(data.reading as AstralChart);
+    else if (targetFeature === 'analyse_sentimentale') setSentiment(data.reading as SentimentReading);
+    else if (targetFeature === 'compatibilite_amoureuse') setCompat(data.reading as CompatReading);
+    else if (targetFeature === 'grande_analyse') setGrandeAnalyse(data.reading as GrandeAnalyse);
+    else if (targetFeature === 'cycle_lunaire') setLunar(data.reading as LunarCycleReading);
+    else if (targetFeature === 'transits_planetaires') setTransits(data.reading as TransitsReading);
+    else if (isThemeKey(targetFeature)) setThematic(data.reading as ThematicReading);
+    else setReading(data.reading as Reading);
+    setSignInfo(data.sign ?? null);
+    setBalance(data.balance ?? 0);
+    setGeneratedToday((prev) => {
+      const next = new Set(prev);
+      next.add(targetFeature);
+      return next;
+    });
+    setLoadingFeature(null);
+    setShowCompatModal(false);
+    // Retour testeur (09/09) : le résultat apparaît dans la colonne de
+    // droite, hors champ sur mobile — sans indice qu'il est arrivé, on
+    // clique une seconde fois sur "Générer" en pensant que rien ne s'est
+    // passé (et on paie deux fois). Affiché d'abord dans une mini popup,
+    // impossible à manquer quelle que soit la position de défilement.
+    setShowPopup(true);
+    return true;
   }
 
   const hasResult = reading || chart || sentiment || compat || grandeAnalyse || thematic || lunar || transits;
 
   // Partage sur les réseaux — jamais la lecture complète (réservée aux
-  // personnes inscrites/abonnées) : un seul extrait court, déjà pensé pour
-  // être bref dans chaque type de lecture (l'accroche, le résumé, le titre —
-  // jamais les paragraphes détaillés type "amour"/"conseil"). Le lien pointe
+  // personnes inscrites/abonnées), voir lib/shareTeaser.ts. Le lien pointe
   // vers le parrainage existant (lib/referral.ts) : la personne qui partage
   // touche ses crédits de parrain si ça se transforme en inscription.
-  function extraitAPartager(): string | null {
-    if (compat) return `${compat.resume} (${compat.scoreGlobal}%)`;
-    if (reading?.headline) return reading.headline;
-    if (sentiment) return sentiment.titre;
-    if (grandeAnalyse) return grandeAnalyse.synthese;
-    if (thematic) return thematic.titre;
-    if (lunar) return lunar.titre;
-    if (transits) return transits.titre;
-    if (chart) return chart.portrait;
+  const extraitResultat = (() => {
+    if (compat) return extraitAPartager(feature, compat);
+    if (reading) return extraitAPartager(feature, reading);
+    if (sentiment) return extraitAPartager(feature, sentiment);
+    if (grandeAnalyse) return extraitAPartager(feature, grandeAnalyse);
+    if (thematic) return extraitAPartager(feature, thematic);
+    if (lunar) return extraitAPartager(feature, lunar);
+    if (transits) return extraitAPartager(feature, transits);
+    if (chart) return extraitAPartager(feature, chart);
     return null;
-  }
-
-  async function partager() {
-    const extrait = extraitAPartager();
-    const texte = extrait
-      ? t('shareTextWithHighlight', { highlight: extrait.length > 140 ? `${extrait.slice(0, 140)}…` : extrait })
-      : t('shareTextFallback');
-    if (typeof navigator !== 'undefined' && navigator.share) {
-      try {
-        await navigator.share({ title: 'Horosphère', text: texte, url: shareLink });
-      } catch {
-        // Partage annulé par la personne (ou refusé par l'OS) — rien à faire.
-      }
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(`${texte} ${shareLink}`);
-      setShareCopied(true);
-      setTimeout(() => setShareCopied(false), 2500);
-    } catch {
-      // Presse-papiers indisponible (contexte non sécurisé, permission
-      // refusée) — pas de repli supplémentaire au-delà du message d'échec silencieux.
-    }
-  }
+  })();
+  const texteAPartager = extraitResultat
+    ? t('shareTextWithHighlight', { highlight: extraitResultat.length > 140 ? `${extraitResultat.slice(0, 140)}…` : extraitResultat })
+    : t('shareTextFallback');
 
   useEffect(() => {
     if (!showPopup) return;
@@ -202,11 +208,14 @@ export default function Dashboard({
       {lunar && signInfo && <LunarCycleCard reading={lunar} signInfo={signInfo} />}
       {transits && signInfo && <TransitsCard reading={transits} signInfo={signInfo} />}
       {hasResult && (
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 14 }}>
-          <button type="button" onClick={partager} className="btn btn-ghost" style={{ padding: '9px 18px', fontSize: '0.82rem' }}>
-            {shareCopied ? t('shareCopied') : t('shareButton')}
-          </button>
-        </div>
+        <ShareButton
+          shareText={texteAPartager}
+          shareUrl={shareLink}
+          title={t('shareTitle')}
+          subtitle={t('shareSubtitle')}
+          label={t('shareButton')}
+          copiedLabel={t('shareCopied')}
+        />
       )}
     </>
   );
@@ -233,6 +242,12 @@ export default function Dashboard({
       {balanceError && (
         <div className="card" style={{ padding: '14px 18px', marginBottom: 24, borderColor: 'var(--lever)', color: 'var(--lever-profond)', fontSize: '0.86rem' }}>
           {balanceError}
+        </div>
+      )}
+
+      {error && (
+        <div className="card" style={{ padding: '14px 18px', marginBottom: 24, borderColor: 'var(--lever)', color: 'var(--lever-profond)', fontSize: '0.86rem' }}>
+          {error} {(error.toLowerCase().includes('crédit') || error.toLowerCase().includes('credit') || error.toLowerCase().includes('abonnement') || error.toLowerCase().includes('subscription')) && <Link href="/tarifs" style={{ textDecoration: 'underline' }}>{t('viewPackages')}</Link>}
         </div>
       )}
 
@@ -274,11 +289,19 @@ export default function Dashboard({
                   const meta = FEATURE_LABELS[key];
                   const active = key === feature;
                   const locked = Boolean(meta.subscriptionOnly) && !hasSubscription;
+                  const dejaFaitAujourdhui = generatedToday.has(key);
+                  const enCours = loadingFeature === key;
+                  const insuffisant = balance < FEATURE_COSTS[key];
+
                   return (
-                    <button
+                    <div
                       key={key}
-                      disabled={!meta.disponible}
-                      onClick={() => setFeature(key)}
+                      role="button"
+                      tabIndex={meta.disponible ? 0 : -1}
+                      onClick={() => meta.disponible && setFeature(key)}
+                      onKeyDown={(e) => {
+                        if (meta.disponible && (e.key === 'Enter' || e.key === ' ')) setFeature(key);
+                      }}
                       aria-pressed={active}
                       className="card pick-btn"
                       style={{
@@ -307,10 +330,43 @@ export default function Dashboard({
                           {meta.disponible ? tp(`features.${key}.description`) : t('descriptionComingSoon', { description: tp(`features.${key}.description`) })}
                         </div>
                       </div>
-                      <span className="mono" style={{ fontSize: '0.82rem', color: 'var(--lever-profond)', whiteSpace: 'nowrap' }}>
-                        {FEATURE_COSTS[key]} {tp('creditUnit')}
-                      </span>
-                    </button>
+
+                      {!meta.disponible || locked ? (
+                        <span className="mono" style={{ fontSize: '0.82rem', color: 'var(--lever-profond)', whiteSpace: 'nowrap' }}>
+                          {FEATURE_COSTS[key]} {tp('creditUnit')}
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (key === 'compatibilite_amoureuse') {
+                              setFeature(key);
+                              setShowCompatModal(true);
+                            } else {
+                              void generate(key);
+                            }
+                          }}
+                          disabled={enCours || insuffisant}
+                          className="btn btn-ghost"
+                          style={{
+                            padding: '6px 14px',
+                            fontSize: '0.76rem',
+                            whiteSpace: 'nowrap',
+                            opacity: dejaFaitAujourdhui && !insuffisant ? 0.6 : 1,
+                            cursor: enCours || insuffisant ? 'not-allowed' : 'pointer',
+                          }}
+                        >
+                          {enCours
+                            ? t('generating')
+                            : insuffisant
+                            ? t('insufficientCredits', { balance, cost: FEATURE_COSTS[key] })
+                            : dejaFaitAujourdhui
+                            ? t('generatedTodayBadge')
+                            : t('generateRowButton', { cost: FEATURE_COSTS[key] })}
+                        </button>
+                      )}
+                    </div>
                   );
                 })}
               </div>
@@ -355,69 +411,6 @@ export default function Dashboard({
               <Link href="/tarifs" className="btn btn-primary" style={{ padding: '9px 18px', fontSize: '0.82rem' }}>{t('viewSubscriptions')}</Link>
             </div>
           )}
-
-          {needsAutrePersonne && !featureLocked && (
-            <div className="card" style={{ padding: '14px 16px', marginBottom: 24, boxShadow: 'none', display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div className="field-label" style={{ marginBottom: -4 }}>{t('compareYourSignTo')}</div>
-              <p style={{ fontSize: '0.8rem', color: 'var(--sourdine)', margin: 0 }}>{t('compareYourSignToHelp')}</p>
-              <div>
-                <label htmlFor="autre-prenom" style={{ fontSize: '0.76rem', color: 'var(--sourdine)', display: 'block', marginBottom: 4 }}>{t('firstName')}</label>
-                <input
-                  id="autre-prenom"
-                  type="text"
-                  value={autrePrenom}
-                  onChange={(e) => setAutrePrenom(e.target.value)}
-                  placeholder={t('firstNamePlaceholder')}
-                  style={{ padding: '10px 12px', borderRadius: 10, border: '1px solid var(--trait)', background: 'var(--nacre)', color: 'var(--encre)', fontSize: '0.9rem', width: '100%' }}
-                />
-              </div>
-              <div>
-                <label htmlFor="autre-date" style={{ fontSize: '0.76rem', color: 'var(--sourdine)', display: 'block', marginBottom: 4 }}>{t('birthDate')}</label>
-                <input
-                  id="autre-date"
-                  type="date"
-                  value={autreDateNaissance}
-                  onChange={(e) => setAutreDateNaissance(e.target.value)}
-                  max={new Date().toISOString().slice(0, 10)}
-                  style={{ padding: '10px 12px', borderRadius: 10, border: '1px solid var(--trait)', background: 'var(--nacre)', color: 'var(--encre)', fontSize: '0.9rem', width: '100%' }}
-                />
-              </div>
-            </div>
-          )}
-
-          {!featureLocked && (
-            <>
-              <button
-                onClick={() => generate()}
-                disabled={loading || balance < cost || !canGenerate}
-                className={`btn btn-primary${loading ? ' btn-loading' : ''}`}
-                style={{ width: '100%' }}
-              >
-                {loading
-                  ? t('generating')
-                  : balance < cost
-                  ? t('insufficientCredits', { balance, cost })
-                  : t('generate', { cost })}
-              </button>
-              {/* Retour testeur : le bouton affichait "Renseignez le prénom et
-                  la date de naissance" à la PLACE de "Générer" tant que les
-                  champs n'étaient pas remplis — contrairement aux autres
-                  lectures, cette lecture-ci ne montrait donc jamais le mot
-                  "Générer", ce qui a fait croire qu'il manquait un bouton.
-                  Le bouton garde maintenant son texte habituel (grisé), et
-                  l'explication passe en dessous. */}
-              {!loading && balance >= cost && !canGenerate && (
-                <p style={{ fontSize: '0.82rem', color: 'var(--sourdine)', marginTop: 8 }}>
-                  {t('fillNameAndDate')}
-                </p>
-              )}
-            </>
-          )}
-          {error && (
-            <p style={{ fontSize: '0.84rem', color: 'var(--lever-profond)', marginTop: 10 }}>
-              {error} {(error.toLowerCase().includes('crédit') || error.toLowerCase().includes('credit') || error.toLowerCase().includes('abonnement') || error.toLowerCase().includes('subscription')) && <Link href="/tarifs" style={{ textDecoration: 'underline' }}>{t('viewPackages')}</Link>}
-            </p>
-          )}
         </div>
 
         <div>
@@ -431,6 +424,82 @@ export default function Dashboard({
           {resultCards}
         </div>
       </div>
+
+      {showCompatModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setShowCompatModal(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.55)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px 16px',
+            overflowY: 'auto',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="card"
+            style={{ position: 'relative', width: '100%', maxWidth: 420, padding: '26px 24px' }}
+          >
+            <button
+              onClick={() => setShowCompatModal(false)}
+              aria-label={t('closePopup')}
+              className="btn btn-ghost"
+              style={{ position: 'absolute', top: -14, right: -14, width: 36, height: 36, padding: 0, borderRadius: '50%' }}
+            >
+              ✕
+            </button>
+
+            <div className="field-label" style={{ marginBottom: -4 }}>{t('compareYourSignTo')}</div>
+            <p style={{ fontSize: '0.8rem', color: 'var(--sourdine)', margin: '8px 0 16px' }}>{t('compareYourSignToHelp')}</p>
+
+            <div style={{ marginBottom: 12 }}>
+              <label htmlFor="autre-prenom" style={{ fontSize: '0.76rem', color: 'var(--sourdine)', display: 'block', marginBottom: 4 }}>{t('firstName')}</label>
+              <input
+                id="autre-prenom"
+                type="text"
+                value={autrePrenom}
+                onChange={(e) => setAutrePrenom(e.target.value)}
+                placeholder={t('firstNamePlaceholder')}
+                style={{ padding: '10px 12px', borderRadius: 10, border: '1px solid var(--trait)', background: 'var(--nacre)', color: 'var(--encre)', fontSize: '0.9rem', width: '100%' }}
+              />
+            </div>
+            <div style={{ marginBottom: 18 }}>
+              <label htmlFor="autre-date" style={{ fontSize: '0.76rem', color: 'var(--sourdine)', display: 'block', marginBottom: 4 }}>{t('birthDate')}</label>
+              <input
+                id="autre-date"
+                type="date"
+                value={autreDateNaissance}
+                onChange={(e) => setAutreDateNaissance(e.target.value)}
+                max={new Date().toISOString().slice(0, 10)}
+                style={{ padding: '10px 12px', borderRadius: 10, border: '1px solid var(--trait)', background: 'var(--nacre)', color: 'var(--encre)', fontSize: '0.9rem', width: '100%' }}
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => void generate('compatibilite_amoureuse')}
+              disabled={loadingFeature === 'compatibilite_amoureuse' || !canGenerateCompat || balance < compatCost}
+              className={`btn btn-primary${loadingFeature === 'compatibilite_amoureuse' ? ' btn-loading' : ''}`}
+              style={{ width: '100%' }}
+            >
+              {loadingFeature === 'compatibilite_amoureuse'
+                ? t('generating')
+                : balance < compatCost
+                ? t('insufficientCredits', { balance, cost: compatCost })
+                : !canGenerateCompat
+                ? t('fillNameAndDate')
+                : t('generate', { cost: compatCost })}
+            </button>
+          </div>
+        </div>
+      )}
 
       {showPopup && hasResult && (
         <div

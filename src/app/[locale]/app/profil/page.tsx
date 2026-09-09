@@ -4,6 +4,8 @@ import { auth } from '@/lib/auth';
 import { getProfile, saveProfile } from '@/lib/profile';
 import { dbConfigured } from '@/lib/db';
 import { validatePassword, setUserPassword, userHasPassword } from '@/lib/password';
+import { lienParrainage, CREDITS_PARRAIN, CREDITS_FILLEUL } from '@/lib/referral';
+import ShareButton from '@/components/ShareButton';
 
 const inputStyle: React.CSSProperties = {
   padding: '11px 14px',
@@ -274,6 +276,24 @@ export default async function ProfilPage({ searchParams }: { searchParams: Promi
                 {hasPassword ? t('updatePassword') : t('createPasswordBtn')}
               </button>
             </form>
+          </div>
+        )}
+
+        {!mandatory && dbConfigured && (
+          <div className="card" style={{ padding: '26px 24px', marginTop: 28 }}>
+            <div className="pill" style={{ marginBottom: 14 }}>{t('referralPill')}</div>
+            <h2 style={{ fontSize: '1.1rem', marginBottom: 8 }}>{t('referralTitle')}</h2>
+            <p style={{ color: 'var(--ombre)', fontSize: '0.86rem', marginBottom: 4 }}>
+              {t('referralText', { creditsParrain: CREDITS_PARRAIN, creditsFilleul: CREDITS_FILLEUL })}
+            </p>
+            <ShareButton
+              shareText={t('referralShareText')}
+              shareUrl={lienParrainage(userId)}
+              title={t('referralBannerTitle')}
+              subtitle={t('referralBannerSubtitle')}
+              label={t('referralButton')}
+              copiedLabel={t('referralCopied')}
+            />
           </div>
         )}
       </div>

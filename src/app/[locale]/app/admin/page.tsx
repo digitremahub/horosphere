@@ -154,6 +154,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           <h2 style={{ fontSize: '1rem', marginBottom: 4 }}>Actions rapides</h2>
           <p style={{ fontSize: '0.82rem', color: 'var(--sourdine)', marginBottom: 14 }}>
             La gestion fine d'un abonnement (annulation, remboursement ponctuel, moyen de paiement) reste dans le Dashboard Stripe — le lien direct vers le bon client est dans le tableau ci-dessous.
+            <strong> Pour offrir des crédits à un utilisateur, ce n'est pas sur Stripe : utilisez le formulaire « 🎁 Offrir des crédits » de sa ligne, dans le tableau plus bas.</strong>
           </p>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <a href="https://dashboard.stripe.com/customers" target="_blank" rel="noopener noreferrer" className="btn btn-ghost" style={{ fontSize: '0.82rem' }}>
