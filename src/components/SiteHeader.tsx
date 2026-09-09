@@ -1,6 +1,7 @@
 import { getLocale, getTranslations } from 'next-intl/server';
 import { auth, signOut } from '@/lib/auth';
 import { Link, getPathname } from '@/i18n/navigation';
+import { isAdminEmail } from '@/lib/adminAuth';
 import Logo from './Logo';
 import MoonPhase from './MoonPhase';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -34,6 +35,13 @@ export default async function SiteHeader() {
                 <Link href="/app/calendrier-de-lavent" aria-label={tAdvent('title')} title={tAdvent('title')} style={{ textDecoration: 'none', color: 'var(--ombre)' }}>🎄</Link>
               )}
               <Link href="/app/profil" style={{ textDecoration: 'none', color: 'var(--ombre)' }}>{t('profile')}</Link>
+              {isAdminEmail((session.user as { email?: string | null }).email) && (
+                // Page volontairement non traduite (outil interne) — voir
+                // app/admin/page.tsx. Le lien reste donc en dur lui aussi,
+                // plutôt que d'alourdir Nav.* dans les 3 langues du site
+                // pour un mot visible seulement par 2 comptes.
+                <Link href="/app/admin" style={{ textDecoration: 'none', color: 'var(--ombre)' }}>Admin</Link>
+              )}
               <form
                 action={async () => {
                   'use server';

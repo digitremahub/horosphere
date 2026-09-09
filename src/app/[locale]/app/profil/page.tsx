@@ -240,7 +240,7 @@ export default async function ProfilPage({ searchParams }: { searchParams: Promi
           </button>
         </form>
 
-        {!mandatory && dbConfigured && (
+        {dbConfigured && (
           <div className="card" style={{ padding: '26px 24px' }}>
             <div className="pill" style={{ marginBottom: 14 }}>{t('securityPill')}</div>
             <h2 style={{ fontSize: '1.1rem', marginBottom: 8 }}>
