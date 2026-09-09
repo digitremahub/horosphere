@@ -308,6 +308,7 @@ export default function Dashboard({
           {needsAutrePersonne && !featureLocked && (
             <div className="card" style={{ padding: '14px 16px', marginBottom: 24, boxShadow: 'none', display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div className="field-label" style={{ marginBottom: -4 }}>{t('compareYourSignTo')}</div>
+              <p style={{ fontSize: '0.8rem', color: 'var(--sourdine)', margin: 0 }}>{t('compareYourSignToHelp')}</p>
               <div>
                 <label htmlFor="autre-prenom" style={{ fontSize: '0.76rem', color: 'var(--sourdine)', display: 'block', marginBottom: 4 }}>{t('firstName')}</label>
                 <input
@@ -334,20 +335,32 @@ export default function Dashboard({
           )}
 
           {!featureLocked && (
-            <button
-              onClick={() => generate()}
-              disabled={loading || balance < cost || !canGenerate}
-              className={`btn btn-primary${loading ? ' btn-loading' : ''}`}
-              style={{ width: '100%' }}
-            >
-              {loading
-                ? t('generating')
-                : balance < cost
-                ? t('insufficientCredits', { balance, cost })
-                : !canGenerate
-                ? t('fillNameAndDate')
-                : t('generate', { cost })}
-            </button>
+            <>
+              <button
+                onClick={() => generate()}
+                disabled={loading || balance < cost || !canGenerate}
+                className={`btn btn-primary${loading ? ' btn-loading' : ''}`}
+                style={{ width: '100%' }}
+              >
+                {loading
+                  ? t('generating')
+                  : balance < cost
+                  ? t('insufficientCredits', { balance, cost })
+                  : t('generate', { cost })}
+              </button>
+              {/* Retour testeur : le bouton affichait "Renseignez le prénom et
+                  la date de naissance" à la PLACE de "Générer" tant que les
+                  champs n'étaient pas remplis — contrairement aux autres
+                  lectures, cette lecture-ci ne montrait donc jamais le mot
+                  "Générer", ce qui a fait croire qu'il manquait un bouton.
+                  Le bouton garde maintenant son texte habituel (grisé), et
+                  l'explication passe en dessous. */}
+              {!loading && balance >= cost && !canGenerate && (
+                <p style={{ fontSize: '0.82rem', color: 'var(--sourdine)', marginTop: 8 }}>
+                  {t('fillNameAndDate')}
+                </p>
+              )}
+            </>
           )}
           {error && (
             <p style={{ fontSize: '0.84rem', color: 'var(--lever-profond)', marginTop: 10 }}>

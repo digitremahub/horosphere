@@ -230,6 +230,7 @@
     "lockedTitle": "Esta lectura está reservada a los suscriptores — los créditos solos no bastan aquí.",
     "viewSubscriptions": "Ver las suscripciones",
     "compareYourSignTo": "Comparar tu signo con",
+    "compareYourSignToHelp": "Indica el nombre y la fecha de nacimiento de esa persona — su signo se calcula automáticamente, no hace falta nada más.",
     "firstName": "Nombre",
     "firstNamePlaceholder": "Ej. Camille",
     "birthDate": "Fecha de nacimiento",
