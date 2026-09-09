@@ -8,6 +8,7 @@ import { sql } from './db';
 import { grantCredits } from './credits';
 import { creditsBienvenue } from './promotions';
 import { finaliserParrainageSiPresent } from './referral';
+import { envoyerLienMagique } from './authEmail';
 
 declare global {
   // eslint-disable-next-line no-var
@@ -41,6 +42,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Resend({
       from: process.env.EMAIL_FROM || 'Horosphère <onboarding@resend.dev>',
       apiKey: process.env.AUTH_RESEND_KEY || process.env.RESEND_API_KEY,
+      // Le gabarit par défaut d'Auth.js est entièrement en anglais
+      // ("Sign in to horosphere.fr") quelle que soit la langue du site —
+      // voir authEmail.ts pour l'envoi direct dans la langue de la demande.
+      sendVerificationRequest: envoyerLienMagique,
     }),
     Credentials({
       id: 'password',
