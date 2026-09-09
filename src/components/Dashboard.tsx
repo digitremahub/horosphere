@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { FEATURE_COSTS, FEATURE_LABELS, FEATURE_CATEGORIES, FeatureCategory, FeatureKey } from '@/lib/pricing';
@@ -58,7 +58,7 @@ export default function Dashboard({
   const [autreDateNaissance, setAutreDateNaissance] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const resultRef = useRef<HTMLDivElement>(null);
+  const [showPopup, setShowPopup] = useState(false);
   const locale = useLocale();
   const t = useTranslations('Dashboard');
   const tp = useTranslations('Pricing');
@@ -109,9 +109,9 @@ export default function Dashboard({
       // Retour testeur (09/09) : le résultat apparaît dans la colonne de
       // droite, hors champ sur mobile — sans indice qu'il est arrivé, on
       // clique une seconde fois sur "Générer" en pensant que rien ne s'est
-      // passé (et on paie deux fois). On laisse le nouvel état se rendre
-      // avant de faire défiler jusqu'au résultat.
-      requestAnimationFrame(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+      // passé (et on paie deux fois). Affiché d'abord dans une mini popup,
+      // impossible à manquer quelle que soit la position de défilement.
+      setShowPopup(true);
     } catch {
       setError(t('networkError'));
     } finally {
@@ -120,6 +120,28 @@ export default function Dashboard({
   }
 
   const hasResult = reading || chart || sentiment || compat || grandeAnalyse || thematic || lunar || transits;
+
+  useEffect(() => {
+    if (!showPopup) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowPopup(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [showPopup]);
+
+  const resultCards = (
+    <>
+      {reading && signInfo && <ReadingCard reading={reading} signInfo={signInfo} />}
+      {chart && signInfo && <AstralChartCard chart={chart} signInfo={signInfo} />}
+      {sentiment && signInfo && <SentimentCard reading={sentiment} signInfo={signInfo} />}
+      {compat && signInfo && <CompatibilityCard reading={compat} signInfo={signInfo} autreSigne={compat.autreSigne} moiPrenom={compat.moiPrenom} />}
+      {grandeAnalyse && signInfo && <GrandeAnalyseCard reading={grandeAnalyse} signInfo={signInfo} />}
+      {thematic && signInfo && isThemeKey(feature) && <ThematicCard reading={thematic} signInfo={signInfo} featureNom={tp(`features.${feature}.nom`)} />}
+      {lunar && signInfo && <LunarCycleCard reading={lunar} signInfo={signInfo} />}
+      {transits && signInfo && <TransitsCard reading={transits} signInfo={signInfo} />}
+    </>
+  );
 
   return (
     <div>
@@ -317,7 +339,7 @@ export default function Dashboard({
           )}
         </div>
 
-        <div ref={resultRef}>
+        <div>
           {!hasResult && (
             <div className="card" style={{ padding: '40px 26px', textAlign: 'center', color: 'var(--sourdine)' }}>
               <EmptyStateIllustration size={72} />
@@ -325,16 +347,43 @@ export default function Dashboard({
             </div>
           )}
 
-          {reading && signInfo && <ReadingCard reading={reading} signInfo={signInfo} />}
-          {chart && signInfo && <AstralChartCard chart={chart} signInfo={signInfo} />}
-          {sentiment && signInfo && <SentimentCard reading={sentiment} signInfo={signInfo} />}
-          {compat && signInfo && <CompatibilityCard reading={compat} signInfo={signInfo} autreSigne={compat.autreSigne} moiPrenom={compat.moiPrenom} />}
-          {grandeAnalyse && signInfo && <GrandeAnalyseCard reading={grandeAnalyse} signInfo={signInfo} />}
-          {thematic && signInfo && isThemeKey(feature) && <ThematicCard reading={thematic} signInfo={signInfo} featureNom={tp(`features.${feature}.nom`)} />}
-          {lunar && signInfo && <LunarCycleCard reading={lunar} signInfo={signInfo} />}
-          {transits && signInfo && <TransitsCard reading={transits} signInfo={signInfo} />}
+          {resultCards}
         </div>
       </div>
+
+      {showPopup && hasResult && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setShowPopup(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.55)',
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'center',
+            padding: '40px 16px',
+            overflowY: 'auto',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ position: 'relative', width: '100%', maxWidth: 560, marginTop: 20 }}
+          >
+            <button
+              onClick={() => setShowPopup(false)}
+              aria-label={t('closePopup')}
+              className="btn btn-ghost"
+              style={{ position: 'absolute', top: -14, right: -14, width: 36, height: 36, padding: 0, borderRadius: '50%', zIndex: 1 }}
+            >
+              ✕
+            </button>
+            {resultCards}
+          </div>
+        </div>
+      )}
 
       <style>{`
         .dash-grid > *{ min-width: 0; }

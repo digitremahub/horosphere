@@ -14,7 +14,7 @@ import {
   generateTransits,
   type Langue,
 } from '@/lib/anthropic';
-import { consumeCredits, getBalance, hasActiveSubscription, InsufficientCreditsError } from '@/lib/credits';
+import { consumeCredits, getBalance, hasActiveSubscription, hasGeneratedToday, InsufficientCreditsError } from '@/lib/credits';
 import { getProfile } from '@/lib/profile';
 import { FEATURE_COSTS, FEATURE_LABELS, FeatureKey } from '@/lib/pricing';
 import { THEMES, type ThemeKey } from '@/lib/themes';
@@ -83,6 +83,21 @@ export async function POST(req: NextRequest) {
   }
 
   const uid = Number(userId);
+
+  // Retour utilisateur (09/09) : 1 génération par lecture et par jour —
+  // évite les doubles clics/paiements et les régénérations redondantes
+  // (le contenu ne change de toute façon presque pas dans la journée).
+  try {
+    if (await hasGeneratedToday(uid, feature)) {
+      return NextResponse.json(
+        { error: t('alreadyGeneratedToday'), code: 'ALREADY_GENERATED_TODAY' },
+        { status: 429 }
+      );
+    }
+  } catch (err) {
+    console.error('hasGeneratedToday failed', err);
+    return NextResponse.json({ error: t('checkFailed') }, { status: 500 });
+  }
 
   // Certaines lectures (voir pricing.ts, subscriptionOnly) ne sont pas
   // ouvertes au paiement à la carte : il faut un abonnement actif, quel

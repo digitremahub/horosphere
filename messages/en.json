@@ -94,6 +94,8 @@
     "unknownFeature": "Unknown feature.",
     "comingSoon": "This feature is coming soon.",
     "missingOtherPerson": "Enter the first name and date of birth of the person to compare.",
+    "alreadyGeneratedToday": "You've already generated this reading today — come back tomorrow for a new one.",
+    "checkFailed": "A check failed, please try again in a moment.",
     "subscriptionCheckFailed": "Couldn't verify your subscription right now.",
     "subscriptionRequired": "This reading requires an active subscription.",
     "profileLoadFailed": "Couldn't load your profile.",
@@ -238,6 +240,7 @@
     "networkError": "Network error, try again.",
     "viewPackages": "View packages",
     "chooseReadingPlaceholder": "Choose a reading, your horoscope will appear here.",
+    "closePopup": "Close",
     "locked": "🔒 Subscription required",
     "descriptionComingSoon": "{description} — coming soon"
   },

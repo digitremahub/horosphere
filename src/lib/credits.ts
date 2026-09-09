@@ -24,6 +24,22 @@ export async function hasActiveSubscription(userId: number): Promise<boolean> {
   return rows.length > 0;
 }
 
+/** Une seule génération par lecture et par jour civil (retour utilisateur
+ * 09/09) — évite à la fois les doubles clics/paiements et les
+ * régénérations redondantes d'un contenu qui ne change de toute façon
+ * quasiment pas dans la même journée (données astrologiques du jour). */
+export async function hasGeneratedToday(userId: number, feature: FeatureKey): Promise<boolean> {
+  const sql = requireDb();
+  const rows = await sql<{ id: string }[]>`
+    SELECT id FROM credit_usage
+    WHERE user_id = ${userId}
+      AND feature = ${feature}
+      AND created_at >= date_trunc('day', now())
+    LIMIT 1
+  `;
+  return rows.length > 0;
+}
+
 export async function getBalance(userId: number): Promise<number> {
   const sql = requireDb();
   const rows = await sql<{ total: string | null }[]>`

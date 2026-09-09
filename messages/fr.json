@@ -94,6 +94,8 @@
     "unknownFeature": "Fonctionnalité inconnue.",
     "comingSoon": "Cette fonctionnalité arrive bientôt.",
     "missingOtherPerson": "Indique le prénom et la date de naissance de la personne à comparer.",
+    "alreadyGeneratedToday": "Tu as déjà généré cette lecture aujourd'hui — reviens demain pour une nouvelle version.",
+    "checkFailed": "Une vérification a échoué, réessaie dans un instant.",
     "subscriptionCheckFailed": "Impossible de vérifier votre abonnement pour le moment.",
     "subscriptionRequired": "Cette lecture nécessite un abonnement actif.",
     "profileLoadFailed": "Impossible de charger votre profil.",
@@ -238,6 +240,7 @@
     "networkError": "Erreur réseau, réessaie.",
     "viewPackages": "Voir les forfaits",
     "chooseReadingPlaceholder": "Choisissez une lecture, votre horoscope apparaîtra ici.",
+    "closePopup": "Fermer",
     "locked": "🔒 Forfait requis",
     "descriptionComingSoon": "{description} — bientôt disponible"
   },
