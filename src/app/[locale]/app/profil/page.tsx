@@ -15,7 +15,7 @@ const inputStyle: React.CSSProperties = {
   width: '100%',
 };
 
-export default async function ProfilPage({ searchParams }: { searchParams: Promise<{ mdp?: string }> }) {
+export default async function ProfilPage({ searchParams }: { searchParams: Promise<{ mdp?: string; naissance?: string }> }) {
   const session = await auth();
   const locale = await getLocale();
   const t = await getTranslations('Profil');
@@ -23,7 +23,7 @@ export default async function ProfilPage({ searchParams }: { searchParams: Promi
     redirect({ href: '/connexion', locale });
   }
 
-  const { mdp } = await searchParams;
+  const { mdp, naissance } = await searchParams;
   const userId = Number((session!.user as { id?: string }).id);
   let profile: Awaited<ReturnType<typeof getProfile>> = null;
   let error: string | null = null;
@@ -63,6 +63,15 @@ export default async function ProfilPage({ searchParams }: { searchParams: Promi
 
     if (!prenom || !nom || !dateNaissance || !lieuNaissance) {
       redirect({ href: '/app/profil', locale });
+    }
+
+    // Retour testeur (09/09) : une date de naissance dans le futur passait
+    // sans contrôle. L'attribut `max` sur le champ bloque déjà les
+    // navigateurs qui le respectent, mais un formulaire peut toujours être
+    // soumis directement (devtools, requête manuelle) — la vraie garantie
+    // doit être ici, côté serveur.
+    if (dateNaissance > new Date().toISOString().slice(0, 10)) {
+      redirect({ href: { pathname: '/app/profil', query: { naissance: 'futur' } }, locale });
     }
 
     await saveProfile(uid, {
@@ -146,9 +155,15 @@ export default async function ProfilPage({ searchParams }: { searchParams: Promi
               name="date_naissance"
               type="date"
               required
+              max={new Date().toISOString().slice(0, 10)}
               defaultValue={profile?.date_naissance ?? ''}
               style={inputStyle}
             />
+            {naissance === 'futur' && (
+              <p style={{ fontSize: '0.82rem', color: 'var(--lever-profond)', marginTop: 6 }}>
+                {t('futureDateError')}
+              </p>
+            )}
           </div>
 
           <div style={{ display: 'flex', gap: 10 }}>

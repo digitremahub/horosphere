@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { FEATURE_COSTS, FEATURE_LABELS, FEATURE_CATEGORIES, FeatureCategory, FeatureKey } from '@/lib/pricing';
@@ -58,6 +58,7 @@ export default function Dashboard({
   const [autreDateNaissance, setAutreDateNaissance] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
   const locale = useLocale();
   const t = useTranslations('Dashboard');
   const tp = useTranslations('Pricing');
@@ -68,6 +69,11 @@ export default function Dashboard({
   const featureLocked = Boolean(FEATURE_LABELS[feature].subscriptionOnly) && !hasSubscription;
 
   async function generate() {
+    // Retour testeur (09/09) : un double-clic (notamment sur mobile, où le
+    // bouton peut recevoir un deuxième tap avant que React n'applique
+    // `disabled`) a déjà fait payer deux fois la même lecture — le bouton
+    // seul ne suffit pas comme garde-fou, on bloque aussi ici.
+    if (loading) return;
     setLoading(true);
     setError(null);
     try {
@@ -100,6 +106,12 @@ export default function Dashboard({
       else setReading(data.reading);
       setSignInfo(data.sign);
       setBalance(data.balance);
+      // Retour testeur (09/09) : le résultat apparaît dans la colonne de
+      // droite, hors champ sur mobile — sans indice qu'il est arrivé, on
+      // clique une seconde fois sur "Générer" en pensant que rien ne s'est
+      // passé (et on paie deux fois). On laisse le nouvel état se rendre
+      // avant de faire défiler jusqu'au résultat.
+      requestAnimationFrame(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
     } catch {
       setError(t('networkError'));
     } finally {
@@ -275,6 +287,7 @@ export default function Dashboard({
                   type="date"
                   value={autreDateNaissance}
                   onChange={(e) => setAutreDateNaissance(e.target.value)}
+                  max={new Date().toISOString().slice(0, 10)}
                   style={{ padding: '10px 12px', borderRadius: 10, border: '1px solid var(--trait)', background: 'var(--nacre)', color: 'var(--encre)', fontSize: '0.9rem', width: '100%' }}
                 />
               </div>
@@ -304,7 +317,7 @@ export default function Dashboard({
           )}
         </div>
 
-        <div>
+        <div ref={resultRef}>
           {!hasResult && (
             <div className="card" style={{ padding: '40px 26px', textAlign: 'center', color: 'var(--sourdine)' }}>
               <EmptyStateIllustration size={72} />

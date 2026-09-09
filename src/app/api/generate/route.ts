@@ -73,6 +73,12 @@ export async function POST(req: NextRequest) {
     if (!autrePrenom || !match) {
       return NextResponse.json({ error: t('missingOtherPerson') }, { status: 400 });
     }
+    // Même contrôle que le profil (retour testeur 09/09, date de naissance
+    // acceptée dans le futur) — le champ a un `max` côté client, mais reste
+    // contournable, donc revalidé ici.
+    if (autreDate > new Date().toISOString().slice(0, 10)) {
+      return NextResponse.json({ error: t('missingOtherPerson') }, { status: 400 });
+    }
     autreSign = signFromBirthdate(Number(match[2]), Number(match[3]));
   }
 

@@ -129,6 +129,7 @@
     "firstName": "First name",
     "lastName": "Last name",
     "birthDate": "Date of birth",
+    "futureDateError": "The date of birth cannot be in the future.",
     "birthTime": "Time of birth (optional)",
     "birthPlace": "Place of birth",
     "birthPlacePlaceholder": "City, country",

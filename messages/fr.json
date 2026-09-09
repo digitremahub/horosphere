@@ -129,6 +129,7 @@
     "firstName": "Prénom",
     "lastName": "Nom",
     "birthDate": "Date de naissance",
+    "futureDateError": "La date de naissance ne peut pas être dans le futur.",
     "birthTime": "Heure de naissance (optionnel)",
     "birthPlace": "Lieu de naissance",
     "birthPlacePlaceholder": "Ville, pays",
