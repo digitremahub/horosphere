@@ -94,7 +94,7 @@
     "unknownFeature": "Fonctionnalité inconnue.",
     "comingSoon": "Cette fonctionnalité arrive bientôt.",
     "missingOtherPerson": "Indique le prénom et la date de naissance de la personne à comparer.",
-    "alreadyGeneratedToday": "Tu as déjà généré cette lecture aujourd'hui — reviens demain pour une nouvelle version.",
+    "alreadyGeneratedToday": "Cette lecture a déjà été générée aujourd'hui — voulez-vous vraiment la refaire ? Cela consommera de nouveaux crédits, pour un contenu qui a peu de chances d'avoir changé d'ici demain.",
     "checkFailed": "Une vérification a échoué, réessaie dans un instant.",
     "subscriptionCheckFailed": "Impossible de vérifier votre abonnement pour le moment.",
     "subscriptionRequired": "Cette lecture nécessite un abonnement actif.",

@@ -84,19 +84,24 @@ export async function POST(req: NextRequest) {
 
   const uid = Number(userId);
 
-  // Retour utilisateur (09/09) : 1 génération par lecture et par jour —
-  // évite les doubles clics/paiements et les régénérations redondantes
-  // (le contenu ne change de toute façon presque pas dans la journée).
-  try {
-    if (await hasGeneratedToday(uid, feature)) {
-      return NextResponse.json(
-        { error: t('alreadyGeneratedToday'), code: 'ALREADY_GENERATED_TODAY' },
-        { status: 429 }
-      );
+  // Retour utilisateur : bloquer une régénération le même jour évitait le
+  // double paiement accidentel, mais risquait de frustrer quelqu'un qui
+  // veut vraiment refaire une lecture — remplacé par une confirmation
+  // explicite (`confirmerRegeneration`, envoyé par le client seulement
+  // après que la personne a confirmé le dialogue) plutôt qu'un blocage sec.
+  const confirmerRegeneration = body.confirmerRegeneration === true;
+  if (!confirmerRegeneration) {
+    try {
+      if (await hasGeneratedToday(uid, feature)) {
+        return NextResponse.json(
+          { error: t('alreadyGeneratedToday'), code: 'ALREADY_GENERATED_TODAY' },
+          { status: 409 }
+        );
+      }
+    } catch (err) {
+      console.error('hasGeneratedToday failed', err);
+      return NextResponse.json({ error: t('checkFailed') }, { status: 500 });
     }
-  } catch (err) {
-    console.error('hasGeneratedToday failed', err);
-    return NextResponse.json({ error: t('checkFailed') }, { status: 500 });
   }
 
   // Certaines lectures (voir pricing.ts, subscriptionOnly) ne sont pas

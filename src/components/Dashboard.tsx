@@ -68,22 +68,39 @@ export default function Dashboard({
   const canGenerate = !needsAutrePersonne || (Boolean(autrePrenom.trim()) && Boolean(autreDateNaissance));
   const featureLocked = Boolean(FEATURE_LABELS[feature].subscriptionOnly) && !hasSubscription;
 
-  async function generate() {
+  async function generate(confirmerRegeneration = false) {
     // Retour testeur (09/09) : un double-clic (notamment sur mobile, où le
     // bouton peut recevoir un deuxième tap avant que React n'applique
     // `disabled`) a déjà fait payer deux fois la même lecture — le bouton
-    // seul ne suffit pas comme garde-fou, on bloque aussi ici.
-    if (loading) return;
+    // seul ne suffit pas comme garde-fou, on bloque aussi ici. L'appel de
+    // reconfirmation (voir plus bas) passe outre volontairement : il
+    // survient alors que `loading` est déjà à true depuis le premier appel.
+    if (!confirmerRegeneration && loading) return;
     setLoading(true);
     setError(null);
     try {
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(needsAutrePersonne ? { feature, autrePrenom, autreDateNaissance, locale } : { feature, locale }),
+        body: JSON.stringify(
+          needsAutrePersonne
+            ? { feature, autrePrenom, autreDateNaissance, locale, confirmerRegeneration }
+            : { feature, locale, confirmerRegeneration }
+        ),
       });
       const data = await res.json();
       if (!res.ok) {
+        // Lecture déjà générée aujourd'hui : plutôt qu'un blocage sec, on
+        // demande confirmation avant de vraiment consommer des crédits une
+        // deuxième fois pour un contenu qui a peu de chances d'avoir changé.
+        if (data.code === 'ALREADY_GENERATED_TODAY' && !confirmerRegeneration) {
+          if (window.confirm(data.error)) {
+            await generate(true);
+          } else {
+            setLoading(false);
+          }
+          return;
+        }
         setError(data.error || t('genericError'));
         setLoading(false);
         return;
@@ -318,7 +335,7 @@ export default function Dashboard({
 
           {!featureLocked && (
             <button
-              onClick={generate}
+              onClick={() => generate()}
               disabled={loading || balance < cost || !canGenerate}
               className={`btn btn-primary${loading ? ' btn-loading' : ''}`}
               style={{ width: '100%' }}

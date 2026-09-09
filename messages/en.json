@@ -94,7 +94,7 @@
     "unknownFeature": "Unknown feature.",
     "comingSoon": "This feature is coming soon.",
     "missingOtherPerson": "Enter the first name and date of birth of the person to compare.",
-    "alreadyGeneratedToday": "You've already generated this reading today — come back tomorrow for a new one.",
+    "alreadyGeneratedToday": "This reading was already generated today — do you really want to redo it? It will use more credits, for content that's unlikely to have changed before tomorrow.",
     "checkFailed": "A check failed, please try again in a moment.",
     "subscriptionCheckFailed": "Couldn't verify your subscription right now.",
     "subscriptionRequired": "This reading requires an active subscription.",
