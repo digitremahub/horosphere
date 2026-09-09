@@ -244,6 +244,7 @@
     "birthDate": "Fecha de nacimiento",
     "generating": "Lectura en curso…",
     "insufficientCredits": "Créditos insuficientes ({balance}/{cost})",
+    "insufficientCreditsShort": "🛒 Comprar créditos",
     "fillNameAndDate": "Indica el nombre y la fecha de nacimiento",
     "generate": "Generar ({cost, plural, one {# crédito} other {# créditos}})",
     "genericError": "Ha ocurrido un error.",

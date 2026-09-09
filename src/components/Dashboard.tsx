@@ -335,6 +335,19 @@ export default function Dashboard({
                         <span className="mono" style={{ fontSize: '0.82rem', color: 'var(--lever-profond)', whiteSpace: 'nowrap' }}>
                           {FEATURE_COSTS[key]} {tp('creditUnit')}
                         </span>
+                      ) : insuffisant ? (
+                        // Retour utilisateur : un bouton grisé et inerte n'aide
+                        // personne — quand le solde ne suffit pas, on mène
+                        // directement vers la page d'achat plutôt que de
+                        // bloquer sans rien proposer.
+                        <Link
+                          href="/tarifs"
+                          onClick={(e) => e.stopPropagation()}
+                          className="btn btn-ghost"
+                          style={{ padding: '6px 14px', fontSize: '0.76rem', whiteSpace: 'nowrap' }}
+                        >
+                          {t('insufficientCreditsShort')}
+                        </Link>
                       ) : (
                         <button
                           type="button"
@@ -347,20 +360,18 @@ export default function Dashboard({
                               void generate(key);
                             }
                           }}
-                          disabled={enCours || insuffisant}
+                          disabled={enCours}
                           className="btn btn-ghost"
                           style={{
                             padding: '6px 14px',
                             fontSize: '0.76rem',
                             whiteSpace: 'nowrap',
-                            opacity: dejaFaitAujourdhui && !insuffisant ? 0.6 : 1,
-                            cursor: enCours || insuffisant ? 'not-allowed' : 'pointer',
+                            opacity: dejaFaitAujourdhui ? 0.6 : 1,
+                            cursor: enCours ? 'not-allowed' : 'pointer',
                           }}
                         >
                           {enCours
                             ? t('generating')
-                            : insuffisant
-                            ? t('insufficientCredits', { balance, cost: FEATURE_COSTS[key] })
                             : dejaFaitAujourdhui
                             ? t('generatedTodayBadge')
                             : t('generateRowButton', { cost: FEATURE_COSTS[key] })}
@@ -482,21 +493,25 @@ export default function Dashboard({
               />
             </div>
 
-            <button
-              type="button"
-              onClick={() => void generate('compatibilite_amoureuse')}
-              disabled={loadingFeature === 'compatibilite_amoureuse' || !canGenerateCompat || balance < compatCost}
-              className={`btn btn-primary${loadingFeature === 'compatibilite_amoureuse' ? ' btn-loading' : ''}`}
-              style={{ width: '100%' }}
-            >
-              {loadingFeature === 'compatibilite_amoureuse'
-                ? t('generating')
-                : balance < compatCost
-                ? t('insufficientCredits', { balance, cost: compatCost })
-                : !canGenerateCompat
-                ? t('fillNameAndDate')
-                : t('generate', { cost: compatCost })}
-            </button>
+            {balance < compatCost ? (
+              <Link href="/tarifs" className="btn btn-primary" style={{ width: '100%', textAlign: 'center' }}>
+                {t('insufficientCreditsShort')}
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={() => void generate('compatibilite_amoureuse')}
+                disabled={loadingFeature === 'compatibilite_amoureuse' || !canGenerateCompat}
+                className={`btn btn-primary${loadingFeature === 'compatibilite_amoureuse' ? ' btn-loading' : ''}`}
+                style={{ width: '100%' }}
+              >
+                {loadingFeature === 'compatibilite_amoureuse'
+                  ? t('generating')
+                  : !canGenerateCompat
+                  ? t('fillNameAndDate')
+                  : t('generate', { cost: compatCost })}
+              </button>
+            )}
           </div>
         </div>
       )}

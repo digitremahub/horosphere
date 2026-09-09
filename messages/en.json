@@ -244,6 +244,7 @@
     "birthDate": "Date of birth",
     "generating": "Reading in progress…",
     "insufficientCredits": "Not enough credits ({balance}/{cost})",
+    "insufficientCreditsShort": "🛒 Buy credits",
     "fillNameAndDate": "Enter the first name and date of birth",
     "generate": "Generate ({cost, plural, one {# credit} other {# credits}})",
     "genericError": "Something went wrong.",
