@@ -40,13 +40,21 @@
 //    fixes seuls, 1024×1536 soit ~0,67, avaient déjà été publiés avec
 //    succès). Corrigé en gardant la hauteur TOTALE à 1536 (même ratio que
 //    ce qui marche) : l'image est donc affichée en hauteur réduite
-//    (1536 - bandeau), recadrée en 'cover'. Un recadrage ancré en bas
-//    (objectPosition 'bottom', pour préserver le nom du signe et la
-//    marque) coupait trop sur le haut du personnage et déséquilibrait la
-//    composition ("pas centrée", retour utilisateur) — repassé au
-//    recadrage centré par défaut, qui rogne un peu de chaque côté sans
-//    jamais toucher au personnage ni au nom du signe (l'espace vide en
-//    bas de chaque illustration absorbe l'essentiel du recadrage).
+//    (1536 - bandeau), recadrée en 'cover'.
+//    Deux essais de recadrage se sont révélés mauvais, vérifiés
+//    visuellement via /api/admin/preview-base64 (ce sandbox n'a pas
+//    d'accès sortant direct au domaine de production) :
+//    - ancré en bas (objectPosition 'bottom', tout le rognage en haut) :
+//      coupait trop la constellation/le haut du personnage, composition
+//      déséquilibrée ("pas centrée", retour utilisateur).
+//    - centré (rognage égal haut/bas) : coupait la marque "Horosphère"
+//      tout en bas de chaque illustration, qui laisse très peu de
+//      marge — contrairement à l'hypothèse initiale d'un grand espace
+//      vide en bas.
+//    Ces illustrations ont un fond utile qui va presque jusqu'en bas
+//    mais un ciel/constellation sacrifiable en haut : rognage asymétrique
+//    (~85% du recadrage pris en haut, ~15% en bas) via objectPosition en
+//    pourcentage, qui garde le personnage ET la marque intacts.
 // 6) ratio corrigé, le scénario Make est passé au vert (aucune erreur) et
 //    Airtable marqué "Publié" — mais le post n'apparaissait toujours pas
 //    sur Instagram. Cause : `ImageResponse` (Satori/resvg) ne sait
@@ -125,7 +133,10 @@ export async function GET(req: NextRequest) {
           background: COULEURS.fond,
         }}
       >
-        <img src={imageSrc} style={{ width: IMG_WIDTH, height: IMG_HEIGHT, objectFit: 'cover' }} />
+        <img
+          src={imageSrc}
+          style={{ width: IMG_WIDTH, height: IMG_HEIGHT, objectFit: 'cover', objectPosition: '50% 85%' }}
+        />
         <div
           style={{
             width: IMG_WIDTH,
