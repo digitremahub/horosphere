@@ -174,17 +174,21 @@ async function genererPostInstagramSigne(date: Date): Promise<SocialDraft> {
   ].join('\n');
 
   // Illustration EXCLUSIVEMENT tirée des visuels fixes fournis par
-  // l'utilisateur (voir lib/signImages.ts) — composée avec le texte du
-  // jour via /api/og/signe-post (bandeau sous l'image, jamais superposé
-  // sur la scène elle-même, qui porte déjà le nom du signe et la marque).
-  // La génération IA (genererIllustrationTotem) ne sert plus que de filet
-  // de sécurité si un visuel venait à manquer pour un signe.
+  // l'utilisateur (voir lib/signImages.ts) — envoyée TELLE QUELLE, sans
+  // aucune composition ni recadrage. Une version antérieure composait un
+  // bandeau de texte sous l'image via /api/og/signe-post ; abandonné sur
+  // retour explicite de l'utilisateur ("voici la bonne photo non
+  // tronquée"), qui a définitivement tranché : jamais de crop de ces
+  // illustrations, jamais de logique de rendu supplémentaire qui
+  // pourrait la déformer. Aucune perte réelle : le texte du jour
+  // (accroche + conseil) est de toute façon déjà repris intégralement
+  // dans la légende du post ci-dessus. La génération IA
+  // (genererIllustrationTotem) ne sert plus que de filet de sécurité si
+  // un visuel venait à manquer pour un signe.
   let imageUrl: string | null = null;
   const cheminFixe = imageFixeSigne(sign.key);
   if (cheminFixe) {
-    const base = (process.env.NEXT_PUBLIC_SITE_URL || 'https://horosphere.fr').replace(/\/$/, '');
-    const params = new URLSearchParams({ signe: sign.key, headline: reading.headline, conseil: reading.conseil });
-    imageUrl = `${base}/api/og/signe-post?${params.toString()}`;
+    imageUrl = `${siteUrl()}${cheminFixe}`;
   } else {
     try {
       imageUrl = await genererIllustrationTotem(sign.nom, `${dateISO}-ig-${sign.key}`);
