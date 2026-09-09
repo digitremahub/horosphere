@@ -43,8 +43,19 @@
 //    (1536 - bandeau) avec un recadrage depuis le HAUT (objectPosition
 //    'bottom') pour ne jamais rogner le nom du signe ni la marque, déjà
 //    positionnés en bas de chaque illustration.
+// 6) ratio corrigé, le scénario Make est passé au vert (aucune erreur) et
+//    Airtable marqué "Publié" — mais le post n'apparaissait toujours pas
+//    sur Instagram. Cause : `ImageResponse` (Satori/resvg) ne sait
+//    produire QUE du PNG, sans option pour choisir le format — or l'API
+//    Graph exige explicitement du JPEG pour un post photo ("Format: JPEG
+//    only"). Le PNG semble accepté sans erreur à la création du post
+//    (d'où le faux "succès" côté Make), mais le post ne se publie
+//    jamais réellement. Corrigé en reconvertissant le PNG produit par
+//    Satori en JPEG via `sharp` avant de répondre — jamais de blocage
+//    du pipeline de publication.
 import { ImageResponse } from 'next/og';
 import type { NextRequest } from 'next/server';
+import sharp from 'sharp';
 import { imageFixeSigne } from '@/lib/signImages';
 import type { Sign } from '@/lib/zodiac';
 
@@ -99,7 +110,7 @@ export async function GET(req: NextRequest) {
     return new Response("Illustration momentanément indisponible.", { status: 502 });
   }
 
-  return new ImageResponse(
+  const png = new ImageResponse(
     (
       <div
         style={{
@@ -136,4 +147,12 @@ export async function GET(req: NextRequest) {
     ),
     { width: IMG_WIDTH, height: TOTAL_HAUTEUR }
   );
+
+  // Satori/resvg (ImageResponse) ne produit que du PNG — reconverti en
+  // JPEG ici, seul format accepté par l'API de publication Instagram
+  // (voir point 6 en tête de fichier).
+  const jpeg = await sharp(Buffer.from(await png.arrayBuffer())).jpeg({ quality: 90 }).toBuffer();
+  return new Response(new Uint8Array(jpeg), {
+    headers: { 'content-type': 'image/jpeg', 'cache-control': 'public, max-age=0, must-revalidate' },
+  });
 }
