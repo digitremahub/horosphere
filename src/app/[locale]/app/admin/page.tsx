@@ -13,6 +13,8 @@ import { listUsersAdmin, getAdminStats } from '@/lib/admin';
 import { getSiteConfig, setSiteConfig, CLES_VIDEO } from '@/lib/siteConfig';
 import { rembourserAnniversairesDuMois } from '@/lib/birthdayRefund';
 import { grantCredits } from '@/lib/credits';
+import { offrirMoisAbonnement } from '@/lib/adminSubscriptions';
+import { listConfiguredPromotions } from '@/lib/promotions';
 import { SUBSCRIPTIONS, CREDIT_EXPIRY_DAYS } from '@/lib/pricing';
 
 const inputStyle: React.CSSProperties = {
@@ -65,6 +67,20 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     redirect({ href: { pathname: '/app/admin', query: { ok: `credits:${credits}` } }, locale });
   }
 
+  async function offrirAbonnement(formData: FormData) {
+    'use server';
+    const session = await auth();
+    const email = (session?.user as { email?: string | null } | undefined)?.email;
+    if (!isAdminEmail(email)) return;
+    const userId = Number(formData.get('userId'));
+    const mois = Math.trunc(Number(formData.get('mois')));
+    const resultat = await offrirMoisAbonnement(userId, mois);
+    redirect({
+      href: { pathname: '/app/admin', query: { ok: `abo:${resultat.ok ? '1' : '0'}:${encodeURIComponent(resultat.message)}` } },
+      locale,
+    });
+  }
+
   async function lancerRemboursementsAnniversaire() {
     'use server';
     const session = await auth();
@@ -81,6 +97,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   let users: Awaited<ReturnType<typeof listUsersAdmin>> = [];
   let videos: Record<string, string> = {};
   let loadError: string | null = null;
+  const promotions = await listConfiguredPromotions();
 
   if (dbConfigured) {
     try {
@@ -116,6 +133,15 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             {ok.split(':')[1]} crédit(s) offert(s).
           </div>
         )}
+        {ok?.startsWith('abo:') && (() => {
+          const [, succes, ...reste] = ok.split(':');
+          const message = decodeURIComponent(reste.join(':'));
+          return (
+            <div className="card" style={{ padding: '12px 16px', marginBottom: 20, fontSize: '0.84rem', color: 'var(--lever-profond)', borderColor: succes === '1' ? undefined : 'var(--lever)' }}>
+              {message}
+            </div>
+          );
+        })()}
         {ok?.startsWith('remb:') && (() => {
           const [, traites, rembourses, erreurs] = ok.split(':');
           return (
@@ -147,6 +173,34 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                 <div className="mono" style={{ fontSize: '1.5rem', fontWeight: 600 }}>{p.count}</div>
               </div>
             ))}
+          </div>
+        )}
+
+        {promotions.length > 0 && (
+          <div className="card" style={{ padding: '20px 22px', marginBottom: 28 }}>
+            <h2 style={{ fontSize: '1rem', marginBottom: 4 }}>Promotions</h2>
+            <p style={{ fontSize: '0.82rem', color: 'var(--sourdine)', marginBottom: 14 }}>
+              Configurées dans le code (lib/promotions.ts) — une nouvelle promotion s'y ajoute pour apparaître ici, pas encore de création depuis cette page.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {promotions.map((p) => {
+                const couleur = p.statut === 'active' ? 'var(--sauge)' : p.statut === 'a_venir' ? 'var(--ambre)' : 'var(--sourdine)';
+                const statutLabel = p.statut === 'active' ? '● En cours' : p.statut === 'a_venir' ? '○ À venir' : '○ Terminée';
+                return (
+                  <div key={p.nom} style={{ padding: '12px 14px', borderRadius: 10, border: '1px solid var(--trait)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginBottom: 6, flexWrap: 'wrap' }}>
+                      <strong style={{ fontSize: '0.9rem' }}>{p.nom}</strong>
+                      <span className="mono" style={{ fontSize: '0.72rem', color: couleur }}>{statutLabel}</span>
+                    </div>
+                    <p style={{ margin: '0 0 6px', fontSize: '0.82rem', color: 'var(--ombre)' }}>{p.description}</p>
+                    <div className="mono" style={{ fontSize: '0.72rem', color: 'var(--sourdine)' }}>
+                      Du {p.debut.toLocaleDateString('fr-FR')} au {p.fin.toLocaleDateString('fr-FR')}
+                      {p.quotaTotal !== undefined && ` · ${p.quotaRestant}/${p.quotaTotal} places restantes`}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 
@@ -203,7 +257,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                   <th style={{ padding: '8px 10px' }}>Inscrit le</th>
                   <th style={{ padding: '8px 10px' }}>Abonnement</th>
                   <th style={{ padding: '8px 10px' }}>Crédits</th>
-                  <th style={{ padding: '8px 10px' }}>Offrir</th>
+                  <th style={{ padding: '8px 10px' }}>Offrir des crédits</th>
+                  <th style={{ padding: '8px 10px' }}>Offrir des mois</th>
                   <th style={{ padding: '8px 10px' }}>Stripe</th>
                 </tr>
               </thead>
@@ -238,6 +293,26 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                           Offrir
                         </button>
                       </form>
+                    </td>
+                    <td style={{ padding: '8px 10px' }}>
+                      {u.abonnement_plan ? (
+                        <form action={offrirAbonnement} style={{ display: 'flex', gap: 6 }}>
+                          <input type="hidden" name="userId" value={u.user_id} />
+                          <input
+                            type="number"
+                            name="mois"
+                            min={1}
+                            max={12}
+                            placeholder="1"
+                            style={{ ...inputStyle, width: 56, padding: '5px 8px' }}
+                          />
+                          <button type="submit" className="btn btn-ghost" style={{ fontSize: '0.74rem', padding: '5px 10px', whiteSpace: 'nowrap' }}>
+                            🎁 Offrir
+                          </button>
+                        </form>
+                      ) : (
+                        <span style={{ color: 'var(--sourdine)' }}>—</span>
+                      )}
                     </td>
                     <td style={{ padding: '8px 10px' }}>
                       {u.stripe_customer_id ? (

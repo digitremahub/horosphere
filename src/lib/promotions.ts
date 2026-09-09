@@ -34,6 +34,44 @@ export function creditsBienvenue(date: Date = new Date()): { credits: number; ex
   return { credits: WELCOME_CREDITS, expirationJours: CREDIT_EXPIRY_DAYS, source: 'signup:bienvenue' };
 }
 
+export type PromoOverview = {
+  nom: string;
+  description: string;
+  debut: Date;
+  fin: Date;
+  statut: 'a_venir' | 'active' | 'terminee';
+  quotaRestant?: number;
+  quotaTotal?: number;
+};
+
+/** Vue d'ensemble des promotions telles que configurées dans le code (voir
+ * en-tête de ce fichier — pas de table dédiée pour l'instant, une nouvelle
+ * promotion se code ici comme celle de septembre 2026) — sert uniquement au
+ * backoffice, pour que l'équipe garde une vue d'ensemble sans avoir à
+ * relire le code à chaque fois. Ajouter une future promotion à ce tableau
+ * suffit à la faire apparaître dans /app/admin. */
+export async function listConfiguredPromotions(date: Date = new Date()): Promise<PromoOverview[]> {
+  const statutSeptembre: PromoOverview['statut'] = date < PROMO_DEBUT ? 'a_venir' : date < PROMO_FIN ? 'active' : 'terminee';
+  let quotaRestant = PREMIERS_ABONNES_QUOTA;
+  try {
+    quotaRestant = await premiersAbonnesRestants();
+  } catch {
+    // Vue d'ensemble seulement — une erreur de lecture du quota ne doit pas
+    // empêcher d'afficher les dates de la promotion elle-même.
+  }
+  return [
+    {
+      nom: 'Lancement septembre 2026',
+      description: "-10% sur tous les packs de crédits · crédits doublés le 1er mois pour les 100 premiers abonnés · 10 crédits de bienvenue (valables 7 jours au lieu de 45)",
+      debut: PROMO_DEBUT,
+      fin: PROMO_FIN,
+      statut: statutSeptembre,
+      quotaRestant,
+      quotaTotal: PREMIERS_ABONNES_QUOTA,
+    },
+  ];
+}
+
 export const PREMIERS_ABONNES_QUOTA = 100;
 
 /** Nombre de places restantes sur le bonus "100 premiers abonnés" — pour
