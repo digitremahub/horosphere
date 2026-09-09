@@ -12,7 +12,8 @@ import { dbConfigured } from '@/lib/db';
 import { listUsersAdmin, getAdminStats } from '@/lib/admin';
 import { getSiteConfig, setSiteConfig, CLES_VIDEO } from '@/lib/siteConfig';
 import { rembourserAnniversairesDuMois } from '@/lib/birthdayRefund';
-import { SUBSCRIPTIONS } from '@/lib/pricing';
+import { grantCredits } from '@/lib/credits';
+import { SUBSCRIPTIONS, CREDIT_EXPIRY_DAYS } from '@/lib/pricing';
 
 const inputStyle: React.CSSProperties = {
   padding: '9px 12px',
@@ -45,6 +46,23 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       if (valeur) await setSiteConfig(cle, valeur);
     }
     redirect({ href: { pathname: '/app/admin', query: { ok: 'videos' } }, locale });
+  }
+
+  async function offrirCredits(formData: FormData) {
+    'use server';
+    const session = await auth();
+    const email = (session?.user as { email?: string | null } | undefined)?.email;
+    if (!isAdminEmail(email)) return;
+    const userId = Number(formData.get('userId'));
+    const credits = Math.trunc(Number(formData.get('credits')));
+    // Même durée de vie que les crédits achetés (packs) — un cadeau qui
+    // n'expire jamais serait incohérent avec le reste du système de
+    // crédits, et pourrait s'accumuler indéfiniment sans que personne ne
+    // s'en aperçoive.
+    if (userId > 0 && credits > 0 && credits <= 1000) {
+      await grantCredits(userId, credits, 'admin:offert', CREDIT_EXPIRY_DAYS);
+    }
+    redirect({ href: { pathname: '/app/admin', query: { ok: `credits:${credits}` } }, locale });
   }
 
   async function lancerRemboursementsAnniversaire() {
@@ -91,6 +109,11 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         {ok === 'videos' && (
           <div className="card" style={{ padding: '12px 16px', marginBottom: 20, fontSize: '0.84rem', color: 'var(--lever-profond)' }}>
             URLs vidéo enregistrées.
+          </div>
+        )}
+        {ok?.startsWith('credits:') && (
+          <div className="card" style={{ padding: '12px 16px', marginBottom: 20, fontSize: '0.84rem', color: 'var(--lever-profond)' }}>
+            {ok.split(':')[1]} crédit(s) offert(s).
           </div>
         )}
         {ok?.startsWith('remb:') && (() => {
@@ -179,6 +202,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                   <th style={{ padding: '8px 10px' }}>Inscrit le</th>
                   <th style={{ padding: '8px 10px' }}>Abonnement</th>
                   <th style={{ padding: '8px 10px' }}>Crédits</th>
+                  <th style={{ padding: '8px 10px' }}>Offrir</th>
                   <th style={{ padding: '8px 10px' }}>Stripe</th>
                 </tr>
               </thead>
@@ -198,6 +222,22 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                       )}
                     </td>
                     <td style={{ padding: '8px 10px' }} className="mono">{u.solde_credits}</td>
+                    <td style={{ padding: '8px 10px' }}>
+                      <form action={offrirCredits} style={{ display: 'flex', gap: 6 }}>
+                        <input type="hidden" name="userId" value={u.user_id} />
+                        <input
+                          type="number"
+                          name="credits"
+                          min={1}
+                          max={1000}
+                          placeholder="5"
+                          style={{ ...inputStyle, width: 64, padding: '5px 8px' }}
+                        />
+                        <button type="submit" className="btn btn-ghost" style={{ fontSize: '0.74rem', padding: '5px 10px' }}>
+                          Offrir
+                        </button>
+                      </form>
+                    </td>
                     <td style={{ padding: '8px 10px' }}>
                       {u.stripe_customer_id ? (
                         <a href={`https://dashboard.stripe.com/customers/${u.stripe_customer_id}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--lever-profond)', textDecoration: 'underline' }}>
