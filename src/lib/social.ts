@@ -8,7 +8,7 @@
 import { moonPhaseInfo } from '../components/MoonPhase';
 import { getUpcomingSkyEvents } from './skyEvents';
 import { callClaude, generateHoroscope } from './anthropic';
-import { genererIllustrationSociale, genererIllustrationTotem } from './openaiImage';
+import { genererIllustrationTotem } from './openaiImage';
 import { imageFixeSigne } from './signImages';
 import { soumettreAvatarVideo } from './heygen';
 import { SIGNS, type Sign } from './zodiac';
@@ -66,9 +66,22 @@ const VISUELS_INSTAGRAM = [
   '/images/social/bg-connexion.jpg',
 ];
 
+// Nombre de jours écoulés depuis l'epoch Unix pour une date ISO — sert de
+// compteur stable pour faire tourner les visuels en séquence (voir
+// visuelDuJour ci-dessous) plutôt qu'un tirage pseudo-aléatoire, qui
+// pouvait par hasard répéter la même image deux jours de suite.
+function joursDepuisEpoque(dateISO: string): number {
+  return Math.floor(new Date(`${dateISO}T00:00:00Z`).getTime() / 86_400_000);
+}
+
+/** Rotation SÉQUENTIELLE (pas aléatoire) sur les visuels du site : garantit
+ * qu'un visuel n'est jamais réutilisé avant que tous les autres ne soient
+ * passés — sur retour direct de l'utilisateur ("l'image Facebook ne me
+ * plaît pas, prends une du site non utilisée dans un post"), qui avait
+ * jusque-là de bonnes chances de retomber sur le même visuel plusieurs
+ * jours de suite avec le tirage pseudo-aléatoire précédent. */
 export function visuelDuJour(dateISO: string): string {
-  const rng = mulberry32(hashStr('visuel::' + dateISO));
-  return siteUrl() + pick(rng, VISUELS);
+  return siteUrl() + VISUELS[joursDepuisEpoque(dateISO) % VISUELS.length];
 }
 
 export function visuelInstagramDuJour(dateISO: string): string {
@@ -111,46 +124,12 @@ function nextEventLabel(dateISO: string): string {
   return `${next.label.toLowerCase()} le ${dateLabel}`;
 }
 
-// ===== Illustration IA (GPT / gpt-image-1) =====
-
-// Quatre déclinaisons des motifs visuels déjà établis sur le site (astrolabe,
-// carte du ciel, sextant, silhouette contemplative) — la variété quotidienne
-// vient de la phase lunaire réelle du jour, jamais d'un motif inventé au hasard.
-const SCENES_ILLUSTRATION = [
-  "un astrolabe en cuivre posé sur un balcon donnant sur la mer au crépuscule, sous une lune en {phase} entourée d'étoiles",
-  'une carte du ciel ancienne dépliée à la lumière d\'une bougie, une lune en {phase} visible par une fenêtre en arrière-plan',
-  'un sextant tenu face au couchant, une sphère armillaire dorée au premier plan, un ciel nocturne où domine une lune en {phase}',
-  'une silhouette contemplant un ciel étoilé à travers un astrolabe, une lune en {phase} bien visible, ambiance calme et méditative',
-];
-
-/** `legendeDuJour` est la légende Instagram réellement générée pour ce post
- * (IA ou démo) — passée ici pour que l'illustration montre CE post précis
- * (ex. "lâcher-prise avant la nouvelle lune du 11 septembre") plutôt qu'une
- * scène qui ne connaît que la phase lunaire et rien du texte publié à côté. */
-function sujetIllustrationDuJour(dateISO: string, legendeDuJour?: string): string {
-  const moon = moonPhaseInfo(new Date(dateISO));
-  const rng = mulberry32(hashStr('illustration::' + dateISO));
-  const scene = interpole(pick(rng, SCENES_ILLUSTRATION), { phase: moon.label.toLowerCase() });
-  const evenement = nextEventLabel(dateISO);
-  const base = evenement ? `${scene}. Au loin, une suggestion discrète de ${evenement} qui approche.` : scene;
-  if (!legendeDuJour) return base;
-  return `${base}\n\nLe post que cette image accompagne dit, en substance : "${legendeDuJour.slice(0, 220)}" — que l'ambiance de l'image évoque cette idée précise (jamais de texte, lettres ou mots visibles dans l'image).`;
-}
-
-/** Résout le visuel Facebook du jour : tente une illustration IA fraîche
- * (gpt-image-1), retombe sur la rotation de visuels statiques du site en
- * cas d'échec ou d'absence de clé OPENAI_API_KEY — jamais de blocage du
- * pipeline de publication. `legendeDuJour` (la légende déjà écrite pour ce
- * post) est transmise à GPT pour que le visuel illustre le contenu réel du
- * jour, pas seulement la phase lunaire générique. Instagram a son propre
- * visuel, thématisé par signe (voir genererPostInstagramSigne). */
-async function imageFacebookDuJour(dateISO: string, legendeDuJour?: string): Promise<string> {
-  try {
-    const url = await genererIllustrationSociale(sujetIllustrationDuJour(dateISO, legendeDuJour), dateISO);
-    if (url) return url;
-  } catch (err) {
-    console.error('genererIllustrationSociale a échoué, retombe sur les visuels statiques', err);
-  }
+/** Résout le visuel Facebook du jour : une vraie photo du site, en rotation
+ * (voir visuelDuJour) — plus de génération IA ici (genererIllustrationSociale,
+ * retirée) sur retour direct de l'utilisateur, qui n'aimait pas le rendu des
+ * scènes générées. Instagram a son propre visuel, thématisé par signe (voir
+ * genererPostInstagramSigne). */
+function imageFacebookDuJour(dateISO: string): string {
   return visuelDuJour(dateISO);
 }
 
@@ -281,7 +260,7 @@ async function genererFacebookTiktokDemo(dateISO: string): Promise<{ facebook: S
   const rng = mulberry32(hashStr('social::' + dateISO));
   const hook = pick(rng, TIKTOK_HOOKS);
   const fbLegende = interpole(pick(rng, FB_LEGENDES), vars);
-  const imageFacebook = await imageFacebookDuJour(dateISO, fbLegende);
+  const imageFacebook = imageFacebookDuJour(dateISO);
   const scriptTiktok = interpole(pick(rng, TIKTOK_SCRIPTS), { ...vars, hook });
   const heygenVideoId = await soumettreVideoAvatarTiktok(scriptTiktok);
 
@@ -323,7 +302,7 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
 }`;
 
   const parsed = await callClaude(apiKey, model, prompt, 900);
-  const imageFacebook = await imageFacebookDuJour(dateISO, String(parsed.facebook?.legende ?? ''));
+  const imageFacebook = imageFacebookDuJour(dateISO);
   const scriptTiktokIA = String(parsed.tiktok?.script ?? '').trim();
   return {
     facebook: {
