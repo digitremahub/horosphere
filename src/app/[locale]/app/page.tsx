@@ -8,6 +8,7 @@ import { signFromBirthdate } from '@/lib/zodiac';
 import { localizedSign } from '@/lib/zodiac-i18n';
 import { calculerThemeNatal } from '@/lib/natal';
 import { getSiteConfig, CLES_VIDEO } from '@/lib/siteConfig';
+import { lienParrainage } from '@/lib/referral';
 import Dashboard from '@/components/Dashboard';
 import OnboardingVideoModal from '@/components/OnboardingVideoModal';
 
@@ -108,6 +109,7 @@ export default async function AppPage() {
           initialBalance={balance}
           balanceError={balanceError}
           hasSubscription={hasSubscription}
+          shareLink={lienParrainage(userId)}
         />
       </div>
     </main>

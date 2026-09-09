@@ -35,6 +35,7 @@ export default function Dashboard({
   initialBalance,
   balanceError,
   hasSubscription,
+  shareLink,
 }: {
   userName: string;
   userSign: UserSign;
@@ -42,6 +43,7 @@ export default function Dashboard({
   initialBalance: number;
   balanceError: string | null;
   hasSubscription: boolean;
+  shareLink: string;
 }) {
   const [feature, setFeature] = useState<FeatureKey>('horoscope_quotidien');
   const [balance, setBalance] = useState(initialBalance);
@@ -59,6 +61,7 @@ export default function Dashboard({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPopup, setShowPopup] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
   const locale = useLocale();
   const t = useTranslations('Dashboard');
   const tp = useTranslations('Pricing');
@@ -138,6 +141,47 @@ export default function Dashboard({
 
   const hasResult = reading || chart || sentiment || compat || grandeAnalyse || thematic || lunar || transits;
 
+  // Partage sur les réseaux — jamais la lecture complète (réservée aux
+  // personnes inscrites/abonnées) : un seul extrait court, déjà pensé pour
+  // être bref dans chaque type de lecture (l'accroche, le résumé, le titre —
+  // jamais les paragraphes détaillés type "amour"/"conseil"). Le lien pointe
+  // vers le parrainage existant (lib/referral.ts) : la personne qui partage
+  // touche ses crédits de parrain si ça se transforme en inscription.
+  function extraitAPartager(): string | null {
+    if (compat) return `${compat.resume} (${compat.scoreGlobal}%)`;
+    if (reading?.headline) return reading.headline;
+    if (sentiment) return sentiment.titre;
+    if (grandeAnalyse) return grandeAnalyse.synthese;
+    if (thematic) return thematic.titre;
+    if (lunar) return lunar.titre;
+    if (transits) return transits.titre;
+    if (chart) return chart.portrait;
+    return null;
+  }
+
+  async function partager() {
+    const extrait = extraitAPartager();
+    const texte = extrait
+      ? t('shareTextWithHighlight', { highlight: extrait.length > 140 ? `${extrait.slice(0, 140)}…` : extrait })
+      : t('shareTextFallback');
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({ title: 'Horosphère', text: texte, url: shareLink });
+      } catch {
+        // Partage annulé par la personne (ou refusé par l'OS) — rien à faire.
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(`${texte} ${shareLink}`);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2500);
+    } catch {
+      // Presse-papiers indisponible (contexte non sécurisé, permission
+      // refusée) — pas de repli supplémentaire au-delà du message d'échec silencieux.
+    }
+  }
+
   useEffect(() => {
     if (!showPopup) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -157,6 +201,13 @@ export default function Dashboard({
       {thematic && signInfo && isThemeKey(feature) && <ThematicCard reading={thematic} signInfo={signInfo} featureNom={tp(`features.${feature}.nom`)} />}
       {lunar && signInfo && <LunarCycleCard reading={lunar} signInfo={signInfo} />}
       {transits && signInfo && <TransitsCard reading={transits} signInfo={signInfo} />}
+      {hasResult && (
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 14 }}>
+          <button type="button" onClick={partager} className="btn btn-ghost" style={{ padding: '9px 18px', fontSize: '0.82rem' }}>
+            {shareCopied ? t('shareCopied') : t('shareButton')}
+          </button>
+        </div>
+      )}
     </>
   );
 

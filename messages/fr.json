@@ -243,6 +243,10 @@
     "viewPackages": "Voir les forfaits",
     "chooseReadingPlaceholder": "Choisissez une lecture, votre horoscope apparaîtra ici.",
     "closePopup": "Fermer",
+    "shareButton": "🔗 Partager",
+    "shareCopied": "Lien copié !",
+    "shareTextWithHighlight": "{highlight} — Découvre ta propre lecture sur Horosphère ✨",
+    "shareTextFallback": "Je viens de recevoir ma lecture sur Horosphère ✨ Découvre la tienne :",
     "locked": "🔒 Forfait requis",
     "descriptionComingSoon": "{description} — bientôt disponible"
   },

@@ -243,6 +243,10 @@
     "viewPackages": "View packages",
     "chooseReadingPlaceholder": "Choose a reading, your horoscope will appear here.",
     "closePopup": "Close",
+    "shareButton": "🔗 Share",
+    "shareCopied": "Link copied!",
+    "shareTextWithHighlight": "{highlight} — Discover your own reading on Horosphère ✨",
+    "shareTextFallback": "I just got my reading on Horosphère ✨ Discover yours:",
     "locked": "🔒 Subscription required",
     "descriptionComingSoon": "{description} — coming soon"
   },
