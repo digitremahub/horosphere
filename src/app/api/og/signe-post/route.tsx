@@ -32,6 +32,17 @@
 //    d'erreur générique Next, x-matched-path "/500"). Retiré, et les
 //    paramètres dynamiques (headline/conseil, texte IA) sont
 //    défensivement nettoyés de tout emoji au cas où l'IA en placerait un.
+// 5) une fois l'image affichée, la publication Instagram elle-même a été
+//    rejetée par l'API Graph : "The aspect ratio is not supported"
+//    (36003). En ajoutant le bandeau de texte SOUS l'image (1024×1536)
+//    sans réduire sa hauteur, le visuel final montait à 1024×1856 —
+//    ratio ~0,55, hors de la plage acceptée par Instagram (les visuels
+//    fixes seuls, 1024×1536 soit ~0,67, avaient déjà été publiés avec
+//    succès). Corrigé en gardant la hauteur TOTALE à 1536 (même ratio que
+//    ce qui marche) : l'image est donc affichée en hauteur réduite
+//    (1536 - bandeau) avec un recadrage depuis le HAUT (objectPosition
+//    'bottom') pour ne jamais rogner le nom du signe ni la marque, déjà
+//    positionnés en bas de chaque illustration.
 import { ImageResponse } from 'next/og';
 import type { NextRequest } from 'next/server';
 import { imageFixeSigne } from '@/lib/signImages';
@@ -40,8 +51,13 @@ import type { Sign } from '@/lib/zodiac';
 export const runtime = 'nodejs';
 
 const IMG_WIDTH = 1024;
-const IMG_HEIGHT = 1536;
+// Hauteur TOTALE du visuel (image + bandeau) — volontairement identique à
+// la hauteur native des illustrations fixes (1024×1536, ratio ~0,67) déjà
+// publiées avec succès sur Instagram, pour rester dans la plage
+// d'aspect ratio acceptée par l'API Graph (voir point 5 ci-dessus).
+const TOTAL_HAUTEUR = 1536;
 const BANDE_HAUTEUR = 320;
+const IMG_HEIGHT = TOTAL_HAUTEUR - BANDE_HAUTEUR;
 
 const COULEURS = {
   fond: '#0b0e1a',
@@ -88,13 +104,16 @@ export async function GET(req: NextRequest) {
       <div
         style={{
           width: IMG_WIDTH,
-          height: IMG_HEIGHT + BANDE_HAUTEUR,
+          height: TOTAL_HAUTEUR,
           display: 'flex',
           flexDirection: 'column',
           background: COULEURS.fond,
         }}
       >
-        <img src={imageSrc} style={{ width: IMG_WIDTH, height: IMG_HEIGHT, objectFit: 'cover' }} />
+        <img
+          src={imageSrc}
+          style={{ width: IMG_WIDTH, height: IMG_HEIGHT, objectFit: 'cover', objectPosition: 'bottom' }}
+        />
         <div
           style={{
             width: IMG_WIDTH,
@@ -115,6 +134,6 @@ export async function GET(req: NextRequest) {
         </div>
       </div>
     ),
-    { width: IMG_WIDTH, height: IMG_HEIGHT + BANDE_HAUTEUR }
+    { width: IMG_WIDTH, height: TOTAL_HAUTEUR }
   );
 }
