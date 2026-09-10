@@ -345,7 +345,7 @@ export default async function ProfilPage({ searchParams }: { searchParams: Promi
               {t('referralText', { creditsParrain: CREDITS_PARRAIN, creditsFilleul: CREDITS_FILLEUL })}
             </p>
             <ShareButton
-              shareText={t('referralShareText')}
+              shareText={t('referralShareText', { creditsFilleul: CREDITS_FILLEUL })}
               shareUrl={lienParrainage(userId)}
               title={t('referralBannerTitle')}
               subtitle={t('referralBannerSubtitle')}
