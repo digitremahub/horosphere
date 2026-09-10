@@ -157,51 +157,8 @@ export default async function ActualitesPage({ searchParams }: { searchParams: P
         )}
 
         {!error && items.length > 0 && selected && (
-          <div className="actu-split">
-            <div style={{ minWidth: 0 }}>
-              <Link
-                href="/actualites/tous"
-                style={{ display: 'block', fontSize: '0.82rem', color: 'var(--lever-profond)', textDecoration: 'underline', textAlign: 'center', marginBottom: 14 }}
-              >
-                {t('seeAllArticles')}
-              </Link>
-              <div className="actu-liste">
-              {items.map((item) => {
-                const active = item.slug === selected.slug;
-                return (
-                  <Link
-                    key={item.id}
-                    href={`/actualites?a=${item.slug}`}
-                    scroll={false}
-                    className="card actu-liste-item"
-                    style={{
-                      padding: '16px 18px',
-                      display: 'block',
-                      textDecoration: 'none',
-                      color: 'inherit',
-                      marginBottom: 14,
-                      borderColor: active ? 'var(--lever)' : undefined,
-                      background: active ? 'var(--brume)' : undefined,
-                    }}
-                  >
-                    {item.image_url && (
-                      <div className="photo-frame" style={{ height: 90, marginBottom: 10 }}>
-                        <img src={item.image_url} alt="" loading="lazy" />
-                      </div>
-                    )}
-                    <div className="mono" style={{ fontSize: '0.68rem', color: 'var(--sourdine)', marginBottom: 4 }}>
-                      {item.publie_le && semaineLabel(item.publie_le, dateLocale, t)}
-                    </div>
-                    <h2 style={{ fontSize: '0.98rem', margin: 0, lineHeight: 1.35 }}>{titresTraduits?.get(item.id) ?? item.titre}</h2>
-                  </Link>
-                );
-              })}
-              </div>
-            </div>
-
-            <div className="actu-separateur" aria-hidden="true" />
-
-            <article className="actu-lue" style={{ minWidth: 0 }}>
+          <div style={{ minWidth: 0 }}>
+            <article className="actu-lue">
               {selected.image_url && (
                 <div className="photo-frame" style={{ height: 220, marginBottom: 20 }}>
                   <img src={selected.image_url} alt="" loading="lazy" />
@@ -238,6 +195,48 @@ export default async function ActualitesPage({ searchParams }: { searchParams: P
                 </div>
               )}
             </article>
+
+            {/* Les autres actualités : sous l'article lu (plutôt qu'à côté),
+                en carrousel horizontal — décision explicite de l'utilisateur. */}
+            <div style={{ marginTop: 40, paddingTop: 28, borderTop: '1px solid var(--trait)' }}>
+              <Link
+                href="/actualites/tous"
+                style={{ display: 'block', fontSize: '0.82rem', color: 'var(--lever-profond)', textDecoration: 'underline', marginBottom: 14 }}
+              >
+                {t('seeAllArticles')}
+              </Link>
+              <div className="actu-liste">
+                {items.map((item) => {
+                  const active = item.slug === selected.slug;
+                  return (
+                    <Link
+                      key={item.id}
+                      href={`/actualites?a=${item.slug}`}
+                      scroll={false}
+                      className="card actu-liste-item"
+                      style={{
+                        padding: '16px 18px',
+                        display: 'block',
+                        textDecoration: 'none',
+                        color: 'inherit',
+                        borderColor: active ? 'var(--lever)' : undefined,
+                        background: active ? 'var(--brume)' : undefined,
+                      }}
+                    >
+                      {item.image_url && (
+                        <div className="photo-frame" style={{ height: 90, marginBottom: 10 }}>
+                          <img src={item.image_url} alt="" loading="lazy" />
+                        </div>
+                      )}
+                      <div className="mono" style={{ fontSize: '0.68rem', color: 'var(--sourdine)', marginBottom: 4 }}>
+                        {item.publie_le && semaineLabel(item.publie_le, dateLocale, t)}
+                      </div>
+                      <h2 style={{ fontSize: '0.98rem', margin: 0, lineHeight: 1.35 }}>{titresTraduits?.get(item.id) ?? item.titre}</h2>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -245,16 +244,8 @@ export default async function ActualitesPage({ searchParams }: { searchParams: P
       <style>{`
         @media (max-width: 720px){ .actu-en-direct{ grid-template-columns: 1fr !important; } }
 
-        .actu-split{ display: grid; grid-template-columns: 280px 1px 1fr; gap: 36px; align-items: start; }
-        .actu-liste{ display: flex; flex-direction: column; max-height: 760px; overflow-y: auto; padding-right: 4px; min-width: 0; }
-        .actu-separateur{ background: var(--trait); width: 1px; align-self: stretch; min-height: 100%; }
-
-        @media (max-width: 900px){
-          .actu-split{ grid-template-columns: 1fr !important; gap: 24px; }
-          .actu-separateur{ width: 100%; height: 1px; }
-          .actu-liste{ flex-direction: row; overflow-x: auto; overflow-y: visible; max-height: none; gap: 14px; padding-bottom: 4px; }
-          .actu-liste-item{ min-width: 220px; margin-bottom: 0 !important; }
-        }
+        .actu-liste{ display: flex; flex-direction: row; overflow-x: auto; gap: 14px; padding-bottom: 4px; min-width: 0; }
+        .actu-liste-item{ min-width: 220px; max-width: 220px; flex-shrink: 0; }
       `}</style>
     </main>
   );
