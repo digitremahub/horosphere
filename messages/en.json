@@ -172,6 +172,7 @@
     "createPasswordBtn": "Create my password",
     "referralPill": "Referral",
     "referralTitle": "Invite your friends",
+    "referralSubscriptionPerk": "🎁 And if {seuil} of your referrals have been subscribed for at least {mois} months, your own subscription becomes free for as long as they stay active.",
     "referralText": "For every person who signs up through your personal link, you receive {creditsParrain} credits, and they receive {creditsFilleul} when they join.",
     "referralBannerTitle": "🎁 Your referral link",
     "referralBannerSubtitle": "Share it anywhere — social media, message, email.",

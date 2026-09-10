@@ -362,3 +362,11 @@ CREATE TABLE IF NOT EXISTS preuves_suivi_social (
 );
 CREATE INDEX IF NOT EXISTS preuves_suivi_social_user_idx ON preuves_suivi_social(user_id);
 CREATE INDEX IF NOT EXISTS preuves_suivi_social_statut_idx ON preuves_suivi_social(statut);
+
+-- ===== Abonnement offert au parrain de 5 filleuls abonnés actifs =====
+-- Voir lib/referralSubscription.ts — coupon Stripe -100% appliqué/retiré
+-- automatiquement (cron quotidien /api/cron/parrainage-abonnement) selon
+-- que le parrain compte ou non ≥5 filleuls dont l'abonnement est actif
+-- depuis ≥3 mois consécutifs. Colonne d'observabilité uniquement : l'état
+-- réel de facturation vit dans Stripe (le coupon appliqué à l'abonnement).
+ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS parrainage_gratuit BOOLEAN NOT NULL DEFAULT false;

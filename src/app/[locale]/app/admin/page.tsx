@@ -17,6 +17,7 @@ import { offrirMoisAbonnement } from '@/lib/adminSubscriptions';
 import { definirCategorieUtilisateur, CATEGORIE_LABEL, type Categorie } from '@/lib/adminCategories';
 import { listPromotions, createPromotion, updatePromotion, deletePromotion, bonusAbonnementRestant, type PromotionInput } from '@/lib/promotions';
 import { listPreuvesEnAttente, traiterPreuveSuivi } from '@/lib/followRewards';
+import { listerEtatsParrainageAbonnement, synchroniserParrainagesAbonnement, SEUIL_FILLEULS_ABONNES } from '@/lib/referralSubscription';
 import { SUBSCRIPTIONS, CREDIT_EXPIRY_DAYS } from '@/lib/pricing';
 
 function lireFormulairePromotion(formData: FormData): PromotionInput {
@@ -170,12 +171,25 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     });
   }
 
+  async function recalculerParrainagesAbonnement() {
+    'use server';
+    const session = await auth();
+    const email = (session?.user as { email?: string | null } | undefined)?.email;
+    if (!isAdminEmail(email)) return;
+    const resultat = await synchroniserParrainagesAbonnement();
+    redirect({
+      href: { pathname: '/app/admin', query: { ok: `parr-abo:${resultat.actives}:${resultat.retirees}:${resultat.erreurs}` } },
+      locale,
+    });
+  }
+
   let stats: Awaited<ReturnType<typeof getAdminStats>> | null = null;
   let users: Awaited<ReturnType<typeof listUsersAdmin>> = [];
   let videos: Record<string, string> = {};
   let loadError: string | null = null;
   const promotions = dbConfigured ? await listPromotions().catch(() => []) : [];
   const preuvesSuivi = dbConfigured ? await listPreuvesEnAttente().catch(() => []) : [];
+  const etatsParrainageAbo = dbConfigured ? await listerEtatsParrainageAbonnement().catch(() => []) : [];
   const promotionsAffichage = await Promise.all(
     promotions.map(async (p) => ({ promo: p, quotaRestant: await bonusAbonnementRestant(p).catch(() => p.bonusAbonnementQuota) }))
   );
@@ -209,6 +223,14 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             URLs vidéo enregistrées.
           </div>
         )}
+        {ok?.startsWith('parr-abo:') && (() => {
+          const [actives, retirees, erreurs] = ok.split(':').slice(1);
+          return (
+            <div className="card" style={{ padding: '12px 16px', marginBottom: 20, fontSize: '0.84rem', color: 'var(--lever-profond)' }}>
+              Recalcul terminé : {actives} abonnement(s) offert(s), {retirees} retiré(s){Number(erreurs) > 0 ? `, ${erreurs} erreur(s)` : ''}.
+            </div>
+          );
+        })()}
         {ok?.startsWith('suivi:') && (
           <div className="card" style={{ padding: '12px 16px', marginBottom: 20, fontSize: '0.84rem', color: 'var(--lever-profond)' }}>
             Demande {ok.split(':')[1] === 'approuve' ? 'validée (crédits accordés)' : 'refusée'}.
@@ -285,6 +307,34 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             ))}
           </div>
         )}
+
+        <div className="card" style={{ padding: '20px 22px', marginBottom: 28 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: 12, flexWrap: 'wrap', marginBottom: 4 }}>
+            <h2 style={{ fontSize: '1rem' }}>Parrainage abonnement ({SEUIL_FILLEULS_ABONNES} filleuls actifs = offert)</h2>
+            <form action={recalculerParrainagesAbonnement}>
+              <button type="submit" className="btn btn-ghost" style={{ padding: '6px 14px', fontSize: '0.8rem' }}>Recalculer maintenant</button>
+            </form>
+          </div>
+          <p style={{ fontSize: '0.82rem', color: 'var(--sourdine)', marginBottom: 14 }}>
+            Recalculé automatiquement chaque jour (coupon Stripe -100%, retiré si le nombre de filleuls actifs depuis 3 mois repasse sous {SEUIL_FILLEULS_ABONNES}). N'affiche que les abonnements actifs ayant au moins un filleul.
+          </p>
+          {etatsParrainageAbo.filter((e) => e.filleulsQualifies > 0).length === 0 && (
+            <p style={{ fontSize: '0.84rem', color: 'var(--sourdine)' }}>Aucun parrain avec un filleul abonné pour l'instant.</p>
+          )}
+          {etatsParrainageAbo.filter((e) => e.filleulsQualifies > 0).length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {etatsParrainageAbo.filter((e) => e.filleulsQualifies > 0).map((e) => (
+                <div key={e.subscriptionId} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.84rem', borderTop: '1px solid var(--trait)', paddingTop: 8 }}>
+                  <span>{e.email}</span>
+                  <span>
+                    {e.filleulsQualifies}/{SEUIL_FILLEULS_ABONNES} filleuls qualifiés
+                    {e.gratuitActuellement ? ' — ✅ offert' : ''}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         <div className="card" style={{ padding: '20px 22px', marginBottom: 28 }}>
           <h2 style={{ fontSize: '1rem', marginBottom: 4 }}>Preuves de suivi réseaux ({preuvesSuivi.length})</h2>

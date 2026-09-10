@@ -1,6 +1,7 @@
 {
   "crons": [
     { "path": "/api/cron/expire-credits", "schedule": "0 4 * * *" },
-    { "path": "/api/cron/birthday-refunds", "schedule": "0 5 * * *" }
+    { "path": "/api/cron/birthday-refunds", "schedule": "0 5 * * *" },
+    { "path": "/api/cron/parrainage-abonnement", "schedule": "0 6 * * *" }
   ]
 }

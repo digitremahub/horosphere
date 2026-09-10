@@ -6,6 +6,7 @@ import { dbConfigured } from '@/lib/db';
 import { validatePassword, setUserPassword, userHasPassword } from '@/lib/password';
 import { changerAdresseEmail, EmailDejaUtiliseError } from '@/lib/account';
 import { lienParrainage, CREDITS_PARRAIN, CREDITS_FILLEUL } from '@/lib/referral';
+import { SEUIL_FILLEULS_ABONNES, MOIS_MINIMUM_FILLEUL } from '@/lib/referralSubscription';
 import { statutSuiviUtilisateur, soumettrePreuveSuivi, DemandeDejaEnCoursError, PLATEFORMES_SUIVI, CREDITS_SUIVI, type PlateformeSuivi } from '@/lib/followRewards';
 import { SOCIAL_LINKS } from '@/lib/socialLinks';
 import ShareButton from '@/components/ShareButton';
@@ -385,6 +386,9 @@ export default async function ProfilPage({ searchParams }: { searchParams: Promi
             <h2 style={{ fontSize: '1.1rem', marginBottom: 8 }}>{t('referralTitle')}</h2>
             <p style={{ color: 'var(--ombre)', fontSize: '0.86rem', marginBottom: 4 }}>
               {t('referralText', { creditsParrain: CREDITS_PARRAIN, creditsFilleul: CREDITS_FILLEUL })}
+            </p>
+            <p style={{ color: 'var(--ombre)', fontSize: '0.86rem', marginBottom: 4 }}>
+              {t('referralSubscriptionPerk', { seuil: SEUIL_FILLEULS_ABONNES, mois: MOIS_MINIMUM_FILLEUL })}
             </p>
             <ShareButton
               shareText={t('referralShareText', { creditsFilleul: CREDITS_FILLEUL })}

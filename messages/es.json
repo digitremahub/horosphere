@@ -172,6 +172,7 @@
     "createPasswordBtn": "Crear mi contraseña",
     "referralPill": "Recomendación",
     "referralTitle": "Invita a tus allegados",
+    "referralSubscriptionPerk": "🎁 Y si {seuil} de tus referidos llevan suscritos al menos {mois} meses, tu propia suscripción se vuelve gratuita mientras sigan activos.",
     "referralText": "Por cada persona que se registre a través de tu enlace personal, recibes {creditsParrain} créditos, y ella recibe {creditsFilleul} al inscribirse.",
     "referralBannerTitle": "🎁 Tu enlace de recomendación",
     "referralBannerSubtitle": "Compártelo donde quieras — redes, mensaje, correo.",
