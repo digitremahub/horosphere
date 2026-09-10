@@ -6,6 +6,8 @@ import { dbConfigured } from '@/lib/db';
 import { validatePassword, setUserPassword, userHasPassword } from '@/lib/password';
 import { changerAdresseEmail, EmailDejaUtiliseError } from '@/lib/account';
 import { lienParrainage, CREDITS_PARRAIN, CREDITS_FILLEUL } from '@/lib/referral';
+import { statutSuiviUtilisateur, soumettrePreuveSuivi, DemandeDejaEnCoursError, PLATEFORMES_SUIVI, CREDITS_SUIVI, type PlateformeSuivi } from '@/lib/followRewards';
+import { SOCIAL_LINKS } from '@/lib/socialLinks';
 import ShareButton from '@/components/ShareButton';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -20,7 +22,7 @@ const inputStyle: React.CSSProperties = {
   width: '100%',
 };
 
-export default async function ProfilPage({ searchParams }: { searchParams: Promise<{ mdp?: string; naissance?: string; email?: string }> }) {
+export default async function ProfilPage({ searchParams }: { searchParams: Promise<{ mdp?: string; naissance?: string; email?: string; suivi?: string }> }) {
   const session = await auth();
   const locale = await getLocale();
   const t = await getTranslations('Profil');
@@ -28,11 +30,12 @@ export default async function ProfilPage({ searchParams }: { searchParams: Promi
     redirect({ href: '/connexion', locale });
   }
 
-  const { mdp, naissance, email: emailStatut } = await searchParams;
+  const { mdp, naissance, email: emailStatut, suivi: suiviStatut } = await searchParams;
   const userId = Number((session!.user as { id?: string }).id);
   let profile: Awaited<ReturnType<typeof getProfile>> = null;
   let error: string | null = null;
   let hasPassword = false;
+  let suiviParPlateforme: Awaited<ReturnType<typeof statutSuiviUtilisateur>> = {};
 
   if (dbConfigured) {
     try {
@@ -44,6 +47,11 @@ export default async function ProfilPage({ searchParams }: { searchParams: Promi
       hasPassword = await userHasPassword(userId);
     } catch {
       hasPassword = false;
+    }
+    try {
+      suiviParPlateforme = await statutSuiviUtilisateur(userId);
+    } catch {
+      suiviParPlateforme = {};
     }
   } else {
     error = t('dbNotConnected');
@@ -133,6 +141,40 @@ export default async function ProfilPage({ searchParams }: { searchParams: Promi
 
     await setUserPassword(uid, password);
     redirect({ href: { pathname: '/app/profil', query: { mdp: 'ok' } }, locale });
+  }
+
+  async function soumettreSuivi(formData: FormData) {
+    'use server';
+    const session = await auth();
+    if (!session?.user) redirect({ href: '/connexion', locale });
+    const uid = Number((session!.user as { id?: string }).id);
+
+    const plateforme = String(formData.get('plateforme') || '') as PlateformeSuivi;
+    if (!PLATEFORMES_SUIVI.includes(plateforme)) {
+      redirect({ href: { pathname: '/app/profil', query: { suivi: 'erreur' } }, locale });
+    }
+
+    const fichier = formData.get('capture');
+    if (!(fichier instanceof File) || fichier.size === 0) {
+      redirect({ href: { pathname: '/app/profil', query: { suivi: 'manquant' } }, locale });
+    }
+    // 8 Mo — largement suffisant pour une capture d'écran de téléphone,
+    // évite qu'un fichier disproportionné ne consomme le stockage Blob.
+    if ((fichier as File).size > 8 * 1024 * 1024) {
+      redirect({ href: { pathname: '/app/profil', query: { suivi: 'trop_lourd' } }, locale });
+    }
+
+    const buffer = Buffer.from(await (fichier as File).arrayBuffer());
+    const contentType = (fichier as File).type || 'image/jpeg';
+
+    try {
+      await soumettrePreuveSuivi(uid, plateforme, { buffer, contentType });
+    } catch (err) {
+      const dejaEnCours = err instanceof DemandeDejaEnCoursError;
+      redirect({ href: { pathname: '/app/profil', query: { suivi: dejaEnCours ? 'deja' : 'erreur' } }, locale });
+    }
+
+    redirect({ href: { pathname: '/app/profil', query: { suivi: 'envoye' } }, locale });
   }
 
   return (
@@ -352,6 +394,77 @@ export default async function ProfilPage({ searchParams }: { searchParams: Promi
               label={t('referralButton')}
               copiedLabel={t('referralCopied')}
             />
+          </div>
+        )}
+
+        {!mandatory && dbConfigured && (
+          <div className="card" style={{ padding: '26px 24px', marginTop: 28 }}>
+            <div className="pill" style={{ marginBottom: 14 }}>{t('followPill')}</div>
+            <h2 style={{ fontSize: '1.1rem', marginBottom: 8 }}>{t('followTitle')}</h2>
+            <p style={{ color: 'var(--ombre)', fontSize: '0.86rem', marginBottom: 16 }}>
+              {t('followSubtitle', { credits: CREDITS_SUIVI })}
+            </p>
+
+            {suiviStatut && (
+              <div
+                className="card"
+                style={{
+                  padding: '10px 14px',
+                  marginBottom: 16,
+                  fontSize: '0.84rem',
+                  boxShadow: 'none',
+                  borderColor: suiviStatut === 'envoye' ? 'var(--lever)' : 'var(--ambre)',
+                  color: suiviStatut === 'envoye' ? 'var(--lever-profond)' : 'var(--ambre)',
+                }}
+              >
+                {t(`followBanner_${suiviStatut}`)}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {PLATEFORMES_SUIVI.map((plateforme) => {
+                const lien = SOCIAL_LINKS[plateforme];
+                const demande = suiviParPlateforme[plateforme];
+                const nom = { instagram: 'Instagram', facebook: 'Facebook', tiktok: 'TikTok' }[plateforme];
+                const emoji = { instagram: '📸', facebook: '👍', tiktok: '🎵' }[plateforme];
+
+                return (
+                  <div key={plateforme} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, flexWrap: 'wrap', borderTop: '1px solid var(--trait)', paddingTop: 14 }}>
+                    <div style={{ fontWeight: 600, fontSize: '0.92rem' }}>{emoji} {nom}</div>
+
+                    {!lien && <span style={{ fontSize: '0.82rem', color: 'var(--sourdine)' }}>{t('followComingSoon')}</span>}
+
+                    {lien && demande?.statut === 'approuve' && (
+                      <span style={{ fontSize: '0.82rem', color: 'var(--lever-profond)', fontWeight: 600 }}>
+                        {t('followApproved', { credits: demande.credits })}
+                      </span>
+                    )}
+
+                    {lien && demande?.statut === 'en_attente' && (
+                      <span style={{ fontSize: '0.82rem', color: 'var(--ambre)' }}>{t('followPending')}</span>
+                    )}
+
+                    {lien && demande?.statut !== 'approuve' && demande?.statut !== 'en_attente' && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                        {demande?.statut === 'rejete' && (
+                          <span style={{ fontSize: '0.78rem', color: 'var(--sourdine)' }}>{t('followRejected')}</span>
+                        )}
+                        <a href={lien} target="_blank" rel="noopener noreferrer" className="btn btn-ghost" style={{ padding: '6px 14px', fontSize: '0.82rem' }}>
+                          {t('followSuivreBtn')}
+                        </a>
+                        <form action={soumettreSuivi} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <input type="hidden" name="plateforme" value={plateforme} />
+                          <input type="file" name="capture" accept="image/*" required style={{ fontSize: '0.78rem', maxWidth: 160 }} />
+                          <button type="submit" className="btn btn-ghost" style={{ padding: '6px 14px', fontSize: '0.82rem' }}>
+                            {t('followSendProof')}
+                          </button>
+                        </form>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>

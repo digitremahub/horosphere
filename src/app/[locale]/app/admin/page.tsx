@@ -16,6 +16,7 @@ import { grantCredits } from '@/lib/credits';
 import { offrirMoisAbonnement } from '@/lib/adminSubscriptions';
 import { definirCategorieUtilisateur, CATEGORIE_LABEL, type Categorie } from '@/lib/adminCategories';
 import { listPromotions, createPromotion, updatePromotion, deletePromotion, bonusAbonnementRestant, type PromotionInput } from '@/lib/promotions';
+import { listPreuvesEnAttente, traiterPreuveSuivi } from '@/lib/followRewards';
 import { SUBSCRIPTIONS, CREDIT_EXPIRY_DAYS } from '@/lib/pricing';
 
 function lireFormulairePromotion(formData: FormData): PromotionInput {
@@ -145,6 +146,18 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     redirect({ href: { pathname: '/app/admin', query: { ok: 'promo-supprime' } }, locale });
   }
 
+  async function traiterSuivi(formData: FormData) {
+    'use server';
+    const session = await auth();
+    const email = (session?.user as { email?: string | null } | undefined)?.email;
+    if (!isAdminEmail(email)) return;
+    const id = Number(formData.get('id'));
+    const decision = String(formData.get('decision') || '');
+    if (decision !== 'approuve' && decision !== 'rejete') return;
+    await traiterPreuveSuivi(id, decision, email!);
+    redirect({ href: { pathname: '/app/admin', query: { ok: `suivi:${decision}` } }, locale });
+  }
+
   async function lancerRemboursementsAnniversaire() {
     'use server';
     const session = await auth();
@@ -162,6 +175,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   let videos: Record<string, string> = {};
   let loadError: string | null = null;
   const promotions = dbConfigured ? await listPromotions().catch(() => []) : [];
+  const preuvesSuivi = dbConfigured ? await listPreuvesEnAttente().catch(() => []) : [];
   const promotionsAffichage = await Promise.all(
     promotions.map(async (p) => ({ promo: p, quotaRestant: await bonusAbonnementRestant(p).catch(() => p.bonusAbonnementQuota) }))
   );
@@ -193,6 +207,11 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         {ok === 'videos' && (
           <div className="card" style={{ padding: '12px 16px', marginBottom: 20, fontSize: '0.84rem', color: 'var(--lever-profond)' }}>
             URLs vidéo enregistrées.
+          </div>
+        )}
+        {ok?.startsWith('suivi:') && (
+          <div className="card" style={{ padding: '12px 16px', marginBottom: 20, fontSize: '0.84rem', color: 'var(--lever-profond)' }}>
+            Demande {ok.split(':')[1] === 'approuve' ? 'validée (crédits accordés)' : 'refusée'}.
           </div>
         )}
         {ok?.startsWith('credits:') && (
@@ -266,6 +285,45 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             ))}
           </div>
         )}
+
+        <div className="card" style={{ padding: '20px 22px', marginBottom: 28 }}>
+          <h2 style={{ fontSize: '1rem', marginBottom: 4 }}>Preuves de suivi réseaux ({preuvesSuivi.length})</h2>
+          <p style={{ fontSize: '0.82rem', color: 'var(--sourdine)', marginBottom: 14 }}>
+            Captures d'écran envoyées depuis le profil ("Suivez-nous, gagnez des crédits") — valider n'accorde les crédits qu'à l'approbation, jamais à l'envoi.
+          </p>
+          {preuvesSuivi.length === 0 && <p style={{ fontSize: '0.84rem', color: 'var(--sourdine)' }}>Rien en attente.</p>}
+          {preuvesSuivi.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {preuvesSuivi.map((p) => (
+                <div key={p.id} className="card" style={{ padding: '12px 16px', boxShadow: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, flexWrap: 'wrap' }}>
+                  <div style={{ fontSize: '0.84rem' }}>
+                    <strong>{p.email}</strong> — {p.plateforme} — {new Date(p.created_at).toLocaleString('fr-FR')}
+                    <br />
+                    <a href={p.image_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--lever-profond)', textDecoration: 'underline' }}>
+                      Voir la capture ↗
+                    </a>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <form action={traiterSuivi}>
+                      <input type="hidden" name="id" value={p.id} />
+                      <input type="hidden" name="decision" value="approuve" />
+                      <button type="submit" className="btn btn-ghost" style={{ padding: '6px 14px', fontSize: '0.82rem' }}>
+                        ✅ Valider (+{p.credits})
+                      </button>
+                    </form>
+                    <form action={traiterSuivi}>
+                      <input type="hidden" name="id" value={p.id} />
+                      <input type="hidden" name="decision" value="rejete" />
+                      <button type="submit" className="btn btn-ghost" style={{ padding: '6px 14px', fontSize: '0.82rem' }}>
+                        ❌ Refuser
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         <div className="card" style={{ padding: '20px 22px', marginBottom: 28 }}>
           <h2 style={{ fontSize: '1rem', marginBottom: 4 }}>Promotions</h2>

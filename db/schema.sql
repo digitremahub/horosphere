@@ -341,3 +341,24 @@ CREATE TABLE IF NOT EXISTS site_config (
 
 -- Vidéo d'onboarding : affichée une seule fois, juste après l'inscription.
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS a_vu_onboarding BOOLEAN NOT NULL DEFAULT false;
+
+-- ===== Crédits offerts pour le suivi des réseaux sociaux =====
+-- Voir lib/followRewards.ts — pas d'API de vérification automatique du
+-- suivi d'un compte personnel (Instagram/Facebook nécessiteraient une
+-- procédure OAuth + App Review Meta, TikTok n'a rien d'équivalent) : la
+-- capture d'écran est relue manuellement dans le backoffice avant crédit.
+-- Une demande refusée peut être resoumise (voir statutSuiviUtilisateur,
+-- qui ne retient que la plus récente par plateforme).
+CREATE TABLE IF NOT EXISTS preuves_suivi_social (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  plateforme TEXT NOT NULL,
+  image_url TEXT NOT NULL,
+  statut TEXT NOT NULL DEFAULT 'en_attente',
+  credits INTEGER NOT NULL DEFAULT 3,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  traite_le TIMESTAMPTZ,
+  traite_par TEXT
+);
+CREATE INDEX IF NOT EXISTS preuves_suivi_social_user_idx ON preuves_suivi_social(user_id);
+CREATE INDEX IF NOT EXISTS preuves_suivi_social_statut_idx ON preuves_suivi_social(statut);

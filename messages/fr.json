@@ -177,7 +177,21 @@
     "referralBannerSubtitle": "Partagez-le où vous voulez — réseaux, message, e-mail.",
     "referralButton": "🔗 Partager mon lien",
     "referralCopied": "Lien copié !",
-    "referralShareText": "Rejoins-moi sur Horosphère ✨ {creditsFilleul} crédits offerts pour découvrir tes horoscopes et lectures personnalisées par IA — voici mon lien :"
+    "referralShareText": "Rejoins-moi sur Horosphère ✨ {creditsFilleul} crédits offerts pour découvrir tes horoscopes et lectures personnalisées par IA — voici mon lien :",
+    "followPill": "Crédits bonus",
+    "followTitle": "Suivez-nous, gagnez des crédits",
+    "followSubtitle": "+{credits} crédits par réseau suivi (Instagram, Facebook, TikTok) : suivez le compte, envoyez une capture d'écran comme preuve, et recevez vos crédits une fois validée (sous 48h).",
+    "followSuivreBtn": "Suivre →",
+    "followSendProof": "Envoyer ma preuve",
+    "followPending": "⏳ En attente de vérification",
+    "followApproved": "✅ +{credits} crédits obtenus",
+    "followRejected": "❌ Capture non validée —",
+    "followComingSoon": "Bientôt disponible",
+    "followBanner_envoye": "Capture envoyée ! Vous recevrez vos crédits une fois la vérification faite (sous 48h).",
+    "followBanner_deja": "Une demande est déjà en attente (ou déjà validée) pour ce réseau.",
+    "followBanner_manquant": "Merci de choisir une image avant d'envoyer.",
+    "followBanner_trop_lourd": "Le fichier est trop volumineux (8 Mo maximum).",
+    "followBanner_erreur": "Une erreur est survenue, réessayez."
   },
   "Historique": {
     "backToSpace": "← Mon espace",

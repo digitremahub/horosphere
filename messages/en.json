@@ -177,7 +177,21 @@
     "referralBannerSubtitle": "Share it anywhere — social media, message, email.",
     "referralButton": "🔗 Share my link",
     "referralCopied": "Link copied!",
-    "referralShareText": "Join me on Horosphère ✨ {creditsFilleul} free credits to discover AI-personalized horoscopes and readings — here's my link:"
+    "referralShareText": "Join me on Horosphère ✨ {creditsFilleul} free credits to discover AI-personalized horoscopes and readings — here's my link:",
+    "followPill": "Bonus credits",
+    "followTitle": "Follow us, earn credits",
+    "followSubtitle": "+{credits} credits per network followed (Instagram, Facebook, TikTok): follow the account, send a screenshot as proof, and get your credits once it's checked (within 48h).",
+    "followSuivreBtn": "Follow →",
+    "followSendProof": "Send my proof",
+    "followPending": "⏳ Awaiting review",
+    "followApproved": "✅ +{credits} credits earned",
+    "followRejected": "❌ Screenshot not accepted —",
+    "followComingSoon": "Coming soon",
+    "followBanner_envoye": "Screenshot sent! You'll get your credits once it's reviewed (within 48h).",
+    "followBanner_deja": "A request is already pending (or already approved) for this network.",
+    "followBanner_manquant": "Please choose an image before sending.",
+    "followBanner_trop_lourd": "The file is too large (8 MB max).",
+    "followBanner_erreur": "Something went wrong, please try again."
   },
   "Historique": {
     "backToSpace": "← My space",
