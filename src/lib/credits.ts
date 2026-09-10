@@ -87,6 +87,19 @@ export async function grantSubscriptionCredits(userId: number, credits: number, 
   return grantCredits(userId, credits, `sub:${planSlug}:${periodLabel}`, null);
 }
 
+/** Version "compte admin" de consumeCredits (voir lib/adminAuth.ts) — ne
+ * touche jamais aux lots de crédits ni ne vérifie le solde : seule la ligne
+ * d'historique (credit_usage) est écrite, à 0 crédit réellement débité,
+ * pour que l'historique et hasGeneratedToday continuent de fonctionner
+ * normalement pour ce compte. */
+export async function consumeCreditsUnlimited(userId: number, feature: FeatureKey, sign?: string, reading?: unknown) {
+  const sql = requireDb();
+  await sql`
+    INSERT INTO credit_usage (user_id, feature, credits_spent, sign, reading)
+    VALUES (${userId}, ${feature}, 0, ${sign ?? null}, ${sql.json((reading ?? null) as any)})
+  `;
+}
+
 /** Consomme des crédits pour une fonctionnalité, en épuisant d'abord les
  * lots qui expirent le plus tôt (FIFO par expiration). Lève
  * InsufficientCreditsError si le solde est trop bas — rien n'est débité

@@ -10,6 +10,7 @@ import { calculerThemeNatal } from '@/lib/natal';
 import type { FeatureKey } from '@/lib/pricing';
 import { getSiteConfig, CLES_VIDEO } from '@/lib/siteConfig';
 import { lienParrainage } from '@/lib/referral';
+import { isAdminEmail } from '@/lib/adminAuth';
 import Dashboard from '@/components/Dashboard';
 import OnboardingVideoModal from '@/components/OnboardingVideoModal';
 
@@ -118,6 +119,7 @@ export default async function AppPage() {
           hasSubscription={hasSubscription}
           shareLink={lienParrainage(userId)}
           initialGeneratedToday={generatedToday}
+          illimite={isAdminEmail(session!.user!.email)}
         />
       </div>
     </main>

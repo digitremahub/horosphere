@@ -232,6 +232,7 @@
   "Dashboard": {
     "greeting": "Hello",
     "balance": "Balance",
+    "unlimitedCredits": "✨ Unlimited credits (admin account)",
     "credits": "credits",
     "addCredits": "+ Top up",
     "viewHistory": "View my reading history",

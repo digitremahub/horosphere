@@ -232,6 +232,7 @@
   "Dashboard": {
     "greeting": "Bonjour",
     "balance": "Solde",
+    "unlimitedCredits": "✨ Crédits illimités (compte admin)",
     "credits": "crédits",
     "addCredits": "+ Ajouter",
     "viewHistory": "Voir l'historique de mes lectures",

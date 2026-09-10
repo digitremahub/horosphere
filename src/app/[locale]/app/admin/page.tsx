@@ -494,7 +494,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                         </button>
                       </form>
                     </td>
-                    <td style={{ padding: '8px 10px' }} className="mono">{u.solde_credits}</td>
+                    <td style={{ padding: '8px 10px' }} className="mono">
+                      {isAdminEmail(u.email) ? <span title="Compte admin — crédits illimités">✨ Illimité</span> : u.solde_credits}
+                    </td>
                     <td style={{ padding: '8px 10px' }}>
                       <form action={offrirCredits} style={{ display: 'flex', gap: 6 }}>
                         <input type="hidden" name="userId" value={u.user_id} />

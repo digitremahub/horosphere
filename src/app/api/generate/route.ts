@@ -14,11 +14,12 @@ import {
   generateTransits,
   type Langue,
 } from '@/lib/anthropic';
-import { consumeCredits, getBalance, hasActiveSubscription, hasGeneratedToday, InsufficientCreditsError } from '@/lib/credits';
+import { consumeCredits, consumeCreditsUnlimited, getBalance, hasActiveSubscription, hasGeneratedToday, InsufficientCreditsError } from '@/lib/credits';
 import { getProfile } from '@/lib/profile';
 import { FEATURE_COSTS, FEATURE_LABELS, FeatureKey } from '@/lib/pricing';
 import { THEMES, type ThemeKey } from '@/lib/themes';
 import { dbConfigured } from '@/lib/db';
+import { isAdminEmail } from '@/lib/adminAuth';
 
 const THEME_KEYS = new Set(Object.keys(THEMES));
 function isThemeKey(feature: FeatureKey): feature is FeatureKey & ThemeKey {
@@ -83,6 +84,11 @@ export async function POST(req: NextRequest) {
   }
 
   const uid = Number(userId);
+  // Comptes de la liste blanche admin (voir lib/adminAuth.ts) : crédits
+  // illimités, pour tester le site sans y penser. La limite d'une
+  // génération par jour et par lecture (voir plus bas) reste inchangée —
+  // seul le solde de crédits n'est jamais un obstacle pour ces comptes.
+  const illimite = isAdminEmail(session.user?.email);
 
   // Retour utilisateur : bloquer une régénération le même jour évitait le
   // double paiement accidentel, mais risquait de frustrer quelqu'un qui
@@ -157,12 +163,14 @@ export async function POST(req: NextRequest) {
 
   const cost = FEATURE_COSTS[feature];
 
-  const balance = await getBalance(uid);
-  if (balance < cost) {
-    return NextResponse.json(
-      { error: t('insufficientCredits', { balance, cost }), balance, needed: cost, code: 'INSUFFICIENT_CREDITS' },
-      { status: 402 }
-    );
+  if (!illimite) {
+    const balance = await getBalance(uid);
+    if (balance < cost) {
+      return NextResponse.json(
+        { error: t('insufficientCredits', { balance, cost }), balance, needed: cost, code: 'INSUFFICIENT_CREDITS' },
+        { status: 402 }
+      );
+    }
   }
 
   const dateISO = new Date().toISOString().slice(0, 10);
@@ -221,7 +229,11 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    await consumeCredits(uid, feature, sign.key, reading);
+    if (illimite) {
+      await consumeCreditsUnlimited(uid, feature, sign.key, reading);
+    } else {
+      await consumeCredits(uid, feature, sign.key, reading);
+    }
   } catch (err) {
     if (err instanceof InsufficientCreditsError) {
       return NextResponse.json(

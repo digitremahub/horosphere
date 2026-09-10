@@ -39,6 +39,7 @@ export default function Dashboard({
   hasSubscription,
   shareLink,
   initialGeneratedToday,
+  illimite = false,
 }: {
   userName: string;
   userSign: UserSign;
@@ -48,6 +49,7 @@ export default function Dashboard({
   hasSubscription: boolean;
   shareLink: string;
   initialGeneratedToday: FeatureKey[];
+  illimite?: boolean;
 }) {
   const [feature, setFeature] = useState<FeatureKey>('horoscope_quotidien');
   const [balance, setBalance] = useState(initialBalance);
@@ -228,10 +230,18 @@ export default function Dashboard({
           <p style={{ color: 'var(--ombre)', fontSize: '0.9rem' }}>{userName}</p>
         </div>
         <div className="card" style={{ padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: '0.8rem', color: 'var(--ombre)' }}>{t('balance')}</span>
-          <span className="mono" style={{ fontSize: '1.2rem', fontWeight: 600, color: 'var(--lever-profond)' }}>{balance}</span>
-          <span style={{ fontSize: '0.8rem', color: 'var(--ombre)' }}>{t('credits')}</span>
-          <Link href="/tarifs" className="btn btn-ghost" style={{ padding: '7px 14px', fontSize: '0.78rem' }}>{t('addCredits')}</Link>
+          {illimite ? (
+            <span className="mono" style={{ fontSize: '0.86rem', fontWeight: 600, color: 'var(--lever-profond)' }}>
+              {t('unlimitedCredits')}
+            </span>
+          ) : (
+            <>
+              <span style={{ fontSize: '0.8rem', color: 'var(--ombre)' }}>{t('balance')}</span>
+              <span className="mono" style={{ fontSize: '1.2rem', fontWeight: 600, color: 'var(--lever-profond)' }}>{balance}</span>
+              <span style={{ fontSize: '0.8rem', color: 'var(--ombre)' }}>{t('credits')}</span>
+              <Link href="/tarifs" className="btn btn-ghost" style={{ padding: '7px 14px', fontSize: '0.78rem' }}>{t('addCredits')}</Link>
+            </>
+          )}
         </div>
       </div>
 
@@ -291,7 +301,7 @@ export default function Dashboard({
                   const locked = Boolean(meta.subscriptionOnly) && !hasSubscription;
                   const dejaFaitAujourdhui = generatedToday.has(key);
                   const enCours = loadingFeature === key;
-                  const insuffisant = balance < FEATURE_COSTS[key];
+                  const insuffisant = !illimite && balance < FEATURE_COSTS[key];
 
                   return (
                     <div
@@ -493,7 +503,7 @@ export default function Dashboard({
               />
             </div>
 
-            {balance < compatCost ? (
+            {!illimite && balance < compatCost ? (
               <Link href="/tarifs" className="btn btn-primary" style={{ width: '100%', textAlign: 'center' }}>
                 {t('insufficientCreditsShort')}
               </Link>
