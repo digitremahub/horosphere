@@ -2,7 +2,7 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import { auth } from '@/lib/auth';
 import { dbConfigured } from '@/lib/db';
 import { stripeConfigured } from '@/lib/stripe';
-import { CREDIT_PACKS, SUBSCRIPTIONS, FEATURE_COSTS, FEATURE_LABELS, WELCOME_CREDITS, euros } from '@/lib/pricing';
+import { CREDIT_PACKS, SUBSCRIPTIONS, FEATURE_COSTS, FEATURE_LABELS, WELCOME_CREDITS, euros, prixParCredit } from '@/lib/pricing';
 import { getActivePromotion, bonusAbonnementRestant } from '@/lib/promotions';
 import { dateLocaleTag } from '@/i18n/dateLocale';
 import PricingButton from '@/components/PricingButton';
@@ -88,6 +88,7 @@ export default async function TarifsPage() {
               <div>
                 <span className="mono" style={{ fontSize: '1.5rem', fontWeight: 500 }}>{euros(p.prixCentimes)}</span>
                 <div className="mono" style={{ fontSize: '0.78rem', color: 'var(--sourdine)' }}>{p.credits} {t('creditsUnit')}</div>
+                <div className="mono" style={{ fontSize: '0.72rem', color: 'var(--lever-profond)', marginTop: 2 }}>{t('pricePerCredit', { prix: prixParCredit(p) })}</div>
               </div>
               <PricingButton kind="pack" slug={p.slug} loggedIn={loggedIn} configured={stripeConfigured && Boolean(process.env[p.envKey])} />
             </div>

@@ -296,6 +296,7 @@
     "packsSubtitleBase": "Válidos 45 días después de la compra.",
     "packsSubtitlePromo": " Descuento del {pourcent}% ya aplicado al pagar, hasta el {date}.",
     "creditsUnit": "créditos",
+    "pricePerCredit": "es decir, {prix} por lectura",
     "subscriptionsTitle": "Suscripciones",
     "subscriptionsSubtitleBase": "Cancelable en cualquier momento, créditos recargados cada mes.",
     "subscriptionsSubtitlePromo": " Créditos ×{multiplicateur} el primer mes para los próximos {n, plural, one {# suscriptor} other {# suscriptores}}.",

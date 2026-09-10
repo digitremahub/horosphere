@@ -100,3 +100,10 @@ export const WELCOME_CREDITS = 3;
 export function euros(centimes: number): string {
   return (centimes / 100).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 }
+
+// Prix d'un crédit (≈ le prix d'une lecture simple, qui coûte 1 crédit) pour
+// un pack donné — mécaniquement dégressif : plus le pack est gros, moins le
+// crédit coûte cher. Affiché sur /tarifs sous chaque pack.
+export function prixParCredit(pack: CreditPack): string {
+  return euros(pack.prixCentimes / pack.credits);
+}

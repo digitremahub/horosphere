@@ -296,6 +296,7 @@
     "packsSubtitleBase": "Valid for 45 days after purchase.",
     "packsSubtitlePromo": " {pourcent}% discount already applied at checkout, until {date}.",
     "creditsUnit": "credits",
+    "pricePerCredit": "i.e. {prix} per reading",
     "subscriptionsTitle": "Subscriptions",
     "subscriptionsSubtitleBase": "Cancel anytime, credits refilled every month.",
     "subscriptionsSubtitlePromo": " Credits ×{multiplicateur} the first month for the next {n, plural, one {# subscriber} other {# subscribers}}.",
