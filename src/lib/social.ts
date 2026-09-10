@@ -153,12 +153,37 @@ function signeDuJourInstagram(date: Date): Sign {
   return SIGNS[jourAnnee % SIGNS.length];
 }
 
+// À partir du 14 septembre 2026 (décision explicite de l'utilisateur : "on
+// devait faire 2 signes par jour"), Facebook porte aussi une lecture
+// complète par signe — toujours DIFFÉRENT de celui d'Instagram (décalage
+// d'une demi-rotation, 6 signes sur 12) pour ne jamais publier deux fois le
+// même signe le même jour sur les deux plateformes. Avant cette date,
+// Facebook garde son contenu marketing générique (genererFacebookTiktok).
+export const SEUIL_DEUX_SIGNES = '2026-09-14';
+
+function signeDuJourFacebook(date: Date): Sign {
+  const debutAnnee = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  const jourAnnee = Math.floor((date.getTime() - debutAnnee.getTime()) / 86_400_000);
+  return SIGNS[(jourAnnee + SIGNS.length / 2) % SIGNS.length];
+}
+
+/** Ligne de renvoi croisé, douce et marketing, vers l'autre plateforme —
+ * ajoutée uniquement quand deux signes différents sortent le même jour
+ * (voir SEUIL_DEUX_SIGNES). Absente sinon (comportement historique
+ * inchangé pour les posts avant le 14 septembre). */
+function ligneRenvoiCroise(reseau: 'Facebook' | 'Instagram', autreSigne: Sign): string {
+  return reseau === 'Facebook'
+    ? `📸 Un autre signe est à l'honneur aujourd'hui sur notre page Facebook : ${autreSigne.symbole} ${autreSigne.nom}.`
+    : `📱 Et sur notre compte Instagram aujourd'hui : ${autreSigne.symbole} ${autreSigne.nom}.`;
+}
+
 /** Construit le post Instagram du jour à partir d'une vraie lecture
  * (generateHoroscope, qui a déjà son propre repli déterministe sans clé
- * Anthropic — inutile de dupliquer cette logique ici). */
-async function genererPostInstagramSigne(date: Date): Promise<SocialDraft> {
+ * Anthropic — inutile de dupliquer cette logique ici). `autreSigne`, quand
+ * fourni, ajoute le renvoi croisé vers le signe du jour sur Facebook (voir
+ * SEUIL_DEUX_SIGNES). */
+async function genererPostInstagramSigne(date: Date, sign: Sign, autreSigne?: Sign): Promise<SocialDraft> {
   const dateISO = date.toISOString().slice(0, 10);
-  const sign = signeDuJourInstagram(date);
   const reading = await generateHoroscope({ feature: 'horoscope_quotidien', sign, dateISO, langue: 'fr' });
 
   const legende = [
@@ -171,6 +196,7 @@ async function genererPostInstagramSigne(date: Date): Promise<SocialDraft> {
     `✨ Action du jour : ${reading.conseil}`,
     '',
     `Chaque signe a son jour sur Horosphère — découvre le tien sur horosphere.fr.`,
+    ...(autreSigne ? ['', ligneRenvoiCroise('Instagram', autreSigne)] : []),
   ].join('\n');
 
   // Illustration EXCLUSIVEMENT tirée des visuels fixes fournis par
@@ -197,6 +223,54 @@ async function genererPostInstagramSigne(date: Date): Promise<SocialDraft> {
     }
   }
   if (!imageUrl) imageUrl = visuelInstagramDuJour(dateISO);
+
+  return {
+    legende,
+    hashtags: `${HASHTAGS_BASE} #${sign.key} #horoscope${sign.nom.replace(/\s/g, '')}`,
+    imageUrl,
+    scriptVideo: null,
+    mode: reading.mode,
+  };
+}
+
+/** Symétrique de genererPostInstagramSigne pour Facebook, actif à partir du
+ * 14 septembre 2026 (voir SEUIL_DEUX_SIGNES) — même contenu de valeur (une
+ * vraie lecture, pas du marketing générique), sur un signe différent de
+ * celui d'Instagram, avec son propre renvoi croisé. */
+async function genererPostFacebookSigne(date: Date, sign: Sign, autreSigne: Sign): Promise<SocialDraft> {
+  const dateISO = date.toISOString().slice(0, 10);
+  const reading = await generateHoroscope({ feature: 'horoscope_quotidien', sign, dateISO, langue: 'fr' });
+
+  const legende = [
+    `${sign.symbole} ${sign.nom} — ${reading.headline}`,
+    '',
+    `💛 Amour : ${reading.amour}`,
+    `💼 Travail : ${reading.travail}`,
+    `⚡ Énergie : ${reading.energie}`,
+    '',
+    `✨ Action du jour : ${reading.conseil}`,
+    '',
+    `Chaque signe a son jour sur Horosphère — découvre le tien sur horosphere.fr.`,
+    '',
+    ligneRenvoiCroise('Facebook', autreSigne),
+  ].join('\n');
+
+  // Même principe que côté Instagram (voir plus haut) : visuel fixe par
+  // signe en priorité, jamais recadré. Facebook acceptant un plus large
+  // éventail de ratios/formats, le repli utilise la rotation générique
+  // (visuelDuJour) plutôt que le set JPEG dédié à Instagram.
+  let imageUrl: string | null = null;
+  const cheminFixe = imageFixeSigne(sign.key);
+  if (cheminFixe) {
+    imageUrl = `${siteUrl()}${cheminFixe}`;
+  } else {
+    try {
+      imageUrl = await genererIllustrationTotem(sign.nom, `${dateISO}-fb-${sign.key}`);
+    } catch (err) {
+      console.error('genererPostFacebookSigne: illustration IA échouée, repli visuel statique', err);
+    }
+  }
+  if (!imageUrl) imageUrl = visuelDuJour(dateISO);
 
   return {
     legende,
@@ -339,14 +413,31 @@ async function genererFacebookTiktok(dateISO: string): Promise<{ facebook: Socia
   return genererFacebookTiktokDemo(dateISO);
 }
 
-/** Génère le contenu du jour pour les trois plateformes. Instagram
- * (horoscope complet gratuit, signe du jour) et Facebook/TikTok (marketing)
- * sont deux pipelines indépendants — chacun avec son propre repli
- * déterministe, jamais de blocage du pipeline de publication. */
+/** Génère le contenu du jour pour les trois plateformes.
+ *
+ * À partir du 14 septembre 2026 (SEUIL_DEUX_SIGNES), Instagram et Facebook
+ * portent chacun une lecture complète mais sur un signe DIFFÉRENT, avec un
+ * renvoi croisé doux vers l'autre réseau — TikTok reste du marketing
+ * générique (genererFacebookTiktok, inchangé). Avant cette date, seul
+ * Instagram est par signe ; Facebook/TikTok restent le pipeline marketing
+ * générique historique. Dans tous les cas, chaque pipeline a son propre
+ * repli déterministe : jamais de blocage de la publication. */
 export async function generateDailySocialContent(date: Date = new Date()): Promise<DailySocialContent> {
   const dateISO = date.toISOString().slice(0, 10);
+
+  if (dateISO >= SEUIL_DEUX_SIGNES) {
+    const signeInstagram = signeDuJourInstagram(date);
+    const signeFacebook = signeDuJourFacebook(date);
+    const [instagram, facebook, { tiktok }] = await Promise.all([
+      genererPostInstagramSigne(date, signeInstagram, signeFacebook),
+      genererPostFacebookSigne(date, signeFacebook, signeInstagram),
+      genererFacebookTiktok(dateISO),
+    ]);
+    return { instagram, facebook, tiktok };
+  }
+
   const [instagram, { facebook, tiktok }] = await Promise.all([
-    genererPostInstagramSigne(date),
+    genererPostInstagramSigne(date, signeDuJourInstagram(date)),
     genererFacebookTiktok(dateISO),
   ]);
   return { instagram, facebook, tiktok };
