@@ -158,7 +158,14 @@ export default async function ActualitesPage({ searchParams }: { searchParams: P
 
         {!error && items.length > 0 && selected && (
           <div className="actu-split">
-            <div className="actu-liste">
+            <div>
+              <Link
+                href="/actualites/tous"
+                style={{ display: 'block', fontSize: '0.82rem', color: 'var(--lever-profond)', textDecoration: 'underline', textAlign: 'center', marginBottom: 14 }}
+              >
+                {t('seeAllArticles')}
+              </Link>
+              <div className="actu-liste">
               {items.map((item) => {
                 const active = item.slug === selected.slug;
                 return (
@@ -189,12 +196,7 @@ export default async function ActualitesPage({ searchParams }: { searchParams: P
                   </Link>
                 );
               })}
-              <Link
-                href="/actualites/tous"
-                style={{ fontSize: '0.82rem', color: 'var(--lever-profond)', textDecoration: 'underline', textAlign: 'center', padding: '6px 0 2px' }}
-              >
-                {t('seeAllArticles')}
-              </Link>
+              </div>
             </div>
 
             <div className="actu-separateur" aria-hidden="true" />
