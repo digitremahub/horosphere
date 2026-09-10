@@ -65,6 +65,12 @@ body{
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   line-height: 1.6;
+  /* Filet de sécurité : une rangée défilante mal contenue (flex/grid sans
+     min-width:0 sur son parent) peut sinon faire déborder toute la page
+     horizontalement en mobile — déjà arrivé une fois sur /actualites (voir
+     .actu-liste). Le composant fautif reste à corriger, mais ceci évite
+     que le même bug ne redevienne visible ailleurs sur le site. */
+  overflow-x: hidden;
 }
 
 a{ color: inherit; }

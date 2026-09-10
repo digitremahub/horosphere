@@ -158,7 +158,7 @@ export default async function ActualitesPage({ searchParams }: { searchParams: P
 
         {!error && items.length > 0 && selected && (
           <div className="actu-split">
-            <div>
+            <div style={{ minWidth: 0 }}>
               <Link
                 href="/actualites/tous"
                 style={{ display: 'block', fontSize: '0.82rem', color: 'var(--lever-profond)', textDecoration: 'underline', textAlign: 'center', marginBottom: 14 }}
@@ -246,7 +246,7 @@ export default async function ActualitesPage({ searchParams }: { searchParams: P
         @media (max-width: 720px){ .actu-en-direct{ grid-template-columns: 1fr !important; } }
 
         .actu-split{ display: grid; grid-template-columns: 280px 1px 1fr; gap: 36px; align-items: start; }
-        .actu-liste{ display: flex; flex-direction: column; max-height: 760px; overflow-y: auto; padding-right: 4px; }
+        .actu-liste{ display: flex; flex-direction: column; max-height: 760px; overflow-y: auto; padding-right: 4px; min-width: 0; }
         .actu-separateur{ background: var(--trait); width: 1px; align-self: stretch; min-height: 100%; }
 
         @media (max-width: 900px){
