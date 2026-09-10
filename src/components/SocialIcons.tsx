@@ -26,12 +26,19 @@ const ICONS = { instagram: InstagramIcon, facebook: FacebookIcon } as const;
  * style que ScrollToTopButton (cercle, fond nacre, ombre), empilés en bas à
  * GAUCHE pour ne jamais chevaucher le bouton "remonter en haut" (bas à
  * droite). N'affiche que les réseaux configurés dans lib/socialLinks.ts
- * (jamais de bouton vers un compte pas encore lancé, ex. TikTok). */
+ * (jamais de bouton vers un compte pas encore lancé, ex. TikTok).
+ *
+ * Étant fixés à l'écran, ils recouvrent inévitablement UN contenu de page
+ * différent selon la position de défilement (signalé plusieurs fois par
+ * capture d'écran, notamment en mobile où le texte occupe toute la
+ * largeur) — atténué en réduisant leur taille et en les rendant semi-
+ * transparents par défaut (pleinement visibles au survol/tap, via
+ * .social-icon-float dans globals.css), plutôt qu'en les retirant. */
 export default function SocialIcons() {
   const entries = (Object.entries(SOCIAL_LINKS) as [keyof typeof ICONS, string][]).filter(([, url]) => Boolean(url));
   if (entries.length === 0) return null;
   return (
-    <div style={{ position: 'fixed', bottom: 24, left: 24, zIndex: 50, display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div style={{ position: 'fixed', bottom: 16, left: 16, zIndex: 50, display: 'flex', flexDirection: 'column', gap: 8 }}>
       {entries.map(([key, url]) => {
         const Icon = ICONS[key];
         return (
@@ -41,9 +48,10 @@ export default function SocialIcons() {
             target="_blank"
             rel="noopener noreferrer"
             aria-label={key}
+            className="social-icon-float"
             style={{
-              width: 48,
-              height: 48,
+              width: 36,
+              height: 36,
               borderRadius: '50%',
               border: '1px solid var(--trait)',
               background: 'var(--nacre)',

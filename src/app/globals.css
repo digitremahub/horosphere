@@ -73,6 +73,23 @@ body{
   overflow-x: hidden;
 }
 
+/* Boutons flottants (icônes réseaux, remonter en haut) — signalés plusieurs
+   fois en capture d'écran comme recouvrant du texte pendant le défilement,
+   surtout en mobile où le contenu occupe toute la largeur. Semi-transparents
+   par défaut, pleinement visibles au survol/tap plutôt que retirés. */
+.social-icon-float{
+  opacity: 0.55;
+  transition: opacity 0.15s ease;
+}
+.social-icon-float:hover,
+.social-icon-float:focus-visible,
+.social-icon-float:active{
+  opacity: 1;
+}
+@media (hover: none){
+  .social-icon-float{ opacity: 0.7; }
+}
+
 a{ color: inherit; }
 
 h1, h2, h3, .display{

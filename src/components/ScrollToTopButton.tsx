@@ -24,13 +24,14 @@ export default function ScrollToTopButton() {
       type="button"
       onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
       aria-label="Revenir en haut de la page"
+      className="social-icon-float"
       style={{
         position: 'fixed',
-        bottom: 24,
-        right: 24,
+        bottom: 16,
+        right: 16,
         zIndex: 50,
-        width: 48,
-        height: 48,
+        width: 36,
+        height: 36,
         borderRadius: '50%',
         border: '1px solid var(--trait)',
         background: 'var(--nacre)',
@@ -42,7 +43,7 @@ export default function ScrollToTopButton() {
         cursor: 'pointer',
       }}
     >
-      <img src="/images/logo-mark.png" alt="" width={26} height={26} style={{ display: 'block', borderRadius: '50%' }} />
+      <img src="/images/logo-mark.png" alt="" width={20} height={20} style={{ display: 'block', borderRadius: '50%' }} />
     </button>
   );
 }
