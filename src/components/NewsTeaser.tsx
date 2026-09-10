@@ -7,8 +7,11 @@ import { dateLocaleTag } from '@/i18n/dateLocale';
 // Aperçu des derniers articles "actualité du ciel" sur la page d'accueil —
 // jusqu'à 4, chacun renvoyant directement vers l'article ouvert sur
 // /actualites (?a=slug), qui reste la page complète pour qui aime la
-// lecture. N'affiche rien si la base n'est pas configurée ou qu'aucun
-// article n'a encore été publié (même logique que SocialCarousel).
+// lecture. Pas de lien "voir tous les articles" ici (décision explicite :
+// la mosaïque /actualites/tous n'est accessible que depuis /actualites,
+// jamais depuis ce carrousel d'accueil). N'affiche rien si la base n'est
+// pas configurée ou qu'aucun article n'a encore été publié (même logique
+// que SocialCarousel).
 export default async function NewsTeaser() {
   if (!dbConfigured) return null;
   const [items, t, locale] = await Promise.all([
@@ -23,9 +26,6 @@ export default async function NewsTeaser() {
       <div style={{ textAlign: 'center', marginBottom: 28 }}>
         <div className="pill" style={{ marginBottom: 16, display: 'inline-block' }}>{t('newsPill')}</div>
         <h2 style={{ fontSize: '1.6rem', marginBottom: 10 }}>{t('newsTitle')}</h2>
-        <Link href="/actualites/tous" style={{ fontSize: '0.86rem', color: 'var(--lever-profond)', textDecoration: 'underline' }}>
-          {t('newsSeeAll')}
-        </Link>
       </div>
       <div className="news-teaser-row">
         {items.map((item) => (
