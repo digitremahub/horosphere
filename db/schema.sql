@@ -370,3 +370,10 @@ CREATE INDEX IF NOT EXISTS preuves_suivi_social_statut_idx ON preuves_suivi_soci
 -- depuis ≥3 mois consécutifs. Colonne d'observabilité uniquement : l'état
 -- réel de facturation vit dans Stripe (le coupon appliqué à l'abonnement).
 ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS parrainage_gratuit BOOLEAN NOT NULL DEFAULT false;
+
+-- ===== Rappel avant renouvellement d'abonnement =====
+-- Voir lib/subscriptionRenewalReminder.ts — retient la date de fin de
+-- période déjà notifiée, pour n'envoyer qu'un seul rappel par cycle de
+-- facturation même si le cron quotidien retombe plusieurs jours de suite
+-- dans la fenêtre d'anticipation.
+ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS rappel_renouvellement_periode TIMESTAMPTZ;

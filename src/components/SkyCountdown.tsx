@@ -53,6 +53,10 @@ function pad(n: number) {
 
 export default function SkyCountdown({ events, personnalisations }: { events: SkyEvent[]; personnalisations?: Record<string, string> }) {
   const [now, setNow] = useState<number | null>(null);
+  // "Pour vous" caché par défaut (sinon les cartes sont trop hautes en
+  // mosaïque mobile) — révélé au survol (desktop) via CSS, ou au clic/tap
+  // (mobile, pas de survol) via cet état. Un seul ouvert à la fois.
+  const [ouvert, setOuvert] = useState<string | null>(null);
   const locale = useLocale();
   const t = useTranslations('SkyEvents');
 
@@ -78,8 +82,14 @@ export default function SkyCountdown({ events, personnalisations }: { events: Sk
 
         const impact = personnalisations?.[e.key];
 
+        const estOuvert = ouvert === e.key;
         return (
-          <div key={e.key} className="card" style={{ padding: '14px 12px', display: 'flex', flexDirection: 'column', gap: 8, textAlign: 'left', boxShadow: 'none' }}>
+          <div
+            key={e.key}
+            className="card sky-card"
+            onClick={() => impact && setOuvert((o) => (o === e.key ? null : e.key))}
+            style={{ padding: '14px 12px', display: 'flex', flexDirection: 'column', gap: 8, textAlign: 'left', boxShadow: 'none', cursor: impact ? 'pointer' : undefined }}
+          >
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ flexShrink: 0 }}>{icone(e.key)}</div>
               <div style={{ minWidth: 0 }}>
@@ -91,15 +101,25 @@ export default function SkyCountdown({ events, personnalisations }: { events: Sk
               </div>
             </div>
             {impact && (
-              <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--ombre)', fontStyle: 'italic', borderTop: '1px solid var(--trait)', paddingTop: 8 }}>
-                {impact}
-              </p>
+              <>
+                <div className="sky-impact-hint" style={{ margin: 0, fontSize: '0.66rem', color: 'var(--lever-profond)', borderTop: '1px solid var(--trait)', paddingTop: 6 }}>
+                  {t('forYouHint')}
+                </div>
+                <p
+                  className="sky-impact"
+                  style={{ margin: 0, fontSize: '0.72rem', color: 'var(--ombre)', fontStyle: 'italic', ...(estOuvert ? { display: 'block' } : {}) }}
+                >
+                  {impact}
+                </p>
+              </>
             )}
           </div>
         );
       })}
       <style>{`
-        @media (max-width: 420px){ .sky-countdown{ grid-template-columns: 1fr !important; } }
+        .sky-impact{ display: none; }
+        .sky-card:hover .sky-impact{ display: block; }
+        @media (hover: hover){ .sky-card:hover .sky-impact-hint{ display: none; } }
       `}</style>
     </div>
   );

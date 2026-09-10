@@ -174,13 +174,13 @@ export default async function ActualitesPage({ searchParams }: { searchParams: P
                 <div className="card" style={{ padding: '22px 20px', boxShadow: 'none' }}>
                   <div className="pill" style={{ marginBottom: 14 }}>{t('thisWeek')}</div>
                   <h3 style={{ fontSize: '1.02rem', marginBottom: 16 }}>{t('mostAffectedSigns')}</h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <div className="signes-concernes-grille">
                     {signesConcernes.map((s, i) => {
                       const aspect = aspectDe(s.texte);
                       return (
-                        <div key={i} style={{ borderLeft: '2px solid var(--lever)', paddingLeft: 14 }}>
-                          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
-                            <span style={{ fontSize: '1.2rem', color: 'var(--lever-profond)' }}>{s.symbole}</span>
+                        <div key={i} className="card" style={{ padding: '16px 16px', boxShadow: 'none', borderColor: 'var(--lever)' }}>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
+                            <span style={{ fontSize: '1.4rem', color: 'var(--lever-profond)' }}>{s.symbole}</span>
                             {aspect && (
                               <span className="mono" style={{ fontSize: '0.65rem', color: 'var(--sourdine)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                                 {aspect}
@@ -246,6 +246,8 @@ export default async function ActualitesPage({ searchParams }: { searchParams: P
 
         .actu-liste{ display: flex; flex-direction: row; overflow-x: auto; gap: 14px; padding-bottom: 4px; min-width: 0; }
         .actu-liste-item{ min-width: 220px; max-width: 220px; flex-shrink: 0; }
+
+        .signes-concernes-grille{ display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
       `}</style>
     </main>
   );

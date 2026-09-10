@@ -5,29 +5,26 @@ import ZodiacWheelIllustration from '@/components/ZodiacWheelIllustration';
 import ScrollReveal from '@/components/ScrollReveal';
 import SocialCarousel from '@/components/SocialCarousel';
 import NewsTeaser from '@/components/NewsTeaser';
+import PromoBanner from '@/components/PromoBanner';
 import TeaserVideoSection from '@/components/TeaserVideoSection';
 import WeeklyRecapSection from '@/components/WeeklyRecapSection';
 import { Link } from '@/i18n/navigation';
 import { auth } from '@/lib/auth';
 import { dbConfigured } from '@/lib/db';
 import { getBalance, hasActiveSubscription } from '@/lib/credits';
-import { getActivePromotion } from '@/lib/promotions';
-import { WELCOME_CREDITS } from '@/lib/pricing';
 
 // Photo réelle du rituel quotidien — voir la bannière tarifs et la
 // connexion pour les deux autres.
 const PHOTO_RITUEL = '/images/hero-accueil.png';
 
+// Le détail de l'offre de bienvenue (crédits promo, durée) est désormais
+// porté par <PromoBanner> en haut de page, plus visible qu'enfoui dans
+// cette étape "01" — cette liste reste volontairement générique, avec ou
+// sans promotion active.
 async function etapes() {
-  const [t, promo] = await Promise.all([getTranslations('Home'), getActivePromotion().catch(() => null)]);
-  const promoBienvenue = promo?.creditsBienvenue != null && promo.creditsBienvenueJours != null ? promo : null;
+  const t = await getTranslations('Home');
   return [
-    {
-      titre: t('step1Title'),
-      texte: promoBienvenue
-        ? t('step1TextPromo', { credits: promoBienvenue.creditsBienvenue!, defaut: WELCOME_CREDITS, jours: promoBienvenue.creditsBienvenueJours! })
-        : t('step1Text'),
-    },
+    { titre: t('step1Title'), texte: t('step1Text') },
     { titre: t('step2Title'), texte: t('step2Text') },
     { titre: t('step3Title'), texte: t('step3Text') },
   ];
@@ -79,6 +76,11 @@ export default async function HomePage() {
       <div className="page-bandeau page-bandeau--hero">
         <img src="/images/accueil-bandeau-astrolabe.webp" alt={t('heroImageAlt')} loading="eager" />
       </div>
+
+      {/* 0.2 Bandeau promotion — n'apparaît que si une promotion est
+         active (voir lib/promotions.ts) ; remplace le détail promo qui
+         était noyé dans l'étape "01" du parcours plus bas. */}
+      <PromoBanner />
 
       {/* 0.5 Vidéo teaser (Elian & Lya) — visiteurs non connectés
          uniquement, n'apparaît que si un asset est configuré. */}
