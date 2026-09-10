@@ -13,6 +13,7 @@ import { currentPlanetPositions, zodiacSignAt } from './planets';
 import { signesLesPlusImpactes, soleilCycleActuel, ASPECT_LABEL, type ImpactedSign } from './aspects';
 import { callClaude } from './anthropic';
 import { visuelActuDuJour } from './social';
+import { genererIllustrationSociale } from './openaiImage';
 import { mulberry32, hashStr, pick } from './fallback-generator';
 import { listPublishedNews } from './news';
 import { dbConfigured } from './db';
@@ -87,7 +88,22 @@ function retrogradesTxt(retrogrades: { nom: string }[]): string {
   return `Fait notable : ${noms} ${verbe} actuellement rétrograde${retrogrades.length > 1 ? 's' : ''} — un ralentissement apparent, vu depuis la Terre, qui invite plutôt à revoir et ajuster qu'à lancer du neuf sur ce terrain-là.`;
 }
 
-function fallbackSkyNews(date: Date): SkyNewsDraft {
+/** Illustration de l'article — une vraie scène générée par IA à partir du
+ * résumé réel de la semaine (voir genererIllustrationSociale) plutôt qu'un
+ * visuel décoratif recyclé, quand une clé OpenAI est configurée ; repli sur
+ * la rotation existante (visuelActuDuJour) sinon ou en cas d'échec, jamais
+ * bloquant pour la génération de l'article. */
+async function imageArticle(dateISO: string, sujet: string): Promise<string> {
+  try {
+    const ia = await genererIllustrationSociale(sujet, `actu-${dateISO}`);
+    if (ia) return ia;
+  } catch (err) {
+    console.error('imageArticle: illustration IA échouée, repli visuel statique', err);
+  }
+  return visuelActuDuJour(dateISO);
+}
+
+async function fallbackSkyNews(date: Date): Promise<SkyNewsDraft> {
   const { moon, evenements, planetes, retrogrades, impactes, cycle } = contexteDuCiel(date);
   const dateISO = date.toISOString().slice(0, 10);
   const rng = mulberry32(hashStr('skynews::' + dateISO));
@@ -116,11 +132,15 @@ function fallbackSkyNews(date: Date): SkyNewsDraft {
     .filter(Boolean)
     .join('\n\n');
 
+  const resume = prochainLabel
+    ? `Lune en ${moon.label.toLowerCase()}, et ${prochainLabel} à l'horizon.`
+    : `Lune en ${moon.label.toLowerCase()} cette semaine.`;
+
   return {
     titre,
-    resume: prochainLabel ? `Lune en ${moon.label.toLowerCase()}, et ${prochainLabel} à l'horizon.` : `Lune en ${moon.label.toLowerCase()} cette semaine.`,
+    resume,
     contenu,
-    imageUrl: visuelActuDuJour(dateISO),
+    imageUrl: await imageArticle(dateISO, resume),
     mode: 'demo',
   };
 }
@@ -148,7 +168,7 @@ async function dernierArticlePublie(): Promise<{ titre: string; contenu: string 
 export async function generateSkyNews(date: Date = new Date()): Promise<SkyNewsDraft> {
   const dateISO = date.toISOString().slice(0, 10);
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return fallbackSkyNews(date);
+  if (!apiKey) return await fallbackSkyNews(date);
 
   const { moon, evenements, planetes, retrogrades, impactes, cycle } = contexteDuCiel(date);
   const precedent = await dernierArticlePublie();
@@ -186,15 +206,16 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exac
 
   try {
     const parsed = await callClaude(apiKey, model, prompt, 900);
+    const resumeIA = String(parsed.resume ?? '');
     return {
       titre: String(parsed.titre ?? ''),
-      resume: String(parsed.resume ?? ''),
+      resume: resumeIA,
       contenu: String(parsed.contenu ?? ''),
-      imageUrl: visuelActuDuJour(dateISO),
+      imageUrl: await imageArticle(dateISO, resumeIA || String(parsed.titre ?? '')),
       mode: 'ia',
     };
   } catch (err) {
     console.error('generateSkyNews failed, fallback démo', err);
-    return fallbackSkyNews(date);
+    return await fallbackSkyNews(date);
   }
 }

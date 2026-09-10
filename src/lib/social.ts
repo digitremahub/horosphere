@@ -46,12 +46,20 @@ export function siteUrl(): string {
 // dans ce pipeline) — cohérent avec l'identité visuelle existante.
 // Facebook accepte le PNG sans problème (Graph API), donc ces cinq visuels
 // (dont bg-tarifs.png, au ratio 2.25:1) restent utilisables tels quels.
+// Les 3 visuels "actualités" (carte du ciel, sphère armillaire, éclipse)
+// rejoignent la rotation ici — même identité astro, pour varier davantage
+// les posts marketing génériques (pertinent surtout avant le 14/09, date à
+// partir de laquelle Facebook porte une lecture par signe avec sa propre
+// image dédiée, voir genererPostFacebookSigne).
 const VISUELS = [
   '/images/hero-accueil.png',
   '/images/bg-theme-astral.png',
   '/images/bg-tarifs.png',
   '/images/bg-resultat-lecture.png',
   '/images/bg-connexion.png',
+  '/images/actualites/carte-du-ciel.webp',
+  '/images/actualites/sphere-armillaire.webp',
+  '/images/actualites/eclipse.webp',
 ];
 
 // Instagram (Content Publishing API) impose du JPEG strict et un ratio
