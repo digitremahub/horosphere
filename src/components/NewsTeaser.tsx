@@ -23,7 +23,7 @@ export default async function NewsTeaser() {
       <div style={{ textAlign: 'center', marginBottom: 28 }}>
         <div className="pill" style={{ marginBottom: 16, display: 'inline-block' }}>{t('newsPill')}</div>
         <h2 style={{ fontSize: '1.6rem', marginBottom: 10 }}>{t('newsTitle')}</h2>
-        <Link href="/actualites" style={{ fontSize: '0.86rem', color: 'var(--lever-profond)', textDecoration: 'underline' }}>
+        <Link href="/actualites/tous" style={{ fontSize: '0.86rem', color: 'var(--lever-profond)', textDecoration: 'underline' }}>
           {t('newsSeeAll')}
         </Link>
       </div>

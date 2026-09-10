@@ -43,6 +43,28 @@ export async function getNewsBySlug(slug: string): Promise<NewsItem | null> {
   return rows[0] ?? null;
 }
 
+// Les articles ne sortent plus à date fixe mais au fil des vraies périodes
+// de changement du ciel (voir lib/skyNews.ts) — afficher la date exacte de
+// publication donnerait à tort l'impression d'un calendrier rigide. On
+// affiche plutôt la semaine (lundi-dimanche) que couvre l'article. Utilisé
+// par /actualites (lecteur) et /actualites/tous (mosaïque de tous les
+// articles) — d'où l'export ici plutôt qu'une définition locale dupliquée.
+export function semaineDe(date: Date): { debut: Date; fin: Date } {
+  const jour = date.getDay(); // 0 = dimanche ... 6 = samedi
+  const decalageDepuisLundi = jour === 0 ? 6 : jour - 1;
+  const debut = new Date(date);
+  debut.setDate(date.getDate() - decalageDepuisLundi);
+  const fin = new Date(debut);
+  fin.setDate(debut.getDate() + 6);
+  return { debut, fin };
+}
+
+export function semaineLabel(publieLe: string, dateLocale: string, t: (key: string, values: Record<string, string>) => string): string {
+  const { debut, fin } = semaineDe(new Date(publieLe));
+  const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long' };
+  return t('weekOf', { start: debut.toLocaleDateString(dateLocale, opts), end: fin.toLocaleDateString(dateLocale, opts) });
+}
+
 /** Actualités publiées dans les `days` derniers jours — base de la
  * newsletter hebdomadaire. */
 export async function getRecentPublishedNews(days = 7): Promise<NewsItem[]> {

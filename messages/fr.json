@@ -121,7 +121,11 @@
     "empty": "Rien de publié pour l'instant — revenez bientôt.",
     "thisWeek": "Cette semaine",
     "mostAffectedSigns": "Signes les plus concernés",
-    "weekOf": "Semaine du {start} au {end}"
+    "weekOf": "Semaine du {start} au {end}",
+    "seeAllArticles": "Toutes les actualités →",
+    "allArticlesTitle": "Toutes les actualités",
+    "allArticlesSubtitle": "L'ensemble des lectures de fond publiées, semaine après semaine.",
+    "backToLive": "← Retour au ciel en direct"
   },
   "Profil": {
     "imageAlt": "Une silhouette contemplant le ciel étoilé à travers un astrolabe, en fond du formulaire de naissance.",

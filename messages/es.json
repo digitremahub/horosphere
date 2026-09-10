@@ -121,7 +121,11 @@
     "empty": "Nada publicado todavía — vuelve pronto.",
     "thisWeek": "Esta semana",
     "mostAffectedSigns": "Signos más afectados",
-    "weekOf": "Semana del {start} al {end}"
+    "weekOf": "Semana del {start} al {end}",
+    "seeAllArticles": "Todas las noticias →",
+    "allArticlesTitle": "Todas las noticias",
+    "allArticlesSubtitle": "Todas las lecturas de fondo publicadas hasta ahora, semana tras semana.",
+    "backToLive": "← Volver al cielo en directo"
   },
   "Profil": {
     "imageAlt": "Una silueta contemplando el cielo estrellado a través de un astrolabio, de fondo en el formulario de nacimiento.",

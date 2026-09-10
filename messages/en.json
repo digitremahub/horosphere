@@ -121,7 +121,11 @@
     "empty": "Nothing published yet — check back soon.",
     "thisWeek": "This week",
     "mostAffectedSigns": "Most affected signs",
-    "weekOf": "Week of {start} to {end}"
+    "weekOf": "Week of {start} to {end}",
+    "seeAllArticles": "All articles →",
+    "allArticlesTitle": "All articles",
+    "allArticlesSubtitle": "Every in-depth read published so far, week after week.",
+    "backToLive": "← Back to the live sky"
   },
   "Profil": {
     "imageAlt": "A silhouette gazing at the starry sky through an astrolabe, background of the birth details form.",
