@@ -92,7 +92,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     if (!isAdminEmail(email)) return;
     const userId = Number(formData.get('userId'));
     const mois = Math.trunc(Number(formData.get('mois')));
-    const resultat = await offrirMoisAbonnement(userId, mois);
+    const planSlug = String(formData.get('planSlug') || '') || undefined;
+    const resultat = await offrirMoisAbonnement(userId, mois, planSlug);
     redirect({
       href: { pathname: '/app/admin', query: { ok: `abo:${resultat.ok ? '1' : '0'}:${encodeURIComponent(resultat.message)}` } },
       locale,
@@ -483,7 +484,31 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                           </button>
                         </form>
                       ) : (
-                        <span style={{ color: 'var(--sourdine)' }}>—</span>
+                        <form action={offrirAbonnement} style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 180 }}>
+                          <input type="hidden" name="userId" value={u.user_id} />
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <select name="planSlug" required style={{ ...inputStyle, padding: '5px 6px', fontSize: '0.74rem' }}>
+                              <option value="">Forfait…</option>
+                              {SUBSCRIPTIONS.map((s) => (
+                                <option key={s.slug} value={s.slug}>{s.nom}</option>
+                              ))}
+                            </select>
+                            <input
+                              type="number"
+                              name="mois"
+                              min={1}
+                              max={12}
+                              placeholder="1"
+                              style={{ ...inputStyle, width: 48, padding: '5px 8px', fontSize: '0.74rem' }}
+                            />
+                            <button type="submit" className="btn btn-ghost" style={{ fontSize: '0.74rem', padding: '5px 10px', whiteSpace: 'nowrap' }}>
+                              🎁
+                            </button>
+                          </div>
+                          <span style={{ fontSize: '0.66rem', color: 'var(--sourdine)' }}>
+                            ⚠️ Pas encore abonné : crée un nouvel abonnement gratuit. Sans carte enregistrée avant la fin de l&apos;essai, il s&apos;arrête tout seul ensuite.
+                          </span>
+                        </form>
                       )}
                     </td>
                     <td style={{ padding: '8px 10px' }}>

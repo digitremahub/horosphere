@@ -1,11 +1,14 @@
 import { getLocale, getTranslations } from 'next-intl/server';
 import { redirect, Link } from '@/i18n/navigation';
-import { auth } from '@/lib/auth';
+import { auth, signOut } from '@/lib/auth';
 import { getProfile, saveProfile } from '@/lib/profile';
 import { dbConfigured } from '@/lib/db';
 import { validatePassword, setUserPassword, userHasPassword } from '@/lib/password';
+import { changerAdresseEmail, EmailDejaUtiliseError } from '@/lib/account';
 import { lienParrainage, CREDITS_PARRAIN, CREDITS_FILLEUL } from '@/lib/referral';
 import ShareButton from '@/components/ShareButton';
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const inputStyle: React.CSSProperties = {
   padding: '11px 14px',
@@ -17,7 +20,7 @@ const inputStyle: React.CSSProperties = {
   width: '100%',
 };
 
-export default async function ProfilPage({ searchParams }: { searchParams: Promise<{ mdp?: string; naissance?: string }> }) {
+export default async function ProfilPage({ searchParams }: { searchParams: Promise<{ mdp?: string; naissance?: string; email?: string }> }) {
   const session = await auth();
   const locale = await getLocale();
   const t = await getTranslations('Profil');
@@ -25,7 +28,7 @@ export default async function ProfilPage({ searchParams }: { searchParams: Promi
     redirect({ href: '/connexion', locale });
   }
 
-  const { mdp, naissance } = await searchParams;
+  const { mdp, naissance, email: emailStatut } = await searchParams;
   const userId = Number((session!.user as { id?: string }).id);
   let profile: Awaited<ReturnType<typeof getProfile>> = null;
   let error: string | null = null;
@@ -88,6 +91,31 @@ export default async function ProfilPage({ searchParams }: { searchParams: Promi
     });
 
     redirect({ href: '/app', locale });
+  }
+
+  async function changerEmail(formData: FormData) {
+    'use server';
+    const session = await auth();
+    if (!session?.user) redirect({ href: '/connexion', locale });
+    const uid = Number((session!.user as { id?: string }).id);
+
+    const nouvelEmail = String(formData.get('nouvel_email') || '').trim().toLowerCase();
+    if (!EMAIL_REGEX.test(nouvelEmail)) {
+      redirect({ href: { pathname: '/app/profil', query: { email: 'invalide' } }, locale });
+    }
+
+    try {
+      await changerAdresseEmail(uid, nouvelEmail);
+    } catch (err) {
+      const dejaPris = err instanceof EmailDejaUtiliseError;
+      redirect({ href: { pathname: '/app/profil', query: { email: dejaPris ? 'existe' : 'erreur' } }, locale });
+    }
+
+    // L'e-mail sert d'identifiant de connexion : la session en cours (JWT)
+    // garde l'ancienne adresse tant qu'elle n'est pas renouvelée. On
+    // déconnecte donc immédiatement plutôt que d'afficher une adresse
+    // périmée — la personne se reconnecte avec la nouvelle juste après.
+    await signOut({ redirectTo: '/connexion?email=change' });
   }
 
   async function submitPassword(formData: FormData) {
@@ -241,6 +269,36 @@ export default async function ProfilPage({ searchParams }: { searchParams: Promi
             {mandatory ? t('createProfile') : t('save')}
           </button>
         </form>
+
+        {dbConfigured && (
+          <div className="card" style={{ padding: '26px 24px', marginBottom: 28 }}>
+            <div className="pill" style={{ marginBottom: 14 }}>{t('securityPill')}</div>
+            <h2 style={{ fontSize: '1.1rem', marginBottom: 8 }}>{t('emailTitle')}</h2>
+            <p style={{ color: 'var(--ombre)', fontSize: '0.86rem', marginBottom: 4 }}>{t('emailCurrentLabel')}</p>
+            <p style={{ fontWeight: 600, marginBottom: 18 }}>{session!.user!.email}</p>
+
+            {emailStatut === 'invalide' && (
+              <p style={{ fontSize: '0.86rem', color: 'var(--lever-profond)', marginBottom: 14 }}>{t('emailInvalid')}</p>
+            )}
+            {emailStatut === 'existe' && (
+              <p style={{ fontSize: '0.86rem', color: 'var(--lever-profond)', marginBottom: 14 }}>{t('emailExists')}</p>
+            )}
+            {emailStatut === 'erreur' && (
+              <p style={{ fontSize: '0.86rem', color: 'var(--lever-profond)', marginBottom: 14 }}>{t('emailError')}</p>
+            )}
+
+            <form action={changerEmail} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div>
+                <label htmlFor="nouvel_email" className="field-label">{t('newEmailLabel')}</label>
+                <input id="nouvel_email" name="nouvel_email" type="email" required placeholder="nouvelle@adresse.com" style={inputStyle} />
+              </div>
+              <button type="submit" className="btn btn-ghost" style={{ alignSelf: 'flex-start' }}>
+                {t('changeEmailBtn')}
+              </button>
+            </form>
+            <p style={{ fontSize: '0.76rem', color: 'var(--sourdine)', marginTop: 10 }}>{t('emailChangeHint')}</p>
+          </div>
+        )}
 
         {dbConfigured && (
           <div className="card" style={{ padding: '26px 24px' }}>

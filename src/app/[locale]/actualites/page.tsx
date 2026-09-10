@@ -2,10 +2,14 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { listPublishedNews, splitArticleSections } from '@/lib/news';
 import { dbConfigured } from '@/lib/db';
+import { auth } from '@/lib/auth';
+import { getProfile } from '@/lib/profile';
+import { signFromBirthdate } from '@/lib/zodiac';
 import AstrolabeIllustration from '@/components/AstrolabeIllustration';
 import MoonOfTheDay from '@/components/MoonOfTheDay';
 import SkyCountdown from '@/components/SkyCountdown';
 import { getUpcomingSkyEvents } from '@/lib/skyEvents';
+import { interpretationPersonnelle } from '@/lib/skyEventsPersonnels';
 import { dateLocaleTag } from '@/i18n/dateLocale';
 import { translatedTitles, translatedArticle, type NewsLocale } from '@/lib/translate';
 
@@ -13,7 +17,11 @@ export const metadata = {
   title: 'Actualités — Horosphère',
 };
 
-export const revalidate = 300;
+// Pas de `revalidate` fixe ici : le compte à rebours du ciel est maintenant
+// personnalisé selon le signe de la personne connectée (voir
+// interpretationPersonnelle ci-dessous), donc rendu à la demande plutôt que
+// partagé entre tous les visiteurs — le reste de la page (articles) profite
+// quand même du cache HTTP habituel de Next.js pour les visiteurs anonymes.
 
 const ASPECT_HINT: Record<string, string> = {
   'en prise directe': 'conjonction',
@@ -58,6 +66,31 @@ export default async function ActualitesPage({ searchParams }: { searchParams: P
   const locale = await getLocale();
   const t = await getTranslations('Actualites');
   const skyEvents = getUpcomingSkyEvents();
+
+  // Impact personnalisé du compte à rebours ("ce que ça change pour moi") —
+  // seulement pour une personne connectée avec un profil déjà rempli ;
+  // aucun signe à deviner ou approximer pour un visiteur anonyme, la
+  // section reste alors simplement sans ce complément.
+  let personnalisations: Record<string, string> | undefined;
+  if (dbConfigured) {
+    try {
+      const session = await auth();
+      const userId = session?.user ? Number((session.user as { id?: string }).id) : null;
+      const profile = userId ? await getProfile(userId) : null;
+      if (profile) {
+        const [, m, d] = profile.date_naissance.split('-').map(Number);
+        const signeKey = signFromBirthdate(m, d).key;
+        personnalisations = Object.fromEntries(
+          skyEvents
+            .map((e) => [e.key, interpretationPersonnelle(e, signeKey)] as const)
+            .filter((entry): entry is [string, string] => entry[1] !== null)
+        );
+      }
+    } catch {
+      personnalisations = undefined; // jamais bloquant pour le reste de la page
+    }
+  }
+
   let items: Awaited<ReturnType<typeof listPublishedNews>> = [];
   let error: string | null = null;
 
@@ -126,7 +159,7 @@ export default async function ActualitesPage({ searchParams }: { searchParams: P
           <p style={{ color: 'var(--sourdine)', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16, textAlign: 'center' }}>
             {t('upcomingEvents')}
           </p>
-          <SkyCountdown events={skyEvents} />
+          <SkyCountdown events={skyEvents} personnalisations={personnalisations} />
         </div>
       </section>
 
