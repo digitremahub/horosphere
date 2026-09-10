@@ -14,6 +14,7 @@ import { getSiteConfig, setSiteConfig, CLES_VIDEO } from '@/lib/siteConfig';
 import { rembourserAnniversairesDuMois } from '@/lib/birthdayRefund';
 import { grantCredits } from '@/lib/credits';
 import { offrirMoisAbonnement } from '@/lib/adminSubscriptions';
+import { definirCategorieUtilisateur, CATEGORIE_LABEL, type Categorie } from '@/lib/adminCategories';
 import { listPromotions, createPromotion, updatePromotion, deletePromotion, bonusAbonnementRestant, type PromotionInput } from '@/lib/promotions';
 import { SUBSCRIPTIONS, CREDIT_EXPIRY_DAYS } from '@/lib/pricing';
 
@@ -96,6 +97,21 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     const resultat = await offrirMoisAbonnement(userId, mois, planSlug);
     redirect({
       href: { pathname: '/app/admin', query: { ok: `abo:${resultat.ok ? '1' : '0'}:${encodeURIComponent(resultat.message)}` } },
+      locale,
+    });
+  }
+
+  async function definirCategorie(formData: FormData) {
+    'use server';
+    const session = await auth();
+    const email = (session?.user as { email?: string | null } | undefined)?.email;
+    if (!isAdminEmail(email)) return;
+    const userId = Number(formData.get('userId'));
+    const valeur = String(formData.get('categorie') || '');
+    const categorie = (valeur === 'influenceur' || valeur === 'beta_testeur') ? (valeur as Categorie) : null;
+    const resultat = await definirCategorieUtilisateur(userId, categorie);
+    redirect({
+      href: { pathname: '/app/admin', query: { ok: `cat:${resultat.ok ? '1' : '0'}:${encodeURIComponent(resultat.message)}` } },
       locale,
     });
   }
@@ -185,6 +201,15 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           </div>
         )}
         {ok?.startsWith('abo:') && (() => {
+          const [, succes, ...reste] = ok.split(':');
+          const message = decodeURIComponent(reste.join(':'));
+          return (
+            <div className="card" style={{ padding: '12px 16px', marginBottom: 20, fontSize: '0.84rem', color: 'var(--lever-profond)', borderColor: succes === '1' ? undefined : 'var(--lever)' }}>
+              {message}
+            </div>
+          );
+        })()}
+        {ok?.startsWith('cat:') && (() => {
           const [, succes, ...reste] = ok.split(':');
           const message = decodeURIComponent(reste.join(':'));
           return (
@@ -429,6 +454,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                   <th style={{ padding: '8px 10px' }}>E-mail</th>
                   <th style={{ padding: '8px 10px' }}>Inscrit le</th>
                   <th style={{ padding: '8px 10px' }}>Abonnement</th>
+                  <th style={{ padding: '8px 10px' }}>Catégorie</th>
                   <th style={{ padding: '8px 10px' }}>Crédits</th>
                   <th style={{ padding: '8px 10px' }}>Offrir des crédits</th>
                   <th style={{ padding: '8px 10px' }}>Offrir des mois</th>
@@ -443,12 +469,30 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                     <td style={{ padding: '8px 10px' }} className="mono">{u.inscrit_le ? u.inscrit_le.slice(0, 10) : '—'}</td>
                     <td style={{ padding: '8px 10px' }}>
                       {u.abonnement_plan ? (
-                        <span className="pill" style={{ padding: '2px 8px', fontSize: '0.72rem' }}>
-                          {PLAN_NOMS[u.abonnement_plan] ?? u.abonnement_plan} · {u.abonnement_statut}
-                        </span>
+                        <div>
+                          <span className="pill" style={{ padding: '2px 8px', fontSize: '0.72rem' }}>
+                            ✅ Abonné · {PLAN_NOMS[u.abonnement_plan] ?? u.abonnement_plan} · {u.abonnement_statut}
+                          </span>
+                          <div className="mono" style={{ fontSize: '0.66rem', color: 'var(--sourdine)', marginTop: 4, whiteSpace: 'nowrap' }}>
+                            Du {u.abonnement_debut ? u.abonnement_debut.slice(0, 10) : '—'} au {u.abonnement_fin ? u.abonnement_fin.slice(0, 10) : '—'}
+                          </div>
+                        </div>
                       ) : (
-                        <span style={{ color: 'var(--sourdine)' }}>Aucun</span>
+                        <span style={{ color: 'var(--sourdine)' }}>❌ Pas abonné</span>
                       )}
+                    </td>
+                    <td style={{ padding: '8px 10px' }}>
+                      <form action={definirCategorie} style={{ display: 'flex', gap: 6 }}>
+                        <input type="hidden" name="userId" value={u.user_id} />
+                        <select name="categorie" defaultValue={u.categorie ?? ''} style={{ ...inputStyle, padding: '5px 6px', fontSize: '0.74rem', width: 'auto' }}>
+                          <option value="">Aucune</option>
+                          <option value="influenceur">{CATEGORIE_LABEL.influenceur}</option>
+                          <option value="beta_testeur">{CATEGORIE_LABEL.beta_testeur}</option>
+                        </select>
+                        <button type="submit" className="btn btn-ghost" style={{ fontSize: '0.74rem', padding: '5px 10px' }}>
+                          OK
+                        </button>
+                      </form>
                     </td>
                     <td style={{ padding: '8px 10px' }} className="mono">{u.solde_credits}</td>
                     <td style={{ padding: '8px 10px' }}>

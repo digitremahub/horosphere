@@ -15,9 +15,24 @@ export type AdminUserRow = {
   inscrit_le: string | null;
   abonnement_plan: string | null;
   abonnement_statut: string | null;
+  abonnement_debut: string | null;
+  abonnement_fin: string | null;
+  categorie: string | null;
   solde_credits: number;
   stripe_customer_id: string | null;
 };
+
+let categorieColumnEnsured = false;
+
+/** `users.categorie` (influenceur / bêta testeur / aucune) — voir
+ * lib/adminCategories.ts. Auto-créée au premier appel (CREATE TABLE IF NOT
+ * EXISTS ne s'applique pas à une colonne : ALTER ... ADD COLUMN IF NOT
+ * EXISTS, même idée), pas besoin de rejouer db/schema.sql à la main. */
+async function ensureCategorieColumn(sql: ReturnType<typeof requireDb>) {
+  if (categorieColumnEnsured) return;
+  await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS categorie TEXT`);
+  categorieColumnEnsured = true;
+}
 
 /** Les utilisateurs les plus récents (inscription = date de création du
  * profil, `users` n'a pas de colonne created_at — schéma standard
@@ -25,21 +40,25 @@ export type AdminUserRow = {
  * bord rapide, pas un export complet. */
 export async function listUsersAdmin(limit = 200): Promise<AdminUserRow[]> {
   const sql = requireDb();
+  await ensureCategorieColumn(sql);
   return sql<AdminUserRow[]>`
     SELECT
       u.id AS user_id,
       u.email,
+      u.categorie,
       p.prenom,
       p.nom,
       p.created_at::text AS inscrit_le,
       s.plan_slug AS abonnement_plan,
       s.status AS abonnement_statut,
+      s.created_at::text AS abonnement_debut,
+      s.current_period_end::text AS abonnement_fin,
       COALESCE(c.solde, 0)::int AS solde_credits,
       sc.stripe_customer_id
     FROM users u
     LEFT JOIN profiles p ON p.user_id = u.id
     LEFT JOIN LATERAL (
-      SELECT plan_slug, status FROM subscriptions
+      SELECT plan_slug, status, created_at, current_period_end FROM subscriptions
       WHERE user_id = u.id
       ORDER BY (status IN ('active', 'trialing')) DESC, updated_at DESC
       LIMIT 1

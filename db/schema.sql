@@ -22,6 +22,11 @@ CREATE TABLE IF NOT EXISTS users (
 -- idempotent (voir lib/auth.ts et /inscription).
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
 
+-- Catégorie spéciale assignable depuis le backoffice (influenceur, bêta
+-- testeur — voir lib/adminCategories.ts), avec un bonus de crédits à
+-- l'attribution. NULL = aucune catégorie particulière.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS categorie TEXT;
+
 CREATE TABLE IF NOT EXISTS accounts (
   id SERIAL PRIMARY KEY,
   "userId" INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
