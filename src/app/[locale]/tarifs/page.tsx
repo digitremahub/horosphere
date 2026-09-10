@@ -2,7 +2,7 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import { auth } from '@/lib/auth';
 import { dbConfigured } from '@/lib/db';
 import { stripeConfigured } from '@/lib/stripe';
-import { CREDIT_PACKS, SUBSCRIPTIONS, FEATURE_COSTS, FEATURE_LABELS, WELCOME_CREDITS, euros, prixParCredit } from '@/lib/pricing';
+import { CREDIT_PACKS, SUBSCRIPTIONS, FEATURE_COSTS, FEATURE_LABELS, WELCOME_CREDITS, euros, prixParCredit, prixParJour } from '@/lib/pricing';
 import { getActivePromotion, bonusAbonnementRestant } from '@/lib/promotions';
 import { dateLocaleTag } from '@/i18n/dateLocale';
 import PricingButton from '@/components/PricingButton';
@@ -134,6 +134,9 @@ export default async function TarifsPage() {
                 <span className="mono" style={{ fontSize: '1.5rem', fontWeight: 500 }}>{euros(s.prixCentimesParMois)}</span>
                 <span style={{ fontSize: '0.82rem', color: 'var(--sourdine)' }}> {t('perMonth')}</span>
                 <div className="mono" style={{ fontSize: '0.78rem', color: 'var(--sourdine)' }}>{s.creditsParMois} {t('creditsPerMonth')}</div>
+                <div className="mono" style={{ fontSize: '0.72rem', color: 'var(--lever-profond)', marginTop: 2 }}>
+                  {s.prixCentimesParMois / 30 < 100 ? t('pricePerDayUnder1', { prix: prixParJour(s) }) : t('pricePerDay', { prix: prixParJour(s) })}
+                </div>
               </div>
               <PricingButton kind="sub" slug={s.slug} loggedIn={loggedIn} configured={stripeConfigured && Boolean(process.env[s.envKey])} label={t('subscribe')} />
             </div>

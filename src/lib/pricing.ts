@@ -107,3 +107,9 @@ export function euros(centimes: number): string {
 export function prixParCredit(pack: CreditPack): string {
   return euros(pack.prixCentimes / pack.credits);
 }
+
+// Prix d'un abonnement ramené à la journée (slogan historique : "l'horoscope
+// pour moins d'1€/jour"). Affiché sur /tarifs sous chaque abonnement.
+export function prixParJour(sub: Subscription): string {
+  return euros(sub.prixCentimesParMois / 30);
+}
