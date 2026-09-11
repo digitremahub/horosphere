@@ -42,7 +42,10 @@ const COULEURS = {
   // pour que le texte gris garde un fort contraste quelle que soit
   // l'image en arrière-plan.
   bandeau: 'rgba(248, 238, 220, 0.95)',
-  ambre: '#C08A3E',
+  // --lever-profond dans globals.css : "texte d'emphase, survol, erreurs"
+  // — le bon choix pour un mot mis en avant. --ambre ("or mat — traits
+  // fins, graduations, séparateurs") avait été utilisé par erreur ici.
+  emphase: '#A64E36',
   // Gris neutre — même valeur que le prototype validé dans Canva.
   gris: '#545454',
 };
@@ -116,7 +119,7 @@ export async function GET(req: NextRequest) {
           {/* Mot de catégorie en GRAND — l'élément dominant de la
               diapositive, écrit directement sur l'image (demande
               explicite de l'utilisateur, pas un petit libellé discret). */}
-          <div style={{ display: 'flex', fontSize: 84, fontWeight: 700, lineHeight: 1.1, color: COULEURS.ambre, marginBottom: 24 }}>
+          <div style={{ display: 'flex', fontSize: 84, fontWeight: 700, lineHeight: 1.1, color: COULEURS.emphase, marginBottom: 24 }}>
             {LABEL_CATEGORIE[categorie]}
           </div>
           {/* Gris plus soutenu + gras : le retour utilisateur signalait un
