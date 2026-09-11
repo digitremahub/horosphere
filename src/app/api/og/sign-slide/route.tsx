@@ -1,15 +1,15 @@
 // Une "diapositive" du carrousel Instagram par signe — l'image fixe du
-// signe (voir lib/signImages.ts) en plein cadre, le texte d'UNE catégorie
-// (amour/travail/énergie/action, ou l'accroche pour la couverture) écrit
-// DIRECTEMENT SUR l'image (voile dégradé en bas pour la lisibilité),
-// jamais dans un bandeau séparé en dessous — demande explicite de
-// l'utilisateur après un premier essai en bandeau ("ajout des
-// descriptions sur l'image par dessus, pas en dessous"). Décision
-// explicite, plus ancienne, de montrer les catégories directement sur les
-// images du carrousel plutôt qu'uniquement dans la légende —
-// contrairement au post Instagram simple (signe seul, jamais recadré ni
-// recomposé, voir genererPostInstagramSigne), le carrousel est un format
-// différent qui suppose ce cadrage.
+// signe (voir lib/signImages.ts) en plein cadre, un bandeau translucide
+// couleur crème en bas portant le texte d'UNE catégorie
+// (amour/travail/énergie/action, ou l'accroche pour la couverture) en
+// GRIS (#545454) — jamais en blanc. Style aligné sur le prototype validé
+// dans Canva (voir la base de modèles de marque Horosphère) : c'est ce
+// même rendu (image plein cadre + bandeau crème + texte gris) que ce
+// générateur de secours reproduit en attendant que l'automatisation
+// Canva (Make, module Autofill) soit branchée pour de bon. Décision
+// explicite de l'utilisateur : le texte doit être en gris, jamais en
+// blanc, et posé sur un bandeau clair — pas de bandeau sombre ni de
+// voile dégradé sombre.
 //
 // Rendu via next/og (Satori), comme /api/og/astrolabe — fournit une URL
 // stable et publiquement accessible, exploitable telle quelle par
@@ -29,14 +29,19 @@ export const runtime = 'nodejs';
 const WIDTH = 1080;
 const HEIGHT = 1350; // Ratio 4:5 — portrait maximal accepté par Instagram.
 
-// Hauteur du voile dégradé sur lequel repose le texte, en bas de l'image
+// Hauteur du bandeau crème sur lequel repose le texte, en bas de l'image
 // pleine page — juste assez pour porter 3 lignes (signe, catégorie,
 // texte) sans manger toute la photo.
-const HAUTEUR_VOILE = 640;
+const HAUTEUR_BANDEAU = 610;
 
 const COULEURS = {
-  ambre: '#E7B979',
-  ombre: '#5B4638',
+  // Crème translucide (même famille que --aube ailleurs sur le site),
+  // pour que le texte gris garde un fort contraste quelle que soit
+  // l'image en arrière-plan.
+  bandeau: 'rgba(248, 238, 220, 0.95)',
+  ambre: '#C08A3E',
+  // Gris neutre — même valeur que le prototype validé dans Canva.
+  gris: '#545454',
 };
 
 export type CategorieSlide = 'cover' | 'amour' | 'travail' | 'energie' | 'action';
@@ -72,7 +77,7 @@ export async function GET(req: NextRequest) {
 
   const png = await new ImageResponse(
     (
-      <div style={{ width: WIDTH, height: HEIGHT, display: 'flex', position: 'relative', background: COULEURS.ombre }}>
+      <div style={{ width: WIDTH, height: HEIGHT, display: 'flex', position: 'relative', background: COULEURS.gris }}>
         {imageUrl && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -82,8 +87,8 @@ export async function GET(req: NextRequest) {
             style={{ objectFit: 'cover', position: 'absolute', top: 0, left: 0 }}
           />
         )}
-        {/* Voile dégradé (transparent en haut, sombre en bas) pour que le
-            texte reste lisible SUR la photo, sans bandeau séparé. */}
+        {/* Bandeau crème translucide superposé DIRECTEMENT sur l'image (pas
+            en dessous) — texte toujours en gris, jamais en blanc. */}
         <div
           style={{
             position: 'absolute',
@@ -91,23 +96,22 @@ export async function GET(req: NextRequest) {
             right: 0,
             bottom: 0,
             width: WIDTH,
-            height: HAUTEUR_VOILE,
+            height: HAUTEUR_BANDEAU,
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'flex-end',
             padding: '0 56px 64px',
-            backgroundImage:
-              'linear-gradient(to bottom, rgba(20,14,10,0) 0%, rgba(20,14,10,0.35) 30%, rgba(20,14,10,0.86) 75%, rgba(20,14,10,0.95) 100%)',
+            background: COULEURS.bandeau,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
             <span style={{ fontSize: 44 }}>{sign.symbole}</span>
-            <span style={{ fontSize: 30, fontWeight: 700, color: '#FFFFFF' }}>{sign.nom}</span>
+            <span style={{ fontSize: 30, fontWeight: 700, color: COULEURS.gris }}>{sign.nom}</span>
           </div>
           <div style={{ display: 'flex', fontSize: 24, textTransform: 'uppercase', letterSpacing: 2, color: COULEURS.ambre, marginBottom: 10 }}>
             {LABEL_CATEGORIE[categorie]}
           </div>
-          <div style={{ display: 'flex', fontSize: 32, lineHeight: 1.35, color: '#FFFFFF' }}>{texte}</div>
+          <div style={{ display: 'flex', fontSize: 32, lineHeight: 1.35, color: COULEURS.gris }}>{texte}</div>
         </div>
       </div>
     ),
