@@ -11,6 +11,7 @@ import type { FeatureKey } from '@/lib/pricing';
 import { getSiteConfig, CLES_VIDEO } from '@/lib/siteConfig';
 import { lienParrainage } from '@/lib/referral';
 import { isAdminEmail } from '@/lib/adminAuth';
+import { aCategoriePrivilegiee } from '@/lib/adminCategories';
 import Dashboard from '@/components/Dashboard';
 import OnboardingVideoModal from '@/components/OnboardingVideoModal';
 
@@ -66,6 +67,7 @@ export default async function AppPage() {
   let balanceError: string | null = null;
   let hasSubscription = false;
   let generatedToday: FeatureKey[] = [];
+  const illimite = isAdminEmail(session!.user!.email);
 
   if (dbConfigured) {
     try {
@@ -77,6 +79,23 @@ export default async function AppPage() {
       hasSubscription = await hasActiveSubscription(userId);
     } catch {
       hasSubscription = false; // erreur de lecture transitoire : traiter comme non-abonné plutôt que bloquer l'affichage
+    }
+    // Admin, influenceur et bêta testeur (voir adminCategories.ts) ont accès
+    // aux lectures réservées aux abonnés sans être eux-mêmes abonnés —
+    // décision explicite de l'utilisateur. Ne déverrouille QUE l'accès à ces
+    // lectures (le prop `hasSubscription`, seul point de contrôle côté UI) :
+    // ne touche pas au solde de crédits, qu'ils continuent de dépenser
+    // normalement (sauf `illimite`, qui reste un privilège admin distinct).
+    if (!hasSubscription) {
+      if (illimite) {
+        hasSubscription = true;
+      } else {
+        try {
+          hasSubscription = await aCategoriePrivilegiee(userId);
+        } catch {
+          // erreur de lecture transitoire : ne pas accorder l'accès par erreur
+        }
+      }
     }
     try {
       generatedToday = await getGeneratedTodayFeatures(userId);
@@ -119,7 +138,7 @@ export default async function AppPage() {
           hasSubscription={hasSubscription}
           shareLink={lienParrainage(userId)}
           initialGeneratedToday={generatedToday}
-          illimite={isAdminEmail(session!.user!.email)}
+          illimite={illimite}
         />
       </div>
     </main>

@@ -20,6 +20,7 @@ import { FEATURE_COSTS, FEATURE_LABELS, FeatureKey } from '@/lib/pricing';
 import { THEMES, type ThemeKey } from '@/lib/themes';
 import { dbConfigured } from '@/lib/db';
 import { isAdminEmail } from '@/lib/adminAuth';
+import { aCategoriePrivilegiee } from '@/lib/adminCategories';
 
 const THEME_KEYS = new Set(Object.keys(THEMES));
 function isThemeKey(feature: FeatureKey): feature is FeatureKey & ThemeKey {
@@ -112,16 +113,21 @@ export async function POST(req: NextRequest) {
 
   // Certaines lectures (voir pricing.ts, subscriptionOnly) ne sont pas
   // ouvertes au paiement à la carte : il faut un abonnement actif, quel
-  // que soit le solde de crédits.
-  if (FEATURE_LABELS[feature].subscriptionOnly) {
-    let subscribed = false;
+  // que soit le solde de crédits — sauf pour les comptes admin (illimite,
+  // déjà exemptés plus bas du contrôle de solde) et les catégories
+  // spéciales influenceur/bêta testeur (voir adminCategories.ts), qui
+  // doivent pouvoir lire ce contenu sans être abonnés. Décision explicite
+  // de l'utilisateur : ces trois profils ont accès aux lectures réservées
+  // aux abonnés.
+  if (FEATURE_LABELS[feature].subscriptionOnly && !illimite) {
+    let accesAccorde = false;
     try {
-      subscribed = await hasActiveSubscription(uid);
+      accesAccorde = (await aCategoriePrivilegiee(uid)) || (await hasActiveSubscription(uid));
     } catch (err) {
       console.error('hasActiveSubscription failed', err);
       return NextResponse.json({ error: t('subscriptionCheckFailed') }, { status: 500 });
     }
-    if (!subscribed) {
+    if (!accesAccorde) {
       return NextResponse.json(
         { error: t('subscriptionRequired'), code: 'SUBSCRIPTION_REQUIRED' },
         { status: 402 }

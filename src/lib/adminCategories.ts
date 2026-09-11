@@ -24,6 +24,20 @@ const CATEGORIE_BONUS: Record<Categorie, number> = {
   beta_testeur: 50,
 };
 
+/** Vrai si l'utilisateur a une catégorie spéciale (influenceur ou bêta
+ * testeur) — donne accès aux lectures réservées aux abonnés
+ * (`subscriptionOnly`, voir pricing.ts) sans nécessiter d'abonnement payant,
+ * au même titre qu'un compte admin (voir isAdminEmail dans adminAuth.ts,
+ * utilisé en complément dans /api/generate). Ne touche pas au solde de
+ * crédits : ces comptes consomment leurs crédits normalement, seule la
+ * barrière "abonnement actif" est levée. */
+export async function aCategoriePrivilegiee(userId: number): Promise<boolean> {
+  const sql = requireDb();
+  await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS categorie TEXT`);
+  const [row] = await sql<{ categorie: string | null }[]>`SELECT categorie FROM users WHERE id = ${userId}`;
+  return row?.categorie === 'influenceur' || row?.categorie === 'beta_testeur';
+}
+
 export type DefinirCategorieResult = { ok: boolean; message: string };
 
 export async function definirCategorieUtilisateur(userId: number, categorie: Categorie | null): Promise<DefinirCategorieResult> {
