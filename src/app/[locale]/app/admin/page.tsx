@@ -585,6 +585,15 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                             Du {u.abonnement_debut ? u.abonnement_debut.slice(0, 10) : '—'} au {u.abonnement_fin ? u.abonnement_fin.slice(0, 10) : '—'}
                           </div>
                         </div>
+                      ) : isAdminEmail(u.email) || u.categorie === 'influenceur' || u.categorie === 'beta_testeur' ? (
+                        // Admin, influenceur et bêta testeur ont accès aux lectures
+                        // réservées aux abonnés sans payer (voir adminCategories.ts,
+                        // aCategoriePrivilegiee) — décision explicite de l'utilisateur :
+                        // ils doivent apparaître comme ayant un forfait, pas "Pas abonné",
+                        // même si aucun abonnement Stripe réel n'existe pour ce compte.
+                        <span className="pill" style={{ padding: '2px 8px', fontSize: '0.72rem' }} title="Accès offert aux lectures réservées aux abonnés — pas un abonnement Stripe réel.">
+                          ✅ Abonné · {isAdminEmail(u.email) ? 'Admin' : CATEGORIE_LABEL[u.categorie as Categorie]} (accès offert)
+                        </span>
                       ) : (
                         <span style={{ color: 'var(--sourdine)' }}>❌ Pas abonné</span>
                       )}
