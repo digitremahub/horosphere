@@ -1,15 +1,17 @@
 // Une "diapositive" du carrousel Instagram par signe — l'image fixe du
 // signe (voir lib/signImages.ts) en plein cadre, un bandeau translucide
-// couleur crème en bas portant le texte d'UNE catégorie
+// couleur crème en bas portant le nom de la catégorie
 // (amour/travail/énergie/action, ou l'accroche pour la couverture) en
-// GRIS (#545454) — jamais en blanc. Style aligné sur le prototype validé
-// dans Canva (voir la base de modèles de marque Horosphère) : c'est ce
-// même rendu (image plein cadre + bandeau crème + texte gris) que ce
-// générateur de secours reproduit en attendant que l'automatisation
-// Canva (Make, module Autofill) soit branchée pour de bon. Décision
-// explicite de l'utilisateur : le texte doit être en gris, jamais en
-// blanc, et posé sur un bandeau clair — pas de bandeau sombre ni de
-// voile dégradé sombre.
+// GRIS (#545454) — jamais en blanc — et en GROS (mot dominant, façon
+// carte-citation), pas en simple libellé discret. Style aligné sur le
+// prototype validé dans Canva (voir la base de modèles de marque
+// Horosphère) : c'est ce même rendu (image plein cadre + bandeau crème +
+// mot de catégorie en grand + texte gris) que ce générateur de secours
+// reproduit en attendant que l'automatisation Canva (Make, module
+// Autofill) soit branchée pour de bon. Décisions explicites de
+// l'utilisateur, dans l'ordre : texte gris jamais blanc, posé sur un
+// bandeau clair (pas de voile sombre) ; puis mot de catégorie en grosses
+// écritures directement sur l'image, pas en petit texte discret.
 //
 // Rendu via next/og (Satori), comme /api/og/astrolabe — fournit une URL
 // stable et publiquement accessible, exploitable telle quelle par
@@ -30,9 +32,10 @@ const WIDTH = 1080;
 const HEIGHT = 1350; // Ratio 4:5 — portrait maximal accepté par Instagram.
 
 // Hauteur du bandeau crème sur lequel repose le texte, en bas de l'image
-// pleine page — juste assez pour porter 3 lignes (signe, catégorie,
-// texte) sans manger toute la photo.
-const HAUTEUR_BANDEAU = 610;
+// pleine page — le mot de catégorie en grand y prend l'essentiel de la
+// place, avec le nom du signe (petit) au-dessus et le texte du jour
+// (corps de paragraphe) en dessous.
+const HAUTEUR_BANDEAU = 660;
 
 const COULEURS = {
   // Crème translucide (même famille que --aube ailleurs sur le site),
@@ -46,12 +49,15 @@ const COULEURS = {
 
 export type CategorieSlide = 'cover' | 'amour' | 'travail' | 'energie' | 'action';
 
+// Mot de catégorie affiché en GRAND (voir COULEURS.ambre) — plus d'emoji
+// ici, contrairement à la légende du post (voir lib/social.ts) : sur
+// l'image, seul le mot doit dominer visuellement.
 const LABEL_CATEGORIE: Record<CategorieSlide, string> = {
   cover: 'Horoscope du jour',
-  amour: '💛 Amour',
-  travail: '💼 Travail',
-  energie: '⚡ Énergie',
-  action: '✨ Action du jour',
+  amour: 'Amour',
+  travail: 'Travail',
+  energie: 'Énergie',
+  action: 'Action du jour',
 };
 
 const CATEGORIES_VALIDES = new Set<CategorieSlide>(['cover', 'amour', 'travail', 'energie', 'action']);
@@ -104,14 +110,17 @@ export async function GET(req: NextRequest) {
             background: COULEURS.bandeau,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
-            <span style={{ fontSize: 44 }}>{sign.symbole}</span>
-            <span style={{ fontSize: 30, fontWeight: 700, color: COULEURS.gris }}>{sign.nom}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+            <span style={{ fontSize: 26 }}>{sign.symbole}</span>
+            <span style={{ fontSize: 20, fontWeight: 700, color: COULEURS.gris }}>{sign.nom}</span>
           </div>
-          <div style={{ display: 'flex', fontSize: 24, textTransform: 'uppercase', letterSpacing: 2, color: COULEURS.ambre, marginBottom: 10 }}>
+          {/* Mot de catégorie en GRAND — l'élément dominant de la
+              diapositive, écrit directement sur l'image (demande
+              explicite de l'utilisateur, pas un petit libellé discret). */}
+          <div style={{ display: 'flex', fontSize: 84, fontWeight: 700, lineHeight: 1.1, color: COULEURS.ambre, marginBottom: 20 }}>
             {LABEL_CATEGORIE[categorie]}
           </div>
-          <div style={{ display: 'flex', fontSize: 32, lineHeight: 1.35, color: COULEURS.gris }}>{texte}</div>
+          <div style={{ display: 'flex', fontSize: 34, lineHeight: 1.35, color: COULEURS.gris }}>{texte}</div>
         </div>
       </div>
     ),
