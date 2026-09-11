@@ -173,8 +173,13 @@ export async function GET(req: NextRequest) {
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               {/* Mot de catégorie en GRAND — l'élément dominant de la
                   diapositive, écrit directement sur l'image (demande
-                  explicite de l'utilisateur, pas un petit libellé discret). */}
-              <div style={{ display: 'flex', fontSize: 84, fontWeight: 700, lineHeight: 1.1, color: COULEURS.emphase, marginBottom: 24 }}>
+                  explicite de l'utilisateur, pas un petit libellé discret).
+                  66px, pas 84 : taille alignée sur le prototype Canva que
+                  l'utilisateur a lui-même corrigé et validé ("la mise en
+                  page et la taille du texte, qui est plus lisible") — 84px
+                  rendait le mot disproportionné par rapport au corps de
+                  texte. */}
+              <div style={{ display: 'flex', fontSize: 66, fontWeight: 700, lineHeight: 1.1, color: COULEURS.emphase, marginBottom: 20 }}>
                 {LABEL_CATEGORIE[categorie]}
               </div>
               {/* Gris plus soutenu + gras : le retour utilisateur signalait un
