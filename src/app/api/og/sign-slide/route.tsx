@@ -1,16 +1,20 @@
 // Une "diapositive" du carrousel Instagram par signe — l'image fixe du
-// signe (voir lib/signImages.ts) en haut, un bandeau de couleur avec le
-// texte d'UNE catégorie (amour/travail/énergie/action, ou l'accroche pour
-// la couverture) en bas. Décision explicite de l'utilisateur : montrer les
-// catégories directement sur les images du carrousel plutôt qu'uniquement
-// dans la légende — contrairement au post Instagram simple (signe seul,
-// jamais recadré ni recomposé, voir genererPostInstagramSigne), le
-// carrousel est un format différent qui suppose ce cadrage.
+// signe (voir lib/signImages.ts) en plein cadre, le texte d'UNE catégorie
+// (amour/travail/énergie/action, ou l'accroche pour la couverture) écrit
+// DIRECTEMENT SUR l'image (voile dégradé en bas pour la lisibilité),
+// jamais dans un bandeau séparé en dessous — demande explicite de
+// l'utilisateur après un premier essai en bandeau ("ajout des
+// descriptions sur l'image par dessus, pas en dessous"). Décision
+// explicite, plus ancienne, de montrer les catégories directement sur les
+// images du carrousel plutôt qu'uniquement dans la légende —
+// contrairement au post Instagram simple (signe seul, jamais recadré ni
+// recomposé, voir genererPostInstagramSigne), le carrousel est un format
+// différent qui suppose ce cadrage.
 //
 // Rendu via next/og (Satori), comme /api/og/astrolabe — fournit une URL
 // stable et publiquement accessible, exploitable telle quelle par
-// Instagram (voir lib/social.ts, genererCarrouselInstagramSigne). Satori ne
-// produit que du PNG ; converti en JPEG ici via sharp, l'API Instagram
+// Instagram (voir lib/social.ts, construireCarrouselInstagramSigne). Satori
+// ne produit que du PNG ; converti en JPEG ici via sharp, l'API Instagram
 // l'exigeant strictement pour les publications carrousel.
 
 import { ImageResponse } from 'next/og';
@@ -24,15 +28,14 @@ export const runtime = 'nodejs';
 
 const WIDTH = 1080;
 const HEIGHT = 1350; // Ratio 4:5 — portrait maximal accepté par Instagram.
-const HAUTEUR_IMAGE = 1050;
-const HAUTEUR_BANDEAU = HEIGHT - HAUTEUR_IMAGE;
+
+// Hauteur du voile dégradé sur lequel repose le texte, en bas de l'image
+// pleine page — juste assez pour porter 3 lignes (signe, catégorie,
+// texte) sans manger toute la photo.
+const HAUTEUR_VOILE = 640;
 
 const COULEURS = {
-  aube: '#F8E9DD',
-  ambre: '#C08A3E',
-  lever: '#E2826A',
-  leverProfond: '#A64E36',
-  sourdine: '#8A7361',
+  ambre: '#E7B979',
   ombre: '#5B4638',
 };
 
@@ -69,33 +72,42 @@ export async function GET(req: NextRequest) {
 
   const png = await new ImageResponse(
     (
-      <div style={{ width: WIDTH, height: HEIGHT, display: 'flex', flexDirection: 'column', background: COULEURS.aube }}>
-        <div style={{ width: WIDTH, height: HAUTEUR_IMAGE, display: 'flex', position: 'relative', overflow: 'hidden' }}>
-          {imageUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={imageUrl} width={WIDTH} height={HAUTEUR_IMAGE} style={{ objectFit: 'cover' }} />
-          )}
-        </div>
+      <div style={{ width: WIDTH, height: HEIGHT, display: 'flex', position: 'relative', background: COULEURS.ombre }}>
+        {imageUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={imageUrl}
+            width={WIDTH}
+            height={HEIGHT}
+            style={{ objectFit: 'cover', position: 'absolute', top: 0, left: 0 }}
+          />
+        )}
+        {/* Voile dégradé (transparent en haut, sombre en bas) pour que le
+            texte reste lisible SUR la photo, sans bandeau séparé. */}
         <div
           style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 0,
             width: WIDTH,
-            height: HAUTEUR_BANDEAU,
+            height: HAUTEUR_VOILE,
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'center',
-            padding: '0 56px',
-            background: COULEURS.aube,
-            borderTop: `4px solid ${COULEURS.ambre}`,
+            justifyContent: 'flex-end',
+            padding: '0 56px 64px',
+            backgroundImage:
+              'linear-gradient(to bottom, rgba(20,14,10,0) 0%, rgba(20,14,10,0.35) 30%, rgba(20,14,10,0.86) 75%, rgba(20,14,10,0.95) 100%)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
             <span style={{ fontSize: 44 }}>{sign.symbole}</span>
-            <span style={{ fontSize: 30, fontWeight: 700, color: COULEURS.leverProfond }}>{sign.nom}</span>
+            <span style={{ fontSize: 30, fontWeight: 700, color: '#FFFFFF' }}>{sign.nom}</span>
           </div>
           <div style={{ display: 'flex', fontSize: 24, textTransform: 'uppercase', letterSpacing: 2, color: COULEURS.ambre, marginBottom: 10 }}>
             {LABEL_CATEGORIE[categorie]}
           </div>
-          <div style={{ display: 'flex', fontSize: 32, lineHeight: 1.35, color: COULEURS.ombre }}>{texte}</div>
+          <div style={{ display: 'flex', fontSize: 32, lineHeight: 1.35, color: '#FFFFFF' }}>{texte}</div>
         </div>
       </div>
     ),
