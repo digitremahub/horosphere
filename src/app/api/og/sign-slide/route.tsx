@@ -110,17 +110,18 @@ export async function GET(req: NextRequest) {
             background: COULEURS.bandeau,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-            <span style={{ fontSize: 26 }}>{sign.symbole}</span>
-            <span style={{ fontSize: 20, fontWeight: 700, color: COULEURS.gris }}>{sign.nom}</span>
-          </div>
+          {/* Pas de nom de signe ici : il est déjà écrit sur l'illustration
+              elle-même (voir lib/signImages.ts) — le répéter ferait doublon,
+              retour explicite de l'utilisateur. */}
           {/* Mot de catégorie en GRAND — l'élément dominant de la
               diapositive, écrit directement sur l'image (demande
               explicite de l'utilisateur, pas un petit libellé discret). */}
-          <div style={{ display: 'flex', fontSize: 84, fontWeight: 700, lineHeight: 1.1, color: COULEURS.ambre, marginBottom: 20 }}>
+          <div style={{ display: 'flex', fontSize: 84, fontWeight: 700, lineHeight: 1.1, color: COULEURS.ambre, marginBottom: 24 }}>
             {LABEL_CATEGORIE[categorie]}
           </div>
-          <div style={{ display: 'flex', fontSize: 34, lineHeight: 1.35, color: COULEURS.gris }}>{texte}</div>
+          {/* Gris plus soutenu + gras : le retour utilisateur signalait un
+              texte peu lisible malgré le bandeau clair. */}
+          <div style={{ display: 'flex', fontSize: 36, fontWeight: 700, lineHeight: 1.35, color: '#3D3D3D' }}>{texte}</div>
         </div>
       </div>
     ),
