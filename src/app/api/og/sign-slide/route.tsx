@@ -69,6 +69,19 @@ const LABEL_CATEGORIE: Record<Exclude<CategorieSlide, 'cover'>, string> = {
 
 const CATEGORIES_VALIDES = new Set<CategorieSlide>(['cover', 'amour', 'travail', 'energie', 'action']);
 
+/** Tronque à `max` caractères sans jamais couper au milieu d'un mot (vu en
+ * pratique : un texte de 509 caractères coupé à 500 donnait "...au ma" au
+ * lieu de "...au malentendu"). Coupe à la dernière fin de phrase si elle
+ * tombe dans les 20% finaux de la limite, sinon au dernier espace. */
+function tronquerProprement(texte: string, max: number): string {
+  if (texte.length <= max) return texte;
+  const coupe = texte.slice(0, max);
+  const dernierePhrase = Math.max(coupe.lastIndexOf('. '), coupe.lastIndexOf('! '), coupe.lastIndexOf('? '));
+  if (dernierePhrase > max * 0.8) return coupe.slice(0, dernierePhrase + 1);
+  const dernierEspace = coupe.lastIndexOf(' ');
+  return (dernierEspace > 0 ? coupe.slice(0, dernierEspace) : coupe).trimEnd() + '…';
+}
+
 function siteUrl(): string {
   return (process.env.NEXT_PUBLIC_SITE_URL || 'https://horosphere-live.vercel.app').replace(/\/$/, '');
 }
@@ -92,7 +105,7 @@ export async function GET(req: NextRequest) {
   // "les gens payent, ils veulent des informations"). Le bandeau (660px,
   // justifyContent flex-end) a largement la place : ~11 lignes de texte à
   // 36px avant de déborder au-dessus de son propre cadre.
-  const texte = (searchParams.get('texte') || '').slice(0, 500);
+  const texte = tronquerProprement(searchParams.get('texte') || '', 500);
   const dateISO = searchParams.get('date') || '';
 
   const sign = SIGNS.find((s) => s.key === signKey);
