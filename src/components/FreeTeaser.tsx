@@ -2,13 +2,21 @@
 
 import { useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { SIGNS } from '@/lib/zodiac';
+import { SIGNS, signFromBirthdate } from '@/lib/zodiac';
 import { localizedSign } from '@/lib/zodiac-i18n';
 import { fallbackHoroscope } from '@/lib/fallback-generator';
 import { Link } from '@/i18n/navigation';
 import BrandMark from '@/components/BrandMark';
 import { SignCircle } from '@/components/CardParts';
 
+// Retour d'audit : l'aperçu gratuit montrait un simple sélecteur de signe,
+// alors que tout l'argumentaire du site vend une personnalisation par
+// thème natal réel (date + heure + lieu de naissance) — décalage entre
+// la promesse et la démonstration. Ici, la personne tape sa VRAIE date de
+// naissance (le signe en est déduit, pas choisi manuellement) ; un texte
+// explicite clarifie ensuite que l'inscription va plus loin (heure +
+// lieu, ascendant, lune natale) plutôt que de laisser croire que cet
+// aperçu est déjà la version complète.
 export default function FreeTeaser({
   ctaHref = '/connexion',
   ctaLabel,
@@ -21,7 +29,12 @@ export default function FreeTeaser({
   const locale = useLocale() as 'fr' | 'en' | 'es';
   const t = useTranslations('Home');
   const tCta = useTranslations('Cta');
-  const [signKey, setSignKey] = useState('belier');
+  const [dateNaissance, setDateNaissance] = useState('');
+  const signKey = useMemo(() => {
+    if (!dateNaissance) return 'belier';
+    const [, m, d] = dateNaissance.split('-').map(Number);
+    return signFromBirthdate(m, d).key;
+  }, [dateNaissance]);
   const sign = localizedSign(SIGNS.find((s) => s.key === signKey)!, locale);
   const todayISO = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const reading = useMemo(() => fallbackHoroscope(signKey, todayISO, locale), [signKey, todayISO, locale]);
@@ -37,34 +50,25 @@ export default function FreeTeaser({
 
       <div className="pill" style={{ marginBottom: 16 }}>{t('freePreviewPill')}</div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 8, marginBottom: 18 }}>
-        {SIGNS.map((s) => {
-          const sLocal = localizedSign(s, locale);
-          return (
-            <button
-              key={s.key}
-              onClick={() => setSignKey(s.key)}
-              aria-pressed={s.key === signKey}
-              className="pick-btn"
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 2,
-                padding: '9px 2px',
-                borderRadius: 12,
-                border: `1px solid ${s.key === signKey ? 'var(--lever)' : 'var(--trait)'}`,
-                background: s.key === signKey ? 'var(--brume)' : 'transparent',
-                color: 'var(--ombre)',
-                fontSize: '0.6rem',
-                cursor: 'pointer',
-              }}
-            >
-              <span style={{ fontSize: '1.15rem', color: s.key === signKey ? 'var(--lever-profond)' : 'var(--sourdine)' }}>{s.symbole}</span>
-              {sLocal.nom}
-            </button>
-          );
-        })}
+      <div style={{ marginBottom: 18 }}>
+        <label htmlFor="teaser-date-naissance" className="field-label">{t('freeBirthdateLabel')}</label>
+        <input
+          id="teaser-date-naissance"
+          type="date"
+          value={dateNaissance}
+          max={todayISO}
+          placeholder={t('freeBirthdatePlaceholder')}
+          onChange={(e) => setDateNaissance(e.target.value)}
+          style={{
+            padding: '10px 12px',
+            borderRadius: 10,
+            border: '1px solid var(--trait)',
+            background: 'var(--nacre)',
+            color: 'var(--encre)',
+            fontSize: '0.9rem',
+            width: '100%',
+          }}
+        />
       </div>
 
       <div key={signKey} className="fade-swap">
@@ -77,8 +81,12 @@ export default function FreeTeaser({
         </div>
 
         <p className="display" style={{ fontStyle: 'italic', fontSize: '1.15rem', marginBottom: 14 }}>{reading.headline}</p>
-        <p style={{ color: 'var(--ombre)', fontSize: '0.95rem', marginBottom: 20 }}>{reading.amour}</p>
+        <p style={{ color: 'var(--ombre)', fontSize: '0.95rem', marginBottom: 14 }}>{reading.amour}</p>
       </div>
+
+      <p style={{ fontSize: '0.76rem', color: 'var(--sourdine)', marginBottom: 20 }}>
+        {t('freeRealPersonalization')}
+      </p>
 
       <Link href={ctaHref} className="btn btn-primary" style={{ width: '100%' }}>
         {ctaLabel ?? tCta('startFreeTeaser')}
