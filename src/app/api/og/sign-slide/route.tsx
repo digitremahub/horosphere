@@ -36,6 +36,10 @@ const HEIGHT = 1350; // Ratio 4:5 — portrait maximal accepté par Instagram.
 // place, avec le nom du signe (petit) au-dessus et le texte du jour
 // (corps de paragraphe) en dessous.
 const HAUTEUR_BANDEAU = 660;
+// La couverture n'affiche que la date, un seul mot court : un bandeau
+// plus bas, centré, plutôt que la même hauteur avec un grand vide
+// au-dessus (et l'illustration en profite pour respirer davantage).
+const HAUTEUR_BANDEAU_COUVERTURE = 280;
 
 const COULEURS = {
   // Crème translucide (même famille que --aube ailleurs sur le site),
@@ -52,11 +56,11 @@ const COULEURS = {
 
 export type CategorieSlide = 'cover' | 'amour' | 'travail' | 'energie' | 'action';
 
-// Mot de catégorie affiché en GRAND (voir COULEURS.ambre) — plus d'emoji
-// ici, contrairement à la légende du post (voir lib/social.ts) : sur
-// l'image, seul le mot doit dominer visuellement.
-const LABEL_CATEGORIE: Record<CategorieSlide, string> = {
-  cover: 'Horoscope du jour',
+// Libellé des catégories "de contenu" (tout sauf la couverture) — affiché
+// en GRAND (voir COULEURS.emphase), plus d'emoji ici contrairement à la
+// légende du post (voir lib/social.ts) : sur l'image, seul le mot doit
+// dominer visuellement.
+const LABEL_CATEGORIE: Record<Exclude<CategorieSlide, 'cover'>, string> = {
   amour: 'Amour',
   travail: 'Travail',
   energie: 'Énergie',
@@ -69,16 +73,37 @@ function siteUrl(): string {
   return (process.env.NEXT_PUBLIC_SITE_URL || 'https://horosphere-live.vercel.app').replace(/\/$/, '');
 }
 
+/** "11 septembre" — jour + mois en toutes lettres, sans année (superflue
+ * sur un post daté du jour). Décision explicite de l'utilisateur : la
+ * couverture du carrousel ne doit indiquer QUE la date (ou la période),
+ * jamais l'accroche du jour. */
+function formaterDate(dateISO: string): string | null {
+  const d = new Date(`${dateISO}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) return null;
+  return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', timeZone: 'UTC' }).format(d);
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const signKey = searchParams.get('sign') || '';
   const categorieParam = searchParams.get('categorie') || '';
   const texte = (searchParams.get('texte') || '').slice(0, 260);
+  const dateISO = searchParams.get('date') || '';
 
   const sign = SIGNS.find((s) => s.key === signKey);
   const categorie = CATEGORIES_VALIDES.has(categorieParam as CategorieSlide) ? (categorieParam as CategorieSlide) : null;
-  if (!sign || !categorie || !texte) {
-    return NextResponse.json({ error: 'Paramètres sign, categorie et texte requis.' }, { status: 400 });
+  if (!sign || !categorie) {
+    return NextResponse.json({ error: 'Paramètres sign et categorie requis.' }, { status: 400 });
+  }
+  // La couverture affiche la date, jamais l'accroche du jour : elle n'a
+  // donc pas besoin de `texte`, mais exige `date`. Les autres catégories
+  // restent inchangées (texte requis).
+  const dateAffichee = categorie === 'cover' ? formaterDate(dateISO) : null;
+  if (categorie === 'cover' && !dateAffichee) {
+    return NextResponse.json({ error: 'Paramètre date requis (et valide) pour la couverture.' }, { status: 400 });
+  }
+  if (categorie !== 'cover' && !texte) {
+    return NextResponse.json({ error: 'Paramètre texte requis pour cette catégorie.' }, { status: 400 });
   }
 
   const cheminImage = imageFixeSigne(sign.key);
@@ -105,26 +130,40 @@ export async function GET(req: NextRequest) {
             right: 0,
             bottom: 0,
             width: WIDTH,
-            height: HAUTEUR_BANDEAU,
+            height: categorie === 'cover' ? HAUTEUR_BANDEAU_COUVERTURE : HAUTEUR_BANDEAU,
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'flex-end',
-            padding: '0 56px 64px',
+            alignItems: categorie === 'cover' ? 'center' : 'stretch',
+            justifyContent: categorie === 'cover' ? 'center' : 'flex-end',
+            padding: categorie === 'cover' ? '0 56px' : '0 56px 64px',
             background: COULEURS.bandeau,
           }}
         >
           {/* Pas de nom de signe ici : il est déjà écrit sur l'illustration
               elle-même (voir lib/signImages.ts) — le répéter ferait doublon,
               retour explicite de l'utilisateur. */}
-          {/* Mot de catégorie en GRAND — l'élément dominant de la
-              diapositive, écrit directement sur l'image (demande
-              explicite de l'utilisateur, pas un petit libellé discret). */}
-          <div style={{ display: 'flex', fontSize: 84, fontWeight: 700, lineHeight: 1.1, color: COULEURS.emphase, marginBottom: 24 }}>
-            {LABEL_CATEGORIE[categorie]}
-          </div>
-          {/* Gris plus soutenu + gras : le retour utilisateur signalait un
-              texte peu lisible malgré le bandeau clair. */}
-          <div style={{ display: 'flex', fontSize: 36, fontWeight: 700, lineHeight: 1.35, color: '#3D3D3D' }}>{texte}</div>
+          {categorie === 'cover' ? (
+            // Couverture : uniquement la date, rien d'autre (pas
+            // l'accroche du jour) — demande explicite de l'utilisateur.
+            <div style={{ display: 'flex', fontSize: 84, fontWeight: 700, lineHeight: 1.1, color: COULEURS.emphase }}>
+              {dateAffichee}
+            </div>
+          ) : (
+            // Satori (next/og) n'empile pas fiablement des fragments <>...</> :
+            // un vrai conteneur flex-colonne est nécessaire pour que les deux
+            // lignes ci-dessous restent bien l'une sous l'autre.
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {/* Mot de catégorie en GRAND — l'élément dominant de la
+                  diapositive, écrit directement sur l'image (demande
+                  explicite de l'utilisateur, pas un petit libellé discret). */}
+              <div style={{ display: 'flex', fontSize: 84, fontWeight: 700, lineHeight: 1.1, color: COULEURS.emphase, marginBottom: 24 }}>
+                {LABEL_CATEGORIE[categorie]}
+              </div>
+              {/* Gris plus soutenu + gras : le retour utilisateur signalait un
+                  texte peu lisible malgré le bandeau clair. */}
+              <div style={{ display: 'flex', fontSize: 36, fontWeight: 700, lineHeight: 1.35, color: '#3D3D3D' }}>{texte}</div>
+            </div>
+          )}
         </div>
       </div>
     ),

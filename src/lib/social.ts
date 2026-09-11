@@ -206,7 +206,9 @@ function construireCarrouselInstagramSigne(sign: Sign, dateISO: string, reading:
   const diapositive = (categorie: string, texte: string) =>
     `${siteUrl()}/api/og/sign-slide?sign=${sign.key}&categorie=${categorie}&texte=${encodeURIComponent(texte)}`;
   return [
-    diapositive('cover', reading.headline),
+    // La couverture n'affiche que la date du jour, jamais l'accroche —
+    // décision explicite de l'utilisateur (voir /api/og/sign-slide).
+    `${siteUrl()}/api/og/sign-slide?sign=${sign.key}&categorie=cover&date=${dateISO}`,
     diapositive('amour', reading.amour),
     diapositive('travail', reading.travail),
     diapositive('energie', reading.energie),
