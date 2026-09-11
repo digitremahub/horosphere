@@ -127,16 +127,33 @@ export async function GET(req: NextRequest) {
   const cheminImage = imageFixeSigne(sign.key);
   const imageUrl = cheminImage ? `${siteUrl()}${cheminImage}` : null;
 
+  // Les 12 illustrations de signe (voir signImages.ts) partagent toutes la
+  // même résolution 1024x1536 (portrait 2:3) — mise à l'échelle pour
+  // couvrir le canevas 1080x1350 (4:5), ça déborde de ~270px en hauteur.
+  // `objectFit: 'cover'` (comportement précédent) centrait ce rognage,
+  // coupant ~135px en haut ET en bas — mais le symbole du signe, les dates
+  // et le ciel étoilé sont tout en haut de chaque illustration : ce
+  // centrage les rognait bien plus que dans le modèle Canva approuvé par
+  // l'utilisateur (retour direct : "le signe est tronqué en haut, ce
+  // n'est pas le modèle prévu sur Canva", capture à l'appui montrant
+  // beaucoup plus de marge de ciel au-dessus du symbole côté Canva).
+  // On rogne donc uniquement en bas (jambes/paysage, moins critique) en
+  // conservant tout le haut de l'illustration.
+  const IMG_SRC_W = 1024;
+  const IMG_SRC_H = 1536;
+  const echelleImage = WIDTH / IMG_SRC_W;
+  const hauteurImageMiseEchelle = IMG_SRC_H * echelleImage;
+
   const png = await new ImageResponse(
     (
-      <div style={{ width: WIDTH, height: HEIGHT, display: 'flex', position: 'relative', background: COULEURS.gris }}>
+      <div style={{ width: WIDTH, height: HEIGHT, display: 'flex', position: 'relative', background: COULEURS.gris, overflow: 'hidden' }}>
         {imageUrl && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={imageUrl}
             width={WIDTH}
-            height={HEIGHT}
-            style={{ objectFit: 'cover', position: 'absolute', top: 0, left: 0 }}
+            height={hauteurImageMiseEchelle}
+            style={{ position: 'absolute', top: 0, left: 0 }}
           />
         )}
         {/* Bandeau crème translucide superposé DIRECTEMENT sur l'image (pas
