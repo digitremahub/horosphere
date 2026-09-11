@@ -267,6 +267,19 @@ export default async function ProfilPage({ searchParams }: { searchParams: Promi
             {t('birthTimeHint')}
           </p>
 
+          <p style={{ fontSize: '0.78rem', color: 'var(--sourdine)', display: 'flex', alignItems: 'flex-start', gap: 6, marginTop: -8 }}>
+            <span aria-hidden="true">🔒</span>
+            <span>
+              {t.rich('birthDataReassurance', {
+                link: (chunks) => (
+                  <Link href="/politique-de-confidentialite" style={{ color: 'var(--lever-profond)' }}>
+                    {chunks}
+                  </Link>
+                ),
+              })}
+            </span>
+          </p>
+
           <div>
             <label htmlFor="telephone" className="field-label">{t('phone')}</label>
             <input

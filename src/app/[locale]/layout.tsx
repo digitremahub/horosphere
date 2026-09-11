@@ -47,6 +47,7 @@ export default async function LocaleLayout({
               <span>© {new Date().getFullYear()} Horosphère</span>
               <span>{t('tagline')}</span>
               <span style={{ display: 'flex', gap: 18 }}>
+                <Link href="/faq" style={{ color: 'var(--sourdine)' }}>{t('faq')}</Link>
                 <Link href="/mentions-legales" style={{ color: 'var(--sourdine)' }}>{t('legalNotice')}</Link>
                 <Link href="/cgv" style={{ color: 'var(--sourdine)' }}>{t('terms')}</Link>
                 <Link href="/politique-de-confidentialite" style={{ color: 'var(--sourdine)' }}>{t('privacy')}</Link>

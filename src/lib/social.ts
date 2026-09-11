@@ -25,15 +25,6 @@ export type SocialDraft = {
   // HEYGEN_API_KEY n'est pas configurée ou si la soumission a échoué
   // (jamais bloquant : le script texte reste disponible dans tous les cas).
   heygenVideoId?: string | null;
-  // Instagram uniquement : 5 visuels pour une publication carrousel (voir
-  // construireCarrouselInstagramSigne) — la même illustration du signe,
-  // déclinée en 5 diapositives dont chacune porte le texte d'UNE catégorie
-  // (accroche, amour, travail, énergie, action) directement sur l'image,
-  // plutôt que de tout condenser dans la seule légende. Décision explicite
-  // de l'utilisateur. `imageUrl` reste renseigné en parallèle (identique à
-  // la première diapositive) pour ne rien casser côté consommateurs
-  // existants qui n'attendent qu'une image simple.
-  imagesCarrousel?: string[] | null;
 };
 
 export type DailySocialContent = {
@@ -194,28 +185,6 @@ function ligneRenvoiCroise(reseau: 'Facebook' | 'Instagram', autreSigne: Sign): 
     : `📱 Et sur notre compte Instagram aujourd'hui : ${autreSigne.symbole} ${autreSigne.nom}.`;
 }
 
-/** Construit les 5 diapositives du carrousel Instagram du jour (voir
- * /api/og/sign-slide) : la couverture (accroche) puis une diapositive par
- * catégorie de la lecture (amour, travail, énergie, action) — toutes basées
- * sur la MÊME image fixe du signe, jamais une image différente par
- * diapositive (cohérence visuelle du carrousel). `null` si le signe n'a pas
- * d'image fixe (repose alors sur genererIllustrationTotem comme couverture
- * seule, sans carrousel — cas résiduel, tous les signes ont leur visuel). */
-function construireCarrouselInstagramSigne(sign: Sign, dateISO: string, reading: { headline: string; amour: string; travail: string; energie: string; conseil: string }): string[] | null {
-  if (!imageFixeSigne(sign.key)) return null;
-  const diapositive = (categorie: string, texte: string) =>
-    `${siteUrl()}/api/og/sign-slide?sign=${sign.key}&categorie=${categorie}&texte=${encodeURIComponent(texte)}`;
-  return [
-    // La couverture n'affiche que la date du jour, jamais l'accroche —
-    // décision explicite de l'utilisateur (voir /api/og/sign-slide).
-    `${siteUrl()}/api/og/sign-slide?sign=${sign.key}&categorie=cover&date=${dateISO}`,
-    diapositive('amour', reading.amour),
-    diapositive('travail', reading.travail),
-    diapositive('energie', reading.energie),
-    diapositive('action', reading.conseil),
-  ];
-}
-
 /** Construit le post Instagram du jour à partir d'une vraie lecture
  * (generateHoroscope, qui a déjà son propre repli déterministe sans clé
  * Anthropic — inutile de dupliquer cette logique ici). `autreSigne`, quand
@@ -269,7 +238,6 @@ async function genererPostInstagramSigne(date: Date, sign: Sign, autreSigne?: Si
     imageUrl,
     scriptVideo: null,
     mode: reading.mode,
-    imagesCarrousel: construireCarrouselInstagramSigne(sign, dateISO, reading),
   };
 }
 

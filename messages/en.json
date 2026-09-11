@@ -15,6 +15,7 @@
   },
   "Footer": {
     "tagline": "A daily ritual, to move forward every day.",
+    "faq": "FAQ",
     "legalNotice": "Legal notice",
     "terms": "Terms",
     "privacy": "Privacy",
@@ -145,6 +146,7 @@
     "birthPlace": "Place of birth",
     "birthPlacePlaceholder": "City, country",
     "birthTimeHint": "With the exact time, your birth chart includes your true ascendant and natal moon — without it, these stay unavailable rather than estimated.",
+    "birthDataReassurance": "This information is used only to calculate your real birth chart. It's never sold or shared with third parties — see our <link>privacy policy</link>.",
     "phone": "Phone (optional)",
     "phonePlaceholder": "e.g. 555-123-4567",
     "phoneHint": "For sending your horoscope by SMS — coming soon (email sending is available below).",
@@ -386,6 +388,27 @@
     "s5Text3": "For any billing anomaly (double charge, incorrect amount), a refund may be requested within 14 days of the transaction; it will be reviewed on a case-by-case basis.",
     "s6Title": "6. Payment",
     "s6Text": "Payments are processed by Stripe. Horosphère does not store any bank details: payment information is entered directly on Stripe's secure interface."
+  },
+  "Faq": {
+    "pill": "Frequently asked questions",
+    "title": "FAQ",
+    "intro": "The questions we get asked most often — about how the service works, your data, and payments. Another question? Write to us at contact@horosphere.fr.",
+    "q1": "How does Horosphère work?",
+    "a1": "You provide your birth date, time, and place: from that, we calculate your real natal chart (planet positions, ascendant, natal moon) instead of giving you a generic horoscope based only on your sun sign. Each reading is generated on demand from this real data.",
+    "q2": "Is my birth data safe?",
+    "a2": "Yes. It's used only to calculate your natal chart and generate your readings. It's never sold or rented, and is only shared with the technical providers strictly necessary to run the service (hosting, payment). Full details are in our <link>privacy policy</link>.",
+    "q3": "What happens if I cancel my subscription?",
+    "a3": "Cancellation takes effect at the end of the period already paid for: you keep access to your subscription benefits (current cycle's credits, subscriber-only readings) until that date, with no renewal or further billing. Unused subscription credits at the end of a cycle don't carry over to the next one.",
+    "q4": "Do my pack credits expire?",
+    "a4": "Yes, {days} days after purchase. After that, unused credits are lost, with no refund — make sure to use them within that window.",
+    "q5": "Can I get a refund?",
+    "a5": "Credits already used (readings already generated) aren't refundable, given the immediate, digital nature of the service. In case of a genuine technical failure (a reading that fails after credits were charged), credits are refunded automatically or on simple request. For a billing error (double charge, wrong amount), a refund can be requested within 14 days.",
+    "q6": "Can I delete my data or my account?",
+    "a6": "Yes, at any time. Write to contact@horosphere.fr to request full deletion of your account and data: it's carried out within one month at most (legal GDPR deadline).",
+    "q7": "Is payment secure?",
+    "a7": "Yes, all payments are processed by Stripe. Horosphère never stores any banking data: your payment details are entered directly on Stripe's secure interface.",
+    "q8": "Is Horosphère available in my language?",
+    "a8": "The site and readings are available in French, English, and Spanish — pick your language at the top of the page."
   },
   "MentionsLegales": {
     "pill": "Legal information",

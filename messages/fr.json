@@ -15,6 +15,7 @@
   },
   "Footer": {
     "tagline": "Un rituel quotidien, pour avancer chaque jour.",
+    "faq": "FAQ",
     "legalNotice": "Mentions légales",
     "terms": "CGV",
     "privacy": "Confidentialité",
@@ -145,6 +146,7 @@
     "birthPlace": "Lieu de naissance",
     "birthPlacePlaceholder": "Ville, pays",
     "birthTimeHint": "Avec l'heure exacte, votre thème astral inclut votre véritable ascendant et votre lune natale — sans elle, ces éléments restent indisponibles plutôt qu'approximés.",
+    "birthDataReassurance": "Ces informations servent uniquement à calculer votre thème astral réel. Elles ne sont ni vendues ni partagées avec des tiers — voir notre <link>politique de confidentialité</link>.",
     "phone": "Téléphone (optionnel)",
     "phonePlaceholder": "06 12 34 56 78",
     "phoneHint": "Pour un envoi par SMS de votre horoscope — fonctionnalité à venir (l'envoi par e-mail est disponible ci-dessous).",
@@ -386,6 +388,27 @@
     "s5Text3": "Pour toute anomalie de facturation (double prélèvement, montant incorrect), un remboursement peut être demandé dans un délai de 14 jours suivant la transaction ; il sera étudié au cas par cas.",
     "s6Title": "6. Paiement",
     "s6Text": "Les paiements sont traités par Stripe. Horosphère ne stocke aucune donnée bancaire : les coordonnées de paiement sont saisies directement sur l'interface sécurisée de Stripe."
+  },
+  "Faq": {
+    "pill": "Questions fréquentes",
+    "title": "FAQ",
+    "intro": "Les questions qu'on nous pose le plus souvent — sur le fonctionnement du service, vos données et les paiements. Une autre question ? Écrivez-nous à contact@horosphere.fr.",
+    "q1": "Comment fonctionne Horosphère ?",
+    "a1": "Vous renseignez votre date, heure et lieu de naissance : à partir de ça, nous calculons votre thème astral réel (position des planètes, ascendant, lune natale) plutôt que de vous donner un horoscope générique basé uniquement sur votre signe solaire. Chaque lecture est générée à la demande à partir de ces données réelles.",
+    "q2": "Mes données de naissance sont-elles en sécurité ?",
+    "a2": "Oui. Elles servent uniquement à calculer votre thème astral et générer vos lectures. Elles ne sont ni vendues ni louées, et ne sont partagées qu'avec les prestataires techniques strictement nécessaires au fonctionnement du service (hébergement, paiement). Le détail complet est sur notre <link>politique de confidentialité</link>.",
+    "q3": "Que se passe-t-il si je résilie mon abonnement ?",
+    "a3": "La résiliation prend effet à la fin de la période déjà payée : vous gardez l'accès aux avantages de l'abonnement (crédits du cycle en cours, lectures réservées aux abonnés) jusqu'à cette date, sans reconduction ni facturation ultérieure. Les crédits d'abonnement non consommés à la fin d'un cycle ne sont pas reportés au cycle suivant.",
+    "q4": "Mes crédits de pack expirent-ils ?",
+    "a4": "Oui, {days} jours après leur achat. Passé ce délai, les crédits non utilisés sont perdus, sans remboursement — pensez à les utiliser dans cette fenêtre.",
+    "q5": "Puis-je être remboursé ?",
+    "a5": "Les crédits déjà consommés (lectures déjà générées) ne sont pas remboursables, la nature du service étant immédiate et numérique. En cas de défaut technique avéré (une lecture qui échoue après débit), les crédits sont recrédités automatiquement ou sur simple demande. En cas d'anomalie de facturation (double prélèvement, montant incorrect), un remboursement peut être demandé sous 14 jours.",
+    "q6": "Puis-je supprimer mes données ou mon compte ?",
+    "a6": "Oui, à tout moment. Écrivez à contact@horosphere.fr pour demander la suppression complète de votre compte et de vos données : elle est effectuée sous un mois maximum (délai légal RGPD).",
+    "q7": "Le paiement est-il sécurisé ?",
+    "a7": "Oui, tous les paiements sont traités par Stripe. Horosphère ne stocke aucune donnée bancaire : vos coordonnées de paiement sont saisies directement sur l'interface sécurisée de Stripe.",
+    "q8": "Horosphère est-il disponible dans ma langue ?",
+    "a8": "Le site et les lectures sont disponibles en français, anglais et espagnol — choisissez votre langue en haut de page."
   },
   "MentionsLegales": {
     "pill": "Informations légales",

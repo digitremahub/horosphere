@@ -15,8 +15,11 @@ const PLATFORM_HREF: Record<string, string | undefined> = {
  * encore été publié (jamais de section vide ou d'espace réservé bancal). */
 export default async function SocialCarousel() {
   if (!dbConfigured) return null;
+  // 6, pas 12 : les posts suivent tous le même gabarit (Amour/Travail/
+  // Énergie/Action) — au-delà de quelques-uns, ça sent le remplissage
+  // plus que la preuve d'activité (retour utilisateur).
   const [posts, t] = await Promise.all([
-    listRecentSocialPosts(12).catch(() => []),
+    listRecentSocialPosts(6).catch(() => []),
     getTranslations('Home'),
   ]);
   if (posts.length === 0) return null;

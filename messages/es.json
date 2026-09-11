@@ -15,6 +15,7 @@
   },
   "Footer": {
     "tagline": "Un ritual diario, para avanzar cada día.",
+    "faq": "Preguntas frecuentes",
     "legalNotice": "Aviso legal",
     "terms": "Condiciones",
     "privacy": "Privacidad",
@@ -145,6 +146,7 @@
     "birthPlace": "Lugar de nacimiento",
     "birthPlacePlaceholder": "Ciudad, país",
     "birthTimeHint": "Con la hora exacta, tu carta natal incluye tu verdadero ascendente y tu luna natal — sin ella, estos elementos permanecen no disponibles en lugar de aproximados.",
+    "birthDataReassurance": "Esta información se usa únicamente para calcular tu carta astral real. No se vende ni se comparte con terceros — consulta nuestra <link>política de privacidad</link>.",
     "phone": "Teléfono (opcional)",
     "phonePlaceholder": "ej. 555-123-4567",
     "phoneHint": "Para el envío por SMS de tu horóscopo — próximamente (el envío por correo ya está disponible más abajo).",
@@ -386,6 +388,27 @@
     "s5Text3": "Ante cualquier anomalía de facturación (cobro duplicado, importe incorrecto), puede solicitarse un reembolso en un plazo de 14 días tras la transacción; se estudiará caso por caso.",
     "s6Title": "6. Pago",
     "s6Text": "Los pagos son procesados por Stripe. Horosphère no almacena ningún dato bancario: la información de pago se introduce directamente en la interfaz segura de Stripe."
+  },
+  "Faq": {
+    "pill": "Preguntas frecuentes",
+    "title": "FAQ",
+    "intro": "Las preguntas que más nos hacen — sobre el funcionamiento del servicio, tus datos y los pagos. ¿Otra pregunta? Escríbenos a contact@horosphere.fr.",
+    "q1": "¿Cómo funciona Horosphère?",
+    "a1": "Indicas tu fecha, hora y lugar de nacimiento: a partir de ahí calculamos tu carta astral real (posición de los planetas, ascendente, luna natal) en lugar de darte un horóscopo genérico basado solo en tu signo solar. Cada lectura se genera bajo demanda a partir de estos datos reales.",
+    "q2": "¿Mis datos de nacimiento están seguros?",
+    "a2": "Sí. Se usan únicamente para calcular tu carta astral y generar tus lecturas. No se venden ni se alquilan, y solo se comparten con los proveedores técnicos estrictamente necesarios para el funcionamiento del servicio (alojamiento, pago). Todos los detalles están en nuestra <link>política de privacidad</link>.",
+    "q3": "¿Qué pasa si cancelo mi suscripción?",
+    "a3": "La cancelación entra en vigor al final del período ya pagado: conservas el acceso a las ventajas de la suscripción (créditos del ciclo en curso, lecturas reservadas a suscriptores) hasta esa fecha, sin renovación ni facturación posterior. Los créditos de suscripción no consumidos al final de un ciclo no se trasladan al siguiente.",
+    "q4": "¿Caducan los créditos de mis packs?",
+    "a4": "Sí, {days} días después de la compra. Pasado ese plazo, los créditos no usados se pierden, sin reembolso — asegúrate de usarlos dentro de ese plazo.",
+    "q5": "¿Puedo obtener un reembolso?",
+    "a5": "Los créditos ya consumidos (lecturas ya generadas) no son reembolsables, dada la naturaleza inmediata y digital del servicio. En caso de fallo técnico comprobado (una lectura que falla tras cobrar créditos), los créditos se reembolsan automáticamente o a petición simple. Ante un error de facturación (cobro duplicado, importe incorrecto), se puede solicitar un reembolso en un plazo de 14 días.",
+    "q6": "¿Puedo eliminar mis datos o mi cuenta?",
+    "a6": "Sí, en cualquier momento. Escribe a contact@horosphere.fr para solicitar la eliminación completa de tu cuenta y tus datos: se realiza en un plazo máximo de un mes (plazo legal del RGPD).",
+    "q7": "¿El pago es seguro?",
+    "a7": "Sí, todos los pagos son procesados por Stripe. Horosphère nunca almacena datos bancarios: tus datos de pago se introducen directamente en la interfaz segura de Stripe.",
+    "q8": "¿Horosphère está disponible en mi idioma?",
+    "a8": "El sitio y las lecturas están disponibles en francés, inglés y español — elige tu idioma en la parte superior de la página."
   },
   "MentionsLegales": {
     "pill": "Información legal",
