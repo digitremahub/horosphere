@@ -87,7 +87,12 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const signKey = searchParams.get('sign') || '';
   const categorieParam = searchParams.get('categorie') || '';
-  const texte = (searchParams.get('texte') || '').slice(0, 260);
+  // 500 caractères — assez pour les 3-4 phrases denses désormais demandées à
+  // l'IA (voir generateHoroscope dans lib/anthropic.ts, retour utilisateur :
+  // "les gens payent, ils veulent des informations"). Le bandeau (660px,
+  // justifyContent flex-end) a largement la place : ~11 lignes de texte à
+  // 36px avant de déborder au-dessus de son propre cadre.
+  const texte = (searchParams.get('texte') || '').slice(0, 500);
   const dateISO = searchParams.get('date') || '';
 
   const sign = SIGNS.find((s) => s.key === signKey);

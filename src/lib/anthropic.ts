@@ -187,19 +187,20 @@ export async function generateHoroscope(opts: Options): Promise<HoroscopeReading
       : `Horoscope général du jour pour ce signe (pas de données de naissance précises).`;
   const prompt = `Tu écris l'horoscope du jour pour l'application Horosphère, pour le signe ${opts.sign.nom} (élément ${opts.sign.element}, planète maîtresse ${opts.sign.planete}). Date du jour : ${opts.dateISO}.
 ${contexte}
-${DIRECTIVE_TON} Phrases courtes, une émotion à la fois, jamais culpabilisant ni anxiogène. Évite les répétitions d'un jour à l'autre.
+${DIRECTIVE_TON} Une émotion à la fois, jamais culpabilisant ni anxiogène. Évite les répétitions d'un jour à l'autre.
+Contenu attendu pour amour/travail/énergie : une vraie information exploitable, pas une généralité qui pourrait s'appliquer à n'importe quel signe n'importe quel jour. Nomme un mécanisme astrologique concret et propre au signe (transit, aspect, position planétaire, élément, planète maîtresse) puis développe CE QUE ÇA CHANGE PRÉCISÉMENT aujourd'hui — une situation plausible, un choix à faire, un risque à éviter. C'est un produit payant : la personne doit sentir qu'elle a appris quelque chose de spécifique à sa lecture, pas relu un horoscope générique.
 Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact :
 {
   "headline": "phrase d'accroche de 5 à 9 mots, qui donne une direction pour la journée",
-  "amour": "1 à 2 phrases sur le plan sentimental, se terminant par ce que ça implique concrètement aujourd'hui",
-  "travail": "1 à 2 phrases sur le plan professionnel, se terminant par ce que ça implique concrètement aujourd'hui",
-  "energie": "1 à 2 phrases sur la forme physique et mentale, se terminant par ce que ça implique concrètement aujourd'hui",
+  "amour": "3 à 4 phrases denses sur le plan sentimental : le mécanisme astrologique du jour, la situation concrète qu'il éclaire, puis ce que ça implique aujourd'hui",
+  "travail": "3 à 4 phrases denses sur le plan professionnel : le mécanisme astrologique du jour, la situation concrète qu'il éclaire, puis ce que ça implique aujourd'hui",
+  "energie": "3 à 4 phrases denses sur la forme physique et mentale : le mécanisme astrologique du jour, la situation concrète qu'il éclaire, puis ce que ça implique aujourd'hui",
   "conseil": "une phrase impérative courte : l'action principale à mener aujourd'hui, le cœur de la lecture",
   "scoreAmour": nombre entier entre 30 et 98,
   "scoreTravail": nombre entier entre 30 et 98,
   "scoreEnergie": nombre entier entre 30 et 98
 }${consigneLangue(langue)}`;
-  const parsed = await callClaude(apiKey, model, prompt, 700);
+  const parsed = await callClaude(apiKey, model, prompt, 1100);
   return {
     headline: avecPrenom(opts.prenom, String(parsed.headline ?? '').slice(0, 200)),
     amour: String(parsed.amour ?? ''),
