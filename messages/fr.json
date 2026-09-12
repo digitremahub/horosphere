@@ -327,8 +327,6 @@
     "subscriptionsSubtitlePromo": " Crédits ×{multiplicateur} le premier mois pour les {n, plural, one {# prochain abonné} other {# prochains abonnés}}.",
     "perMonth": "/mois",
     "creditsPerMonth": "crédits / mois",
-    "pricePerDayUnder1": "soit moins d'1 € par jour ({prix}/jour)",
-    "pricePerDay": "soit {prix} par jour",
     "mostChosen": "Le plus choisi",
     "subscribe": "S'abonner",
     "costTitle": "Combien coûte chaque lecture ?",

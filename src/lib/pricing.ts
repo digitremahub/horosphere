@@ -116,8 +116,14 @@ export function prixParCredit(pack: CreditPack): string {
   return euros(pack.prixCentimes / pack.credits);
 }
 
-// Prix d'un abonnement ramené à la journée (slogan historique : "l'horoscope
-// pour moins d'1€/jour"). Affiché sur /tarifs sous chaque abonnement.
-export function prixParJour(sub: Subscription): string {
-  return euros(sub.prixCentimesParMois / 30);
+// Prix d'un crédit d'abonnement, ramené à la même unité que prixParCredit
+// (packs) pour que les deux familles d'offres soient directement
+// comparables sur /tarifs. Remplace l'ancien repère "prix par jour"
+// (slogan historique "moins d'1€/jour") : retour utilisateur — afficher un
+// prix par JOUR pour les abonnements et un prix par LECTURE pour les packs
+// rendait la comparaison illisible, et laissait croire que l'abonnement le
+// moins cher (moins de crédits/jour) était le plus avantageux alors que
+// c'est l'inverse une fois ramené à la lecture.
+export function prixParCreditAbonnement(sub: Subscription): string {
+  return euros(sub.prixCentimesParMois / sub.creditsParMois);
 }
