@@ -356,16 +356,13 @@
       "guidance_spirituelle": { "nom": "Guidance spirituelle", "description": "Une lecture profonde, avec une pratique concrète pour avancer sur votre chemin intérieur." }
     },
     "packs": {
-      "initiation": { "nom": "Premier Pas", "accroche": "Découvrir Horosphère" },
       "eveil": { "nom": "Élan", "accroche": "Petit usage ponctuel" },
       "connexion": { "nom": "Rythme", "accroche": "Utilisateur régulier" },
-      "illumination": { "nom": "Cap", "accroche": "Gros pack" },
       "eternite": { "nom": "Horizon", "accroche": "Meilleur rapport volume" }
     },
     "subscriptions": {
       "essentiel": { "nom": "Horosphère", "avantage": "Tarif préférentiel" },
-      "premium": { "nom": "Horosphère Suivi", "avantage": "Un accompagnement renforcé, au quotidien" },
-      "vip": { "nom": "Horosphère Guidance", "avantage": "L'accompagnement le plus complet" }
+      "premium": { "nom": "Horosphère Suivi", "avantage": "Un accompagnement renforcé, au quotidien" }
     }
   },
   "Cgv": {

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Crée les 8 produits/prix Stripe (5 packs + 3 abonnements) à partir de la
+// Crée les 5 produits/prix Stripe (3 packs + 2 abonnements) à partir de la
 // grille tarifaire d'Horosphère, et affiche les variables d'environnement
 // à copier dans Vercel (Project Settings → Environment Variables).
 //
@@ -21,17 +21,14 @@ const stripe = new Stripe(key, { apiVersion: '2024-06-20' });
 
 // Garder ces valeurs synchronisées avec src/lib/pricing.ts
 const PACKS = [
-  { slug: 'initiation', nom: 'Horosphère — Pack Initiation', prixCentimes: 299, envKey: 'STRIPE_PRICE_PACK_INITIATION' },
   { slug: 'eveil', nom: 'Horosphère — Pack Éveil', prixCentimes: 699, envKey: 'STRIPE_PRICE_PACK_EVEIL' },
   { slug: 'connexion', nom: 'Horosphère — Pack Connexion', prixCentimes: 1299, envKey: 'STRIPE_PRICE_PACK_CONNEXION' },
-  { slug: 'illumination', nom: 'Horosphère — Pack Illumination', prixCentimes: 1999, envKey: 'STRIPE_PRICE_PACK_ILLUMINATION' },
   { slug: 'eternite', nom: 'Horosphère — Pack Éternité', prixCentimes: 3499, envKey: 'STRIPE_PRICE_PACK_ETERNITE' },
 ];
 
 const SUBS = [
   { slug: 'essentiel', nom: 'Horosphère — Abonnement', prixCentimesParMois: 999, envKey: 'STRIPE_PRICE_SUB_ESSENTIEL' },
   { slug: 'premium', nom: 'Horosphère — Abonnement Premium', prixCentimesParMois: 1999, envKey: 'STRIPE_PRICE_SUB_PREMIUM' },
-  { slug: 'vip', nom: 'Horosphère — Abonnement VIP', prixCentimesParMois: 3499, envKey: 'STRIPE_PRICE_SUB_VIP' },
 ];
 
 async function findOrCreateProduct(name) {

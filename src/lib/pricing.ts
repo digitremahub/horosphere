@@ -25,18 +25,26 @@ export type Subscription = {
   misEnAvant?: boolean;
 };
 
+// 3 packs (au lieu de 5) et 2 abonnements (au lieu de 3) — retour d'audit :
+// trop de choix d'un coup (5+3+14 lignes de tarifs) créait une paralysie du
+// choix. Retiré : "Premier Pas" (3 crédits, quasi un jeton d'essai — déjà
+// couvert par les crédits de bienvenue offerts à l'inscription) et "Cap"
+// (50 crédits, redondant entre "Rythme" et "Horizon"). Aucun client actif
+// au moment de ce changement (voir historique) : rien à migrer.
 export const CREDIT_PACKS: CreditPack[] = [
-  { slug: 'initiation', emoji: '🌱', nom: 'Premier Pas', prixCentimes: 299, credits: 3, accroche: 'Découvrir Horosphère', envKey: 'STRIPE_PRICE_PACK_INITIATION' },
   { slug: 'eveil', emoji: '🚀', nom: 'Élan', prixCentimes: 699, credits: 10, accroche: 'Petit usage ponctuel', envKey: 'STRIPE_PRICE_PACK_EVEIL' },
   { slug: 'connexion', emoji: '🔄', nom: 'Rythme', prixCentimes: 1299, credits: 25, accroche: 'Utilisateur régulier', envKey: 'STRIPE_PRICE_PACK_CONNEXION' },
-  { slug: 'illumination', emoji: '🧭', nom: 'Cap', prixCentimes: 1999, credits: 50, accroche: 'Gros pack', envKey: 'STRIPE_PRICE_PACK_ILLUMINATION' },
   { slug: 'eternite', emoji: '🌅', nom: 'Horizon', prixCentimes: 3499, credits: 100, accroche: 'Meilleur rapport volume', envKey: 'STRIPE_PRICE_PACK_ETERNITE' },
 ];
 
+// Retiré : "Guidance" (400 crédits/mois, l'abonnement le plus cher et le
+// moins susceptible de convertir) — un utilisateur à fort usage peut
+// compléter son abonnement avec le pack "Horizon" plutôt que de choisir
+// entre 3 formules mensuelles. Garde le schéma classique entrée + formule
+// mise en avant, plus simple à comparer.
 export const SUBSCRIPTIONS: Subscription[] = [
   { slug: 'essentiel', emoji: '⭐', nom: 'Horosphère', prixCentimesParMois: 999, creditsParMois: 80, avantage: 'Tarif préférentiel', envKey: 'STRIPE_PRICE_SUB_ESSENTIEL' },
   { slug: 'premium', emoji: '☀️', nom: 'Horosphère Suivi', prixCentimesParMois: 1999, creditsParMois: 200, avantage: 'Un accompagnement renforcé, au quotidien', envKey: 'STRIPE_PRICE_SUB_PREMIUM', misEnAvant: true },
-  { slug: 'vip', emoji: '🌠', nom: 'Horosphère Guidance', prixCentimesParMois: 3499, creditsParMois: 400, avantage: "L'accompagnement le plus complet", envKey: 'STRIPE_PRICE_SUB_VIP' },
 ];
 
 // Combien coûte chaque fonctionnalité, en crédits.

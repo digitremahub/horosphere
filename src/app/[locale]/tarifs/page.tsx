@@ -121,8 +121,8 @@ export default async function TarifsPage() {
                 <BrandMark size={56} />
               </div>
               {s.misEnAvant && (
-                <div className="pill" style={{ position: 'absolute', top: -13, left: 24, background: 'var(--lever)', color: 'var(--aube)', borderColor: 'var(--lever)' }}>
-                  {t('mostChosen')}
+                <div className="pill" style={{ position: 'absolute', top: -13, left: 24, background: 'var(--lever)', color: 'var(--aube)', borderColor: 'var(--lever)', fontWeight: 700, fontSize: '0.76rem', letterSpacing: '0.02em' }}>
+                  ⭐ {t('mostChosen')}
                 </div>
               )}
               <div style={{ fontSize: '1.6rem' }}>{s.emoji}</div>
