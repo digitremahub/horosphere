@@ -25,10 +25,28 @@ export type SocialDraft = {
   // HEYGEN_API_KEY n'est pas configurée ou si la soumission a échoué
   // (jamais bloquant : le script texte reste disponible dans tous les cas).
   heygenVideoId?: string | null;
+  // Carrousel Instagram uniquement (voir genererCarrouselInstagramSigne) :
+  // diapositives 2 à 5 (Amour, Travail, Énergie, Action du jour) — `imageUrl`
+  // porte alors la diapositive 1 (couverture). Noms alignés sur les champs
+  // Airtable "Visuel 2/3/4/5 (URL)" de la table "Réseaux sociaux" pour un
+  // mappage direct côté scénario Make. Absent pour Facebook/TikTok.
+  carrousel2Url?: string;
+  carrousel3Url?: string;
+  carrousel4Url?: string;
+  carrousel5Url?: string;
 };
 
 export type DailySocialContent = {
+  // Alias de compatibilité = instagramMatin (voir plus bas), pour ne pas
+  // casser un scénario Make existant déjà mappé sur `instagram`.
   instagram: SocialDraft;
+  // À partir du 14/09/2026 (SEUIL_DEUX_SIGNES) : deux carrousels Instagram
+  // distincts par jour, 7h et 13h, chacun sur un signe différent (décision
+  // explicite de l'utilisateur, 13/09 — "il faut 2 carrousels par jour, un
+  // du matin (7h) un de l'après-midi (13h)"). Avant cette date, les deux
+  // valent le même contenu (rotation historique à un seul post/jour).
+  instagramMatin: SocialDraft;
+  instagramApresMidi: SocialDraft;
   facebook: SocialDraft;
   tiktok: SocialDraft;
 };
@@ -241,6 +259,51 @@ async function genererPostInstagramSigne(date: Date, sign: Sign, autreSigne?: Si
   };
 }
 
+/** URL d'une diapositive du carrousel quotidien (voir
+ * api/og/carrousel-signe/route.tsx) — `page` va de 1 (couverture) à 5
+ * (action du jour). Rendue à la demande à chaque appel (jamais stockée) :
+ * Make.com doit récupérer ces URLs le jour même où elles sont générées,
+ * la lecture du jour n'étant valable que pour `dateISO`. */
+function urlDiapositiveCarrousel(sign: Sign, page: 1 | 2 | 3 | 4 | 5, dateISO: string): string {
+  return `${siteUrl()}/api/og/carrousel-signe?sign=${sign.key}&page=${page}&date=${dateISO}`;
+}
+
+/** Construit le carrousel Instagram du jour (5 diapositives, identité
+ * visuelle "édition automne" validée dans Canva le 13/09/2026 — voir
+ * api/og/carrousel-signe/route.tsx) à partir d'une vraie lecture. Remplace,
+ * à partir du 14/09/2026 (SEUIL_DEUX_SIGNES), l'ancien post à image unique
+ * (genererPostInstagramSigne, conservée ci-dessus pour les dates
+ * antérieures / repli). */
+async function genererCarrouselInstagramSigne(date: Date, sign: Sign, autreSigne?: Sign): Promise<SocialDraft> {
+  const dateISO = date.toISOString().slice(0, 10);
+  const reading = await generateHoroscope({ feature: 'horoscope_quotidien', sign, dateISO, langue: 'fr' });
+
+  const legende = [
+    `${sign.symbole} ${sign.nom} — ${reading.headline}`,
+    '',
+    `💛 Amour : ${reading.amour}`,
+    `💼 Travail : ${reading.travail}`,
+    `⚡ Énergie : ${reading.energie}`,
+    '',
+    `✨ Action du jour : ${reading.conseil}`,
+    '',
+    `Chaque signe a son jour sur Horosphère — découvre le tien sur horosphere.fr.`,
+    ...(autreSigne ? ['', ligneRenvoiCroise('Instagram', autreSigne)] : []),
+  ].join('\n');
+
+  return {
+    legende,
+    hashtags: `${HASHTAGS_BASE} #${sign.key} #horoscope${sign.nom.replace(/\s/g, '')}`,
+    imageUrl: urlDiapositiveCarrousel(sign, 1, dateISO),
+    carrousel2Url: urlDiapositiveCarrousel(sign, 2, dateISO),
+    carrousel3Url: urlDiapositiveCarrousel(sign, 3, dateISO),
+    carrousel4Url: urlDiapositiveCarrousel(sign, 4, dateISO),
+    carrousel5Url: urlDiapositiveCarrousel(sign, 5, dateISO),
+    scriptVideo: null,
+    mode: reading.mode,
+  };
+}
+
 /** Symétrique de genererPostInstagramSigne pour Facebook, actif à partir du
  * 14 septembre 2026 (voir SEUIL_DEUX_SIGNES) — même contenu de valeur (une
  * vraie lecture, pas du marketing générique), sur un signe différent de
@@ -263,27 +326,17 @@ async function genererPostFacebookSigne(date: Date, sign: Sign, autreSigne: Sign
     ligneRenvoiCroise('Facebook', autreSigne),
   ].join('\n');
 
-  // Même principe que côté Instagram (voir plus haut) : visuel fixe par
-  // signe en priorité, jamais recadré. Facebook acceptant un plus large
-  // éventail de ratios/formats, le repli utilise la rotation générique
-  // (visuelDuJour) plutôt que le set JPEG dédié à Instagram.
-  let imageUrl: string | null = null;
-  const cheminFixe = imageFixeSigne(sign.key);
-  if (cheminFixe) {
-    imageUrl = `${siteUrl()}${cheminFixe}`;
-  } else {
-    try {
-      imageUrl = await genererIllustrationTotem(sign.nom, `${dateISO}-fb-${sign.key}`);
-    } catch (err) {
-      console.error('genererPostFacebookSigne: illustration IA échouée, repli visuel statique', err);
-    }
-  }
-  if (!imageUrl) imageUrl = visuelDuJour(dateISO);
-
+  // Depuis le passage au carrousel côté Instagram (voir
+  // genererCarrouselInstagramSigne), Facebook reprend la même identité
+  // visuelle "édition automne" : la diapositive de couverture rendue
+  // dynamiquement (api/og/carrousel-signe), plutôt que l'ancienne
+  // illustration fixe (lib/signImages.ts, style "personnage fantasy"
+  // explicitement abandonné). Facebook reste à image unique (jamais de
+  // carrousel côté Facebook, voir le schéma Airtable "Réseaux sociaux").
   return {
     legende,
     hashtags: `${HASHTAGS_BASE} #${sign.key} #horoscope${sign.nom.replace(/\s/g, '')}`,
-    imageUrl,
+    imageUrl: urlDiapositiveCarrousel(sign, 1, dateISO),
     scriptVideo: null,
     mode: reading.mode,
   };
@@ -421,32 +474,38 @@ async function genererFacebookTiktok(dateISO: string): Promise<{ facebook: Socia
   return genererFacebookTiktokDemo(dateISO);
 }
 
-/** Génère le contenu du jour pour les trois plateformes.
+/** Génère le contenu du jour pour toutes les plateformes.
  *
- * À partir du 14 septembre 2026 (SEUIL_DEUX_SIGNES), Instagram et Facebook
- * portent chacun une lecture complète mais sur un signe DIFFÉRENT, avec un
- * renvoi croisé doux vers l'autre réseau — TikTok reste du marketing
- * générique (genererFacebookTiktok, inchangé). Avant cette date, seul
- * Instagram est par signe ; Facebook/TikTok restent le pipeline marketing
- * générique historique. Dans tous les cas, chaque pipeline a son propre
- * repli déterministe : jamais de blocage de la publication. */
+ * À partir du 14 septembre 2026 (SEUIL_DEUX_SIGNES, décision explicite de
+ * l'utilisateur le 13/09 : "il faut 2 carrousels par jour, un du matin (7h)
+ * un de l'après-midi (13h)") : Instagram publie DEUX carrousels distincts
+ * (5 diapositives, identité "édition automne" — voir
+ * genererCarrouselInstagramSigne), chacun sur un signe différent ; Facebook
+ * garde son post à image unique sur le signe de l'après-midi, avec renvoi
+ * croisé vers celui du matin. TikTok reste du marketing générique
+ * (genererFacebookTiktok, inchangé). Avant cette date : ancien
+ * comportement (un seul post Instagram/jour, image unique) conservé tel
+ * quel pour ne pas réécrire l'historique. Dans tous les cas, chaque
+ * pipeline a son propre repli déterministe : jamais de blocage de la
+ * publication. */
 export async function generateDailySocialContent(date: Date = new Date()): Promise<DailySocialContent> {
   const dateISO = date.toISOString().slice(0, 10);
 
   if (dateISO >= SEUIL_DEUX_SIGNES) {
-    const signeInstagram = signeDuJourInstagram(date);
-    const signeFacebook = signeDuJourFacebook(date);
-    const [instagram, facebook, { tiktok }] = await Promise.all([
-      genererPostInstagramSigne(date, signeInstagram, signeFacebook),
-      genererPostFacebookSigne(date, signeFacebook, signeInstagram),
+    const signeMatin = signeDuJourInstagram(date);
+    const signeApresMidi = signeDuJourFacebook(date);
+    const [instagramMatin, instagramApresMidi, facebook, { tiktok }] = await Promise.all([
+      genererCarrouselInstagramSigne(date, signeMatin, signeApresMidi),
+      genererCarrouselInstagramSigne(date, signeApresMidi, signeMatin),
+      genererPostFacebookSigne(date, signeApresMidi, signeMatin),
       genererFacebookTiktok(dateISO),
     ]);
-    return { instagram, facebook, tiktok };
+    return { instagram: instagramMatin, instagramMatin, instagramApresMidi, facebook, tiktok };
   }
 
   const [instagram, { facebook, tiktok }] = await Promise.all([
     genererPostInstagramSigne(date, signeDuJourInstagram(date)),
     genererFacebookTiktok(dateISO),
   ]);
-  return { instagram, facebook, tiktok };
+  return { instagram, instagramMatin: instagram, instagramApresMidi: instagram, facebook, tiktok };
 }
