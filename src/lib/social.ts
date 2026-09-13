@@ -11,7 +11,7 @@ import { callClaude, generateHoroscope } from './anthropic';
 import { genererIllustrationTotem } from './openaiImage';
 import { imageFixeSigne } from './signImages';
 import { soumettreAvatarVideo } from './heygen';
-import { SIGNS, type Sign } from './zodiac';
+import { SIGNS, type Sign, signFromBirthdate } from './zodiac';
 import { mulberry32, hashStr, pick } from './fallback-generator';
 
 export type SocialDraft = {
@@ -169,13 +169,43 @@ function imageFacebookDuJour(dateISO: string): string {
 // naissance) : jamais la version personnalisée thème natal, qui reste
 // l'exclusivité de l'app.
 
-/** Rotation continue sur l'année (jour de l'année % 12), pas seulement sur
- * la semaine : contrairement aux reels (lundi-samedi), ce post sort tous
- * les jours, week-end compris. */
+/** Lundi (00:00 UTC) de la semaine ISO contenant `date`. */
+function lundiDeLaSemaineUTC(date: Date): Date {
+  const jour = date.getUTCDay(); // 0 = dimanche ... 6 = samedi
+  const decalage = jour === 0 ? 6 : jour - 1;
+  const lundi = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  lundi.setUTCDate(lundi.getUTCDate() - decalage);
+  return lundi;
+}
+
+// Nouvelle règle (demande explicite de l'utilisateur, 13/09 : "le 1er signe
+// publié de la semaine est le signe du mois en cours, comme ça ça change
+// tout le temps") : la rotation n'est plus ancrée sur le 1er janvier — ce
+// qui donnait EXACTEMENT le même signe, le même jour de l'année, chaque
+// année pour toujours, sans aucun rapport avec le vrai calendrier
+// astrologique — mais sur le vrai signe solaire du lundi de la semaine en
+// cours (signFromBirthdate sur la date du lundi). Le point de départ de la
+// rotation évolue ainsi naturellement d'un mois sur l'autre au lieu de
+// suivre un cycle mathématique figé : la semaine du 14/09/2026 (lundi en
+// Vierge) démarre sur Vierge, celle du 23/09 démarrera sur Balance, etc.
+function indexAncrageSemaine(date: Date): number {
+  const lundi = lundiDeLaSemaineUTC(date);
+  const ancrage = signFromBirthdate(lundi.getUTCMonth() + 1, lundi.getUTCDate());
+  return SIGNS.findIndex((s) => s.key === ancrage.key);
+}
+
+function offsetJourUTC(date: Date): number {
+  const lundi = lundiDeLaSemaineUTC(date);
+  const jourUTC = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+  return Math.floor((jourUTC - lundi.getTime()) / 86_400_000);
+}
+
+/** Rotation continue sur la semaine (ancrée sur le vrai signe solaire du
+ * lundi, voir indexAncrageSemaine ci-dessus), pas sur l'année entière :
+ * contrairement aux reels (lundi-samedi), ce post sort tous les jours,
+ * week-end compris. */
 function signeDuJourInstagram(date: Date): Sign {
-  const debutAnnee = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-  const jourAnnee = Math.floor((date.getTime() - debutAnnee.getTime()) / 86_400_000);
-  return SIGNS[jourAnnee % SIGNS.length];
+  return SIGNS[(indexAncrageSemaine(date) + offsetJourUTC(date)) % SIGNS.length];
 }
 
 // À partir du 14 septembre 2026 (décision explicite de l'utilisateur : "on
@@ -187,9 +217,7 @@ function signeDuJourInstagram(date: Date): Sign {
 export const SEUIL_DEUX_SIGNES = '2026-09-14';
 
 function signeDuJourFacebook(date: Date): Sign {
-  const debutAnnee = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-  const jourAnnee = Math.floor((date.getTime() - debutAnnee.getTime()) / 86_400_000);
-  return SIGNS[(jourAnnee + SIGNS.length / 2) % SIGNS.length];
+  return SIGNS[(indexAncrageSemaine(date) + offsetJourUTC(date) + SIGNS.length / 2) % SIGNS.length];
 }
 
 /** Lignes de renvoi croisé, douces et marketing, vers l'AUTRE plateforme ou
