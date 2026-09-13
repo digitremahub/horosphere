@@ -83,6 +83,13 @@ export async function GET(req: NextRequest) {
   const dateISO = /^\d{4}-\d{2}-\d{2}$/.test(searchParams.get('date') || '')
     ? (searchParams.get('date') as string)
     : new Date().toISOString().slice(0, 10);
+  // Texte déjà calculé, transmis par lib/social.ts (même principe que
+  // l'ancien /api/og/sign-slide) — évite un second appel IA au moment du
+  // rendu, qui pouvait renvoyer un texte différent de celui de la légende
+  // Instagram (une génération IA n'est pas déterministe). N'appeler
+  // generateHoroscope que si ce paramètre est absent (accès direct/preview
+  // sans passer par social.ts).
+  const texteParam = searchParams.get('texte');
 
   const sign = SIGNS.find((s) => s.key === signKey);
   if (!sign) {
@@ -96,12 +103,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Illustration de signe introuvable.' }, { status: 500 });
   }
 
-  let reading: HoroscopeReading;
-  try {
-    reading = await generateHoroscope({ feature: 'horoscope_quotidien', sign, dateISO, langue: 'fr' });
-  } catch (err) {
-    console.error('carrousel-signe: generateHoroscope a échoué', err);
-    return NextResponse.json({ error: 'Lecture indisponible.' }, { status: 502 });
+  let corps = texteParam ?? '';
+  if (page !== 'couverture' && !texteParam) {
+    try {
+      const reading = await generateHoroscope({ feature: 'horoscope_quotidien', sign, dateISO, langue: 'fr' });
+      corps = corpsDePage(page, reading);
+    } catch (err) {
+      console.error('carrousel-signe: generateHoroscope a échoué', err);
+      return NextResponse.json({ error: 'Lecture indisponible.' }, { status: 502 });
+    }
   }
 
   const triade = TRIADE_SIGNE[sign.key];
@@ -192,13 +202,13 @@ export async function GET(req: NextRequest) {
             <div
               style={{
                 display: 'flex',
-                fontSize: tailleCorps(corpsDePage(page, reading)),
+                fontSize: tailleCorps(corps),
                 lineHeight: 1.42,
                 color: COULEURS.corps,
                 textAlign: 'center',
               }}
             >
-              {corpsDePage(page, reading)}
+              {corps}
             </div>
           </div>
         )}

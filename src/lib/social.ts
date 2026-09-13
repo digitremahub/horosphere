@@ -270,12 +270,20 @@ async function genererPostInstagramSigne(date: Date, sign: Sign, autreSigne?: Si
 }
 
 /** URL d'une diapositive du carrousel quotidien (voir
- * api/og/carrousel-signe/route.tsx) — `page` va de 1 (couverture) à 5
- * (action du jour). Rendue à la demande à chaque appel (jamais stockée) :
- * Make.com doit récupérer ces URLs le jour même où elles sont générées,
- * la lecture du jour n'étant valable que pour `dateISO`. */
-function urlDiapositiveCarrousel(sign: Sign, page: 1 | 2 | 3 | 4 | 5, dateISO: string): string {
-  return `${siteUrl()}/api/og/carrousel-signe?sign=${sign.key}&page=${page}&date=${dateISO}`;
+ * api/og/carrousel-signe/route.tsx) — `page` va de 1 (couverture, pas de
+ * texte de lecture) à 5 (action du jour). Le texte de la page (`texte`,
+ * absent pour la couverture) est transmis directement dans l'URL — même
+ * principe que l'ancien /api/og/sign-slide (`&texte=...`) — plutôt que
+ * laissé à la route pour rappeler generateHoroscope : un appel IA n'est
+ * pas déterministe, un second appel au moment du rendu (quand Meta va
+ * chercher l'image, potentiellement des heures après la génération de la
+ * légende) pouvait renvoyer un texte différent de celui de la légende
+ * Instagram — désynchronisation constatée en préparant le lancement du
+ * 14/09. Passer le texte déjà calculé élimine à la fois cette
+ * incohérence et 4 appels IA superflus par signe/jour. */
+function urlDiapositiveCarrousel(sign: Sign, page: 1 | 2 | 3 | 4 | 5, dateISO: string, texte?: string): string {
+  const base = `${siteUrl()}/api/og/carrousel-signe?sign=${sign.key}&page=${page}&date=${dateISO}`;
+  return texte ? `${base}&texte=${encodeURIComponent(texte)}` : base;
 }
 
 /** Construit le carrousel Instagram du jour (5 diapositives, identité
@@ -306,7 +314,15 @@ async function genererCarrouselInstagramSigne(
     ...(autreSigne ? ['', renvoiVersAutreCreneau(moment, autreSigne)] : []),
   ].join('\n');
 
-  const imagesCarrousel = [1, 2, 3, 4, 5].map((page) => urlDiapositiveCarrousel(sign, page as 1 | 2 | 3 | 4 | 5, dateISO));
+  // Même texte que la légende ci-dessus pour chaque page, jamais recalculé.
+  const textesParPage: [1 | 2 | 3 | 4 | 5, string | undefined][] = [
+    [1, undefined],
+    [2, reading.amour],
+    [3, reading.travail],
+    [4, reading.energie],
+    [5, reading.conseil],
+  ];
+  const imagesCarrousel = textesParPage.map(([page, texte]) => urlDiapositiveCarrousel(sign, page, dateISO, texte));
 
   return {
     legende,
