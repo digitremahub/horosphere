@@ -186,6 +186,12 @@ export default async function HistoriquePage() {
             const texteAPartager = extrait
               ? td('shareTextWithHighlight', { highlight: extrait.length > 140 ? `${extrait.slice(0, 140)}…` : extrait })
               : td('shareTextFallback');
+            // Carte visuelle (voir /api/og/partage-lecture) — uniquement si
+            // le signe de cette entrée est connu (pas le cas pour certaines
+            // lectures anciennes sans signe enregistré).
+            const carteUrl = extrait && sign
+              ? `/api/og/partage-lecture?sign=${sign.key}&texte=${encodeURIComponent(extrait)}`
+              : undefined;
             return (
               <div key={entry.id}>
                 {cardNode}
@@ -196,6 +202,7 @@ export default async function HistoriquePage() {
                   subtitle={td('shareSubtitle')}
                   label={td('shareButton')}
                   copiedLabel={td('shareCopied')}
+                  imageUrl={carteUrl}
                 />
               </div>
             );

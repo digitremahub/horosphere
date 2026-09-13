@@ -189,6 +189,15 @@ export default function Dashboard({
   const texteAPartager = extraitResultat
     ? t('shareTextWithHighlight', { highlight: extraitResultat.length > 140 ? `${extraitResultat.slice(0, 140)}…` : extraitResultat })
     : t('shareTextFallback');
+  // Carte visuelle de CETTE lecture (voir /api/og/partage-lecture) — le
+  // signe du profil (pas celui, éventuellement différent, d'une
+  // compatibilité) : c'est la carte personnelle de la personne connectée.
+  // `userName` retombe sur l'e-mail à défaut de prénom (voir app/page.tsx) —
+  // jamais à afficher publiquement sur une image destinée à être partagée.
+  const prenomAffichable = userName.includes('@') ? '' : userName;
+  const carteUrl = extraitResultat
+    ? `/api/og/partage-lecture?sign=${userSign.key}${prenomAffichable ? `&prenom=${encodeURIComponent(prenomAffichable)}` : ''}&texte=${encodeURIComponent(extraitResultat)}`
+    : undefined;
 
   useEffect(() => {
     if (!showPopup) return;
@@ -217,6 +226,7 @@ export default function Dashboard({
           subtitle={t('shareSubtitle')}
           label={t('shareButton')}
           copiedLabel={t('shareCopied')}
+          imageUrl={carteUrl}
         />
       )}
     </>

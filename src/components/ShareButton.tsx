@@ -16,6 +16,7 @@ export default function ShareButton({
   subtitle,
   label,
   copiedLabel,
+  imageUrl,
 }: {
   shareText: string;
   shareUrl: string;
@@ -23,11 +24,34 @@ export default function ShareButton({
   subtitle: string;
   label: string;
   copiedLabel: string;
+  // Carte visuelle de la lecture (voir /api/og/partage-lecture) — décision
+  // stratégique explicite : le bouche-à-oreille d'une vraie personne qui
+  // partage SON résultat compte plus que le compte Horosphère qui poste
+  // dans le vide. Sans image (paramètre absent, ou navigateur incapable de
+  // partager un fichier), on retombe sur le partage texte historique.
+  imageUrl?: string;
 }) {
   const [copied, setCopied] = useState(false);
 
   async function partager() {
     if (typeof navigator !== 'undefined' && navigator.share) {
+      if (imageUrl && navigator.canShare) {
+        try {
+          const reponse = await fetch(imageUrl);
+          const blob = await reponse.blob();
+          const fichier = new File([blob], 'horosphere.jpg', { type: 'image/jpeg' });
+          if (navigator.canShare({ files: [fichier] })) {
+            // L'URL de parrainage reste dans le texte (le champ `url` du
+            // partage n'est pas fiable une fois des fichiers attachés,
+            // certaines applications cibles l'ignorent).
+            await navigator.share({ title: 'Horosphère', text: `${shareText} ${shareUrl}`, files: [fichier] });
+            return;
+          }
+        } catch {
+          // Récupération de l'image ou partage refusé — on retombe sur le
+          // partage texte simple ci-dessous plutôt que de bloquer la personne.
+        }
+      }
       try {
         await navigator.share({ title: 'Horosphère', text: shareText, url: shareUrl });
       } catch {
