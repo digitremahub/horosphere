@@ -55,6 +55,18 @@ async function fondDataUri(signKey: Sign['key']): Promise<string> {
   return dataUri;
 }
 
+// Le corps de lecture est volontairement dense (3 à 4 phrases, voir le
+// prompt de generateHoroscope dans lib/anthropic.ts — jamais une ligne
+// sommaire) : ~280 caractères pour l'Action du jour, jusqu'à ~450 pour
+// Amour/Travail/Énergie. Taille de police adaptative pour que ce contenu
+// tienne dans le cadre disponible sans déborder ni paraître écrasé.
+function tailleCorps(texte: string): number {
+  if (texte.length <= 220) return 34;
+  if (texte.length <= 320) return 30;
+  if (texte.length <= 420) return 27;
+  return 24;
+}
+
 function corpsDePage(page: NomPage, reading: HoroscopeReading): string {
   if (page === 'amour') return reading.amour;
   if (page === 'travail') return reading.travail;
@@ -94,6 +106,10 @@ export async function GET(req: NextRequest) {
 
   const triade = TRIADE_SIGNE[sign.key];
   const dateLongue = new Date(`${dateISO}T12:00:00Z`).toLocaleDateString('fr-FR', FORMAT_DATE_COUVERTURE);
+  // Taille de police adaptative : les triades vont de 24 caractères
+  // (Bélier) à 37 (Verseau) — une taille fixe déborde du cadre (constaté
+  // au premier rendu de test) pour les triades les plus longues.
+  const tailleTriade = Math.max(18, Math.min(28, Math.floor(820 / triade.length)));
 
   const png = await new ImageResponse(
     (
@@ -101,23 +117,27 @@ export async function GET(req: NextRequest) {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={fond} width={WIDTH} height={HEIGHT} style={{ position: 'absolute', inset: 0, objectFit: 'cover' }} />
 
-        {/* Bannière triade — droite, en rotation, semi-transparente sur les
-            pages de contenu (comme sur les modèles Canva), pleine opacité
-            sur la couverture. */}
+        {/* Bannière triade — diagonale au-dessus du médaillon, semi-
+            transparente sur les pages de contenu (comme sur les modèles
+            Canva), pleine opacité sur la couverture. Position/taille
+            calées pour que le rectangle tourné (46°) reste entièrement
+            dans le cadre 1080×1350 même pour les triades les plus longues
+            (vérifié visuellement — un premier essai à top:95 débordait en
+            haut de l'image). */}
         <div
           style={{
             position: 'absolute',
-            top: 95,
-            left: 330,
-            width: 420,
+            top: 248,
+            left: 300,
+            width: 480,
             display: 'flex',
             justifyContent: 'center',
-            transform: 'rotate(51deg)',
+            transform: 'rotate(46deg)',
             transformOrigin: 'center',
             opacity: page === 'couverture' ? 1 : 0.32,
           }}
         >
-          <div style={{ display: 'flex', fontSize: 28, fontWeight: 600, letterSpacing: 2, color: COULEURS.encre, textAlign: 'center' }}>
+          <div style={{ display: 'flex', fontSize: tailleTriade, fontWeight: 600, letterSpacing: 1.5, color: COULEURS.encre, textAlign: 'center' }}>
             {triade}
           </div>
         </div>
@@ -143,28 +163,64 @@ export async function GET(req: NextRequest) {
             </div>
           </div>
         ) : (
+          // Fond translucide derrière tout le bloc titre+texte : sans ça,
+          // le texte devient illisible par endroits sur les fonds les plus
+          // sombres/contrastés (ciel étoilé, aurore — constaté sur Verseau)
+          // — le corps de lecture est volontairement dense (3 à 4 phrases,
+          // voir generateHoroscope) et ne doit jamais paraître sommaire ni
+          // illisible : c'est la preuve de qualité qui donne envie de
+          // rejoindre le site.
           <div
             style={{
               position: 'absolute',
-              left: 60,
-              right: 60,
-              top: 572,
+              left: 44,
+              right: 44,
+              top: 500,
+              bottom: 210,
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
+              justifyContent: 'center',
+              padding: '36px 30px',
+              background: 'rgba(255,252,248,0.66)',
+              borderRadius: 32,
             }}
           >
-            <div style={{ display: 'flex', fontSize: 62, fontWeight: 700, letterSpacing: 2, color: COULEURS.encre, marginBottom: 30 }}>
+            <div style={{ display: 'flex', fontSize: 58, fontWeight: 700, letterSpacing: 2, color: COULEURS.encre, marginBottom: 24 }}>
               {TITRE_PAGE[page]}
             </div>
-            <div style={{ display: 'flex', fontSize: 32, lineHeight: 1.4, color: COULEURS.corps, textAlign: 'center' }}>
+            <div
+              style={{
+                display: 'flex',
+                fontSize: tailleCorps(corpsDePage(page, reading)),
+                lineHeight: 1.42,
+                color: COULEURS.corps,
+                textAlign: 'center',
+              }}
+            >
               {corpsDePage(page, reading)}
             </div>
           </div>
         )}
 
-        <div style={{ position: 'absolute', left: 0, right: 0, bottom: 108, display: 'flex', justifyContent: 'center' }}>
-          <div style={{ display: 'flex', fontSize: 30, fontWeight: 700, letterSpacing: 6, color: COULEURS.encre, textTransform: 'uppercase' }}>
+        {/* Pastille translucide derrière le wordmark : sans ça, le texte
+            devient illisible sur les zones sombres de certains fonds
+            (feuillage automnal en bas de cadre, constaté au premier rendu
+            de test) — même traitement que la pastille de date. */}
+        <div style={{ position: 'absolute', left: 0, right: 0, bottom: 92, display: 'flex', justifyContent: 'center' }}>
+          <div
+            style={{
+              display: 'flex',
+              padding: '14px 36px',
+              background: 'rgba(255,252,248,0.55)',
+              borderRadius: 20,
+              fontSize: 30,
+              fontWeight: 700,
+              letterSpacing: 6,
+              color: COULEURS.encre,
+              textTransform: 'uppercase',
+            }}
+          >
             Horosphère
           </div>
         </div>
