@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { NextIntlClientProvider, hasLocale } from 'next-intl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
@@ -8,6 +8,7 @@ import { Link } from '@/i18n/navigation';
 import SiteHeader from '@/components/SiteHeader';
 import ScrollToTopButton from '@/components/ScrollToTopButton';
 import SocialIcons from '@/components/SocialIcons';
+import PwaRegister from '@/components/PwaRegister';
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -16,8 +17,23 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'Metadata' });
-  return { title: t('title'), description: t('description') };
+  return {
+    title: t('title'),
+    description: t('description'),
+    // "Ajouter à l'écran d'accueil" sur iOS (Safari ignore manifest.ts pour
+    // le nom/la barre de statut, ces balises sont nécessaires en plus).
+    appleWebApp: { title: 'Horosphère', statusBarStyle: 'default' },
+  };
 }
+
+// Couleur de la barre d'adresse mobile / de la fenêtre PWA — même logique
+// clair/sombre que globals.css (--aube, --lever-profond).
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#A64E36' },
+    { media: '(prefers-color-scheme: dark)', color: '#241925' },
+  ],
+};
 
 export default async function LocaleLayout({
   children,
@@ -56,6 +72,7 @@ export default async function LocaleLayout({
           </footer>
           <SocialIcons />
           <ScrollToTopButton />
+          <PwaRegister />
         </NextIntlClientProvider>
       </body>
     </html>
