@@ -18,11 +18,24 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'Metadata' });
   return {
+    // Requis pour que les images Open Graph/Twitter (chemins relatifs,
+    // ex. générées par opengraph-image.tsx) se résolvent en URL absolue —
+    // sans ça Next.js retombe sur localhost, invalide pour un crawler.
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://horosphere.fr'),
     title: t('title'),
     description: t('description'),
     // "Ajouter à l'écran d'accueil" sur iOS (Safari ignore manifest.ts pour
     // le nom/la barre de statut, ces balises sont nécessaires en plus).
     appleWebApp: { title: 'Horosphère', statusBarStyle: 'default' },
+    // Sans ceci, aucun aperçu de lien (WhatsApp, Messenger, iMessage…) —
+    // constaté en partageant un lien de parrainage : la carte de partage
+    // dynamique (/api/og/partage-lecture) n'est utilisée que lorsque le
+    // navigateur sait partager un fichier (Web Share API niveau 2) ; dans
+    // tous les autres cas (repli texte + URL), l'appli de messagerie
+    // génère elle-même son aperçu à partir des balises Open Graph de la
+    // page — qui n'existaient pas du tout jusqu'ici. Voir opengraph-image.tsx.
+    openGraph: { title: t('title'), description: t('description'), siteName: 'Horosphère', locale, type: 'website' },
+    twitter: { card: 'summary_large_image', title: t('title'), description: t('description') },
   };
 }
 
