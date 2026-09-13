@@ -192,14 +192,25 @@ function signeDuJourFacebook(date: Date): Sign {
   return SIGNS[(jourAnnee + SIGNS.length / 2) % SIGNS.length];
 }
 
-/** Ligne de renvoi croisé, douce et marketing, vers l'autre plateforme —
- * ajoutée uniquement quand deux signes différents sortent le même jour
- * (voir SEUIL_DEUX_SIGNES). Absente sinon (comportement historique
- * inchangé pour les posts avant le 14 septembre). */
-function ligneRenvoiCroise(reseau: 'Facebook' | 'Instagram', autreSigne: Sign): string {
-  return reseau === 'Facebook'
-    ? `📸 Un autre signe est à l'honneur aujourd'hui sur notre page Facebook : ${autreSigne.symbole} ${autreSigne.nom}.`
-    : `📱 Et sur notre compte Instagram aujourd'hui : ${autreSigne.symbole} ${autreSigne.nom}.`;
+/** Lignes de renvoi croisé, douces et marketing, vers l'AUTRE plateforme ou
+ * créneau — ajoutées uniquement quand deux signes différents sortent le
+ * même jour (voir SEUIL_DEUX_SIGNES). Nomment explicitement la
+ * destination (corrige une confusion du premier jet où chaque variante
+ * nommait par erreur sa propre plateforme au lieu de celle vers laquelle
+ * elle renvoie — repéré en préparant le contenu du 14/09). */
+function renvoiVersFacebook(autreSigne: Sign): string {
+  return `📸 Et sur notre page Facebook aujourd'hui : ${autreSigne.symbole} ${autreSigne.nom}.`;
+}
+function renvoiVersInstagram(autreSigne: Sign): string {
+  return `📱 Et sur notre compte Instagram aujourd'hui : ${autreSigne.symbole} ${autreSigne.nom}.`;
+}
+/** Variante pour les deux carrousels Instagram du jour (matin/après-midi,
+ * voir genererCarrouselInstagramSigne) : renvoie vers l'autre créneau du
+ * même compte plutôt que vers une autre plateforme. */
+function renvoiVersAutreCreneau(moment: 'matin' | 'apres-midi', autreSigne: Sign): string {
+  return moment === 'matin'
+    ? `📅 Et cet après-midi sur Instagram : ${autreSigne.symbole} ${autreSigne.nom}.`
+    : `📅 Et ce matin sur Instagram : ${autreSigne.symbole} ${autreSigne.nom}.`;
 }
 
 /** Construit le post Instagram du jour à partir d'une vraie lecture
@@ -221,7 +232,7 @@ async function genererPostInstagramSigne(date: Date, sign: Sign, autreSigne?: Si
     `✨ Action du jour : ${reading.conseil}`,
     '',
     `Chaque signe a son jour sur Horosphère — découvre le tien sur horosphere.fr.`,
-    ...(autreSigne ? ['', ligneRenvoiCroise('Instagram', autreSigne)] : []),
+    ...(autreSigne ? ['', renvoiVersFacebook(autreSigne)] : []),
   ].join('\n');
 
   // Illustration EXCLUSIVEMENT tirée des visuels fixes fournis par
@@ -273,7 +284,12 @@ function urlDiapositiveCarrousel(sign: Sign, page: 1 | 2 | 3 | 4 | 5, dateISO: s
  * à partir du 14/09/2026 (SEUIL_DEUX_SIGNES), l'ancien post à image unique
  * (genererPostInstagramSigne, conservée ci-dessus pour les dates
  * antérieures / repli). */
-async function genererCarrouselInstagramSigne(date: Date, sign: Sign, autreSigne?: Sign): Promise<SocialDraft> {
+async function genererCarrouselInstagramSigne(
+  date: Date,
+  sign: Sign,
+  moment: 'matin' | 'apres-midi',
+  autreSigne?: Sign
+): Promise<SocialDraft> {
   const dateISO = date.toISOString().slice(0, 10);
   const reading = await generateHoroscope({ feature: 'horoscope_quotidien', sign, dateISO, langue: 'fr' });
 
@@ -287,7 +303,7 @@ async function genererCarrouselInstagramSigne(date: Date, sign: Sign, autreSigne
     `✨ Action du jour : ${reading.conseil}`,
     '',
     `Chaque signe a son jour sur Horosphère — découvre le tien sur horosphere.fr.`,
-    ...(autreSigne ? ['', ligneRenvoiCroise('Instagram', autreSigne)] : []),
+    ...(autreSigne ? ['', renvoiVersAutreCreneau(moment, autreSigne)] : []),
   ].join('\n');
 
   const imagesCarrousel = [1, 2, 3, 4, 5].map((page) => urlDiapositiveCarrousel(sign, page as 1 | 2 | 3 | 4 | 5, dateISO));
@@ -321,7 +337,7 @@ async function genererPostFacebookSigne(date: Date, sign: Sign, autreSigne: Sign
     '',
     `Chaque signe a son jour sur Horosphère — découvre le tien sur horosphere.fr.`,
     '',
-    ligneRenvoiCroise('Facebook', autreSigne),
+    renvoiVersInstagram(autreSigne),
   ].join('\n');
 
   // Depuis le passage au carrousel côté Instagram (voir
@@ -493,8 +509,8 @@ export async function generateDailySocialContent(date: Date = new Date()): Promi
     const signeMatin = signeDuJourInstagram(date);
     const signeApresMidi = signeDuJourFacebook(date);
     const [instagramMatin, instagramApresMidi, facebook, { tiktok }] = await Promise.all([
-      genererCarrouselInstagramSigne(date, signeMatin, signeApresMidi),
-      genererCarrouselInstagramSigne(date, signeApresMidi, signeMatin),
+      genererCarrouselInstagramSigne(date, signeMatin, 'matin', signeApresMidi),
+      genererCarrouselInstagramSigne(date, signeApresMidi, 'apres-midi', signeMatin),
       genererPostFacebookSigne(date, signeApresMidi, signeMatin),
       genererFacebookTiktok(dateISO),
     ]);
