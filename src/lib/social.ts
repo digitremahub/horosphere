@@ -26,14 +26,13 @@ export type SocialDraft = {
   // (jamais bloquant : le script texte reste disponible dans tous les cas).
   heygenVideoId?: string | null;
   // Carrousel Instagram uniquement (voir genererCarrouselInstagramSigne) :
-  // diapositives 2 à 5 (Amour, Travail, Énergie, Action du jour) — `imageUrl`
-  // porte alors la diapositive 1 (couverture). Noms alignés sur les champs
-  // Airtable "Visuel 2/3/4/5 (URL)" de la table "Réseaux sociaux" pour un
-  // mappage direct côté scénario Make. Absent pour Facebook/TikTok.
-  carrousel2Url?: string;
-  carrousel3Url?: string;
-  carrousel4Url?: string;
-  carrousel5Url?: string;
+  // les 5 diapositives dans l'ordre (couverture, Amour, Travail, Énergie,
+  // Action du jour). Reprend le nom de champ ET la convention d'index déjà
+  // câblés côté scénario Make "Génération quotidienne" (accès
+  // `imagesCarrousel[1]`..`imagesCarrousel[5]`, 1-indexé côté Make sur ce
+  // même tableau) — ne pas renommer sans mettre à jour ce scénario. Absent
+  // pour Facebook/TikTok.
+  imagesCarrousel?: string[];
 };
 
 export type DailySocialContent = {
@@ -291,14 +290,13 @@ async function genererCarrouselInstagramSigne(date: Date, sign: Sign, autreSigne
     ...(autreSigne ? ['', ligneRenvoiCroise('Instagram', autreSigne)] : []),
   ].join('\n');
 
+  const imagesCarrousel = [1, 2, 3, 4, 5].map((page) => urlDiapositiveCarrousel(sign, page as 1 | 2 | 3 | 4 | 5, dateISO));
+
   return {
     legende,
     hashtags: `${HASHTAGS_BASE} #${sign.key} #horoscope${sign.nom.replace(/\s/g, '')}`,
-    imageUrl: urlDiapositiveCarrousel(sign, 1, dateISO),
-    carrousel2Url: urlDiapositiveCarrousel(sign, 2, dateISO),
-    carrousel3Url: urlDiapositiveCarrousel(sign, 3, dateISO),
-    carrousel4Url: urlDiapositiveCarrousel(sign, 4, dateISO),
-    carrousel5Url: urlDiapositiveCarrousel(sign, 5, dateISO),
+    imageUrl: imagesCarrousel[0],
+    imagesCarrousel,
     scriptVideo: null,
     mode: reading.mode,
   };
