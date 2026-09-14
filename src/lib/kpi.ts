@@ -1,0 +1,141 @@
+// KPI du backoffice — demande explicite de l'utilisateur ("Dans le
+// backoffice je dois aussi pouvoir suivre les KPI et le nombre de visite
+// etc"), restée en attente depuis le début de la conversation. Deux volets :
+//
+// 1. Fréquentation du site : aucun outil de tracking n'existait (pas de
+//    @vercel/analytics, Web Analytics Vercel désactivé sur le projet) — un
+//    compteur de vues minimal, maison, est ajouté ici (table `page_views`),
+//    alimenté par un beacon client (voir components/VisiteBeacon.tsx +
+//    api/track-visit) plutôt que de dépendre d'un service externe à
+//    activer/configurer côté utilisateur.
+// 2. Croissance/business : réutilise les données déjà en base (utilisateurs,
+//    abonnements) pour calculer nouveaux utilisateurs, MRR estimé et taux de
+//    conversion — jamais une deuxième source de vérité pour ce qui existe
+//    déjà dans lib/admin.ts.
+
+import { requireDb } from './db';
+import { SUBSCRIPTIONS } from './pricing';
+
+let pageViewsTableEnsured = false;
+
+async function ensurePageViewsTable(sql: ReturnType<typeof requireDb>): Promise<void> {
+  if (pageViewsTableEnsured) return;
+  await sql.unsafe(`
+    CREATE TABLE IF NOT EXISTS page_views (
+      id BIGSERIAL PRIMARY KEY,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      path TEXT NOT NULL,
+      visitor_id TEXT NOT NULL
+    )
+  `);
+  await sql.unsafe(`CREATE INDEX IF NOT EXISTS page_views_created_at_idx ON page_views (created_at)`);
+  pageViewsTableEnsured = true;
+}
+
+/** Enregistre une vue de page — appelée depuis /api/track-visit (voir
+ * components/VisiteBeacon.tsx). `visitorId` est un identifiant anonyme tiré
+ * d'un cookie (aucune donnée personnelle) : sert uniquement à distinguer
+ * visiteurs uniques et vues de page, jamais à identifier quelqu'un. Ne lève
+ * jamais d'erreur ne bloquant : une vue manquée n'est jamais grave. */
+export async function enregistrerVisite(path: string, visitorId: string): Promise<void> {
+  const sql = requireDb();
+  await ensurePageViewsTable(sql);
+  await sql`INSERT INTO page_views (path, visitor_id) VALUES (${path.slice(0, 300)}, ${visitorId.slice(0, 100)})`;
+}
+
+export type VisitesResume = {
+  vuesAujourdHui: number;
+  vuesSur7j: number;
+  vuesSur30j: number;
+  visiteursUniques7j: number;
+  visiteursUniques30j: number;
+  // Vues par jour, sur les 14 derniers jours (le plus ancien en premier) —
+  // sert à dessiner une mini-tendance dans le backoffice sans dépendance à
+  // une librairie de graphiques.
+  serie14j: { jour: string; vues: number }[];
+};
+
+async function getVisitesResume(sql: ReturnType<typeof requireDb>): Promise<VisitesResume> {
+  await ensurePageViewsTable(sql);
+
+  const [{ count: vuesAujourdHui }] = await sql<{ count: string }[]>`
+    SELECT COUNT(*)::text AS count FROM page_views WHERE created_at >= date_trunc('day', now())
+  `;
+  const [{ count: vuesSur7j }] = await sql<{ count: string }[]>`
+    SELECT COUNT(*)::text AS count FROM page_views WHERE created_at >= now() - interval '7 days'
+  `;
+  const [{ count: vuesSur30j }] = await sql<{ count: string }[]>`
+    SELECT COUNT(*)::text AS count FROM page_views WHERE created_at >= now() - interval '30 days'
+  `;
+  const [{ count: visiteursUniques7j }] = await sql<{ count: string }[]>`
+    SELECT COUNT(DISTINCT visitor_id)::text AS count FROM page_views WHERE created_at >= now() - interval '7 days'
+  `;
+  const [{ count: visiteursUniques30j }] = await sql<{ count: string }[]>`
+    SELECT COUNT(DISTINCT visitor_id)::text AS count FROM page_views WHERE created_at >= now() - interval '30 days'
+  `;
+  const serie = await sql<{ jour: string; vues: string }[]>`
+    SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') AS jour, COUNT(*)::text AS vues
+    FROM page_views
+    WHERE created_at >= now() - interval '14 days'
+    GROUP BY 1
+    ORDER BY 1
+  `;
+  const parJour = new Map(serie.map((r) => [r.jour, Number(r.vues)]));
+  const serie14j: { jour: string; vues: number }[] = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() - i);
+    const jour = d.toISOString().slice(0, 10);
+    serie14j.push({ jour, vues: parJour.get(jour) ?? 0 });
+  }
+
+  return {
+    vuesAujourdHui: Number(vuesAujourdHui),
+    vuesSur7j: Number(vuesSur7j),
+    vuesSur30j: Number(vuesSur30j),
+    visiteursUniques7j: Number(visiteursUniques7j),
+    visiteursUniques30j: Number(visiteursUniques30j),
+    serie14j,
+  };
+}
+
+export type Kpis = {
+  visites: VisitesResume;
+  utilisateurs: { total: number; nouveaux7j: number; nouveaux30j: number };
+  abonnements: { actifs: number; mrrCentimes: number; parPlan: { plan_slug: string; count: number }[] };
+  tauxConversionPourcent: number;
+};
+
+const PRIX_PAR_PLAN = new Map(SUBSCRIPTIONS.map((s) => [s.slug, s.prixCentimesParMois]));
+
+/** Vue d'ensemble du backoffice — fréquentation + croissance + business, un
+ * seul appel pour toute la page KPI (voir app/admin/kpi/page.tsx). */
+export async function getKpis(): Promise<Kpis> {
+  const sql = requireDb();
+
+  const [visites, [{ count: totalUsers }], [{ count: nouveaux7j }], [{ count: nouveaux30j }], parPlanActifs] = await Promise.all([
+    getVisitesResume(sql),
+    sql<{ count: string }[]>`SELECT COUNT(*)::text AS count FROM users`,
+    sql<{ count: string }[]>`SELECT COUNT(*)::text AS count FROM profiles WHERE created_at >= now() - interval '7 days'`,
+    sql<{ count: string }[]>`SELECT COUNT(*)::text AS count FROM profiles WHERE created_at >= now() - interval '30 days'`,
+    // MRR estimé sur les abonnements réellement actifs (hors essai en cours,
+    // pas encore facturé) — volontairement distinct du compteur "abonnés
+    // actifs" du reste du backoffice (actif + essai) pour ne pas surestimer
+    // le revenu récurrent.
+    sql<{ plan_slug: string; count: string }[]>`
+      SELECT plan_slug, COUNT(*)::text AS count FROM subscriptions WHERE status = 'active' GROUP BY plan_slug
+    `,
+  ]);
+
+  const parPlan = parPlanActifs.map((r) => ({ plan_slug: r.plan_slug, count: Number(r.count) }));
+  const mrrCentimes = parPlan.reduce((total, r) => total + r.count * (PRIX_PAR_PLAN.get(r.plan_slug) ?? 0), 0);
+  const actifs = parPlan.reduce((total, r) => total + r.count, 0);
+  const total = Number(totalUsers);
+
+  return {
+    visites,
+    utilisateurs: { total, nouveaux7j: Number(nouveaux7j), nouveaux30j: Number(nouveaux30j) },
+    abonnements: { actifs, mrrCentimes, parPlan },
+    tauxConversionPourcent: total > 0 ? Math.round((actifs / total) * 1000) / 10 : 0,
+  };
+}

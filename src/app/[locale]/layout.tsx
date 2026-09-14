@@ -9,6 +9,7 @@ import SiteHeader from '@/components/SiteHeader';
 import ScrollToTopButton from '@/components/ScrollToTopButton';
 import SocialIcons from '@/components/SocialIcons';
 import PwaRegister from '@/components/PwaRegister';
+import VisiteBeacon from '@/components/VisiteBeacon';
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -86,6 +87,7 @@ export default async function LocaleLayout({
           <SocialIcons />
           <ScrollToTopButton />
           <PwaRegister />
+          <VisiteBeacon />
         </NextIntlClientProvider>
       </body>
     </html>

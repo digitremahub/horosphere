@@ -10,6 +10,7 @@ import { auth } from '@/lib/auth';
 import { isAdminEmail } from '@/lib/adminAuth';
 import { dbConfigured } from '@/lib/db';
 import { listUsersAdmin, getAdminStats } from '@/lib/admin';
+import { getKpis, type Kpis } from '@/lib/kpi';
 import { getSiteConfig, setSiteConfig, CLES_VIDEO } from '@/lib/siteConfig';
 import { rembourserAnniversairesDuMois } from '@/lib/birthdayRefund';
 import { grantCredits } from '@/lib/credits';
@@ -184,6 +185,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   }
 
   let stats: Awaited<ReturnType<typeof getAdminStats>> | null = null;
+  let kpis: Kpis | null = null;
   let users: Awaited<ReturnType<typeof listUsersAdmin>> = [];
   let videos: Record<string, string> = {};
   let loadError: string | null = null;
@@ -196,7 +198,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
 
   if (dbConfigured) {
     try {
-      [stats, users] = await Promise.all([getAdminStats(), listUsersAdmin(200)]);
+      [stats, users, kpis] = await Promise.all([getAdminStats(), listUsersAdmin(200), getKpis().catch(() => null)]);
       const paires = await Promise.all(Object.values(CLES_VIDEO).map(async (cle) => [cle, (await getSiteConfig(cle)) || ''] as const));
       videos = Object.fromEntries(paires);
     } catch (err) {
@@ -305,6 +307,62 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                 <div className="mono" style={{ fontSize: '1.5rem', fontWeight: 600 }}>{p.count}</div>
               </div>
             ))}
+          </div>
+        )}
+
+        {kpis && (
+          <div className="card" style={{ padding: '20px 22px', marginBottom: 28 }}>
+            <h2 style={{ fontSize: '1rem', marginBottom: 4 }}>KPI</h2>
+            <p style={{ fontSize: '0.82rem', color: 'var(--sourdine)', marginBottom: 16 }}>
+              Fréquentation (compteur maison, voir lib/kpi.ts — pas de Web Analytics Vercel activé sur ce projet) et croissance.
+            </p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 20 }}>
+              <div style={{ padding: '12px 14px', borderRadius: 10, border: '1px solid var(--trait)' }}>
+                <div style={{ fontSize: '0.7rem', color: 'var(--sourdine)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Vues aujourd&apos;hui</div>
+                <div className="mono" style={{ fontSize: '1.3rem', fontWeight: 600 }}>{kpis.visites.vuesAujourdHui}</div>
+              </div>
+              <div style={{ padding: '12px 14px', borderRadius: 10, border: '1px solid var(--trait)' }}>
+                <div style={{ fontSize: '0.7rem', color: 'var(--sourdine)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Vues (7j)</div>
+                <div className="mono" style={{ fontSize: '1.3rem', fontWeight: 600 }}>{kpis.visites.vuesSur7j}</div>
+              </div>
+              <div style={{ padding: '12px 14px', borderRadius: 10, border: '1px solid var(--trait)' }}>
+                <div style={{ fontSize: '0.7rem', color: 'var(--sourdine)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Visiteurs uniques (7j)</div>
+                <div className="mono" style={{ fontSize: '1.3rem', fontWeight: 600 }}>{kpis.visites.visiteursUniques7j}</div>
+              </div>
+              <div style={{ padding: '12px 14px', borderRadius: 10, border: '1px solid var(--trait)' }}>
+                <div style={{ fontSize: '0.7rem', color: 'var(--sourdine)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Visiteurs uniques (30j)</div>
+                <div className="mono" style={{ fontSize: '1.3rem', fontWeight: 600 }}>{kpis.visites.visiteursUniques30j}</div>
+              </div>
+              <div style={{ padding: '12px 14px', borderRadius: 10, border: '1px solid var(--trait)' }}>
+                <div style={{ fontSize: '0.7rem', color: 'var(--sourdine)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Nouveaux inscrits (7j)</div>
+                <div className="mono" style={{ fontSize: '1.3rem', fontWeight: 600 }}>{kpis.utilisateurs.nouveaux7j}</div>
+              </div>
+              <div style={{ padding: '12px 14px', borderRadius: 10, border: '1px solid var(--trait)' }}>
+                <div style={{ fontSize: '0.7rem', color: 'var(--sourdine)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Nouveaux inscrits (30j)</div>
+                <div className="mono" style={{ fontSize: '1.3rem', fontWeight: 600 }}>{kpis.utilisateurs.nouveaux30j}</div>
+              </div>
+              <div style={{ padding: '12px 14px', borderRadius: 10, border: '1px solid var(--trait)' }}>
+                <div style={{ fontSize: '0.7rem', color: 'var(--sourdine)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>MRR estimé</div>
+                <div className="mono" style={{ fontSize: '1.3rem', fontWeight: 600 }}>{(kpis.abonnements.mrrCentimes / 100).toFixed(0)} €</div>
+              </div>
+              <div style={{ padding: '12px 14px', borderRadius: 10, border: '1px solid var(--trait)' }}>
+                <div style={{ fontSize: '0.7rem', color: 'var(--sourdine)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Taux de conversion</div>
+                <div className="mono" style={{ fontSize: '1.3rem', fontWeight: 600 }}>{kpis.tauxConversionPourcent}%</div>
+              </div>
+            </div>
+
+            <div style={{ fontSize: '0.72rem', color: 'var(--sourdine)', marginBottom: 8 }}>Vues de page — 14 derniers jours</div>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 60 }}>
+              {(() => {
+                const max = Math.max(1, ...kpis.visites.serie14j.map((j) => j.vues));
+                return kpis.visites.serie14j.map((j) => (
+                  <div key={j.jour} title={`${j.jour} — ${j.vues} vue(s)`} style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', height: '100%' }}>
+                    <div style={{ background: 'var(--lever-profond)', opacity: 0.75, borderRadius: '3px 3px 0 0', height: `${Math.max(4, (j.vues / max) * 100)}%` }} />
+                  </div>
+                ));
+              })()}
+            </div>
           </div>
         )}
 
