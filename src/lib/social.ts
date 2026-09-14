@@ -188,13 +188,18 @@ function lundiDeLaSemaineUTC(date: Date): Date {
 // rotation évolue ainsi naturellement d'un mois sur l'autre au lieu de
 // suivre un cycle mathématique figé : la semaine du 14/09/2026 (lundi en
 // Vierge) démarre sur Vierge, celle du 23/09 démarrera sur Balance, etc.
-function indexAncrageSemaine(date: Date): number {
+// Exportées (au-delà de leur usage interne pour Instagram/Facebook
+// ci-dessous) pour être réutilisées telles quelles par les nouvelles
+// catégories de contenu à rotation par signe (voir lib/careerPost.ts) —
+// même ancrage hebdomadaire pour tout le monde, jamais une deuxième
+// implémentation qui pourrait diverger.
+export function indexAncrageSemaine(date: Date): number {
   const lundi = lundiDeLaSemaineUTC(date);
   const ancrage = signFromBirthdate(lundi.getUTCMonth() + 1, lundi.getUTCDate());
   return SIGNS.findIndex((s) => s.key === ancrage.key);
 }
 
-function offsetJourUTC(date: Date): number {
+export function offsetJourUTC(date: Date): number {
   const lundi = lundiDeLaSemaineUTC(date);
   const jourUTC = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
   return Math.floor((jourUTC - lundi.getTime()) / 86_400_000);
