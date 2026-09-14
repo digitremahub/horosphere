@@ -17,7 +17,7 @@ import { offrirMoisAbonnement } from '@/lib/adminSubscriptions';
 import { definirCategorieUtilisateur, CATEGORIE_LABEL, type Categorie } from '@/lib/adminCategories';
 import { listPromotions, createPromotion, updatePromotion, deletePromotion, bonusAbonnementRestant, type PromotionInput } from '@/lib/promotions';
 import { listPreuvesEnAttente, traiterPreuveSuivi } from '@/lib/followRewards';
-import { listerEtatsParrainageAbonnement, synchroniserParrainagesAbonnement, SEUIL_FILLEULS_ABONNES } from '@/lib/referralSubscription';
+import { listerEtatsParrainageAbonnement, synchroniserParrainagesAbonnement, SEUIL_FILLEULS_ABONNES, MOIS_MINIMUM_FILLEUL } from '@/lib/referralSubscription';
 import { SUBSCRIPTIONS, CREDIT_EXPIRY_DAYS } from '@/lib/pricing';
 
 function lireFormulairePromotion(formData: FormData): PromotionInput {
@@ -316,7 +316,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             </form>
           </div>
           <p style={{ fontSize: '0.82rem', color: 'var(--sourdine)', marginBottom: 14 }}>
-            Recalculé automatiquement chaque jour (coupon Stripe -100%, retiré si le nombre de filleuls actifs depuis 3 mois repasse sous {SEUIL_FILLEULS_ABONNES}). N'affiche que les abonnements actifs ayant au moins un filleul.
+            Recalculé automatiquement chaque jour (coupon Stripe -100%, retiré si le nombre de filleuls actifs depuis {MOIS_MINIMUM_FILLEUL} mois repasse sous {SEUIL_FILLEULS_ABONNES}). N'affiche que les abonnements actifs ayant au moins un filleul.
           </p>
           {etatsParrainageAbo.filter((e) => e.filleulsQualifies > 0).length === 0 && (
             <p style={{ fontSize: '0.84rem', color: 'var(--sourdine)' }}>Aucun parrain avec un filleul abonné pour l'instant.</p>

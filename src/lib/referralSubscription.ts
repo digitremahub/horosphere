@@ -1,8 +1,9 @@
 // Abonnement offert au parrain qui a fait venir 5 abonnés payants actifs
-// depuis au moins 3 mois consécutifs — décision explicite de l'utilisateur :
-// "tant que les abonnements des filleuls sont actifs" (donc réversible : un
-// filleul qui résilie et fait repasser son parrain sous 5 lui retire la
-// gratuité, automatiquement, sans intervention manuelle).
+// depuis au moins 1 mois consécutif (réduit de 3 mois à 1 mois, décision
+// explicite de l'utilisateur le 14/09) — décision explicite de
+// l'utilisateur : "tant que les abonnements des filleuls sont actifs" (donc
+// réversible : un filleul qui résilie et fait repasser son parrain sous 5
+// lui retire la gratuité, automatiquement, sans intervention manuelle).
 //
 // Mécanisme choisi (décision explicite) : un coupon Stripe -100% appliqué
 // directement sur l'abonnement du parrain tant que la condition tient — 0€
@@ -10,8 +11,8 @@
 // quotidienne (voir /api/cron/parrainage-abonnement) recalcule l'état de
 // TOUS les abonnements actifs et applique/retire le coupon en conséquence.
 //
-// "3 mois consécutifs" est approximé par l'ancienneté ININTERROMPUE de la
-// ligne `subscriptions` du filleul (status='active' depuis ≥ 3 mois) — un
+// "1 mois consécutif" est approximé par l'ancienneté ININTERROMPUE de la
+// ligne `subscriptions` du filleul (status='active' depuis ≥ 1 mois) — un
 // abonnement Stripe annulé puis repris crée une nouvelle ligne (nouvel id
 // Stripe), donc une résiliation remet bien le compteur à zéro pour ce
 // filleul, comme attendu.
@@ -20,7 +21,7 @@ import { requireDb } from './db';
 import { stripeClient } from './stripe';
 
 export const SEUIL_FILLEULS_ABONNES = 5;
-export const MOIS_MINIMUM_FILLEUL = 3;
+export const MOIS_MINIMUM_FILLEUL = 1;
 
 const COUPON_ID = 'parrainage-5-filleuls-gratuit';
 
@@ -76,7 +77,7 @@ export async function listerEtatsParrainageAbonnement(): Promise<EtatParrainageA
     LEFT JOIN parrainages p ON p.parrain_user_id = s.user_id
     LEFT JOIN subscriptions fs ON fs.user_id = p.filleul_user_id
       AND fs.status = 'active'
-      AND fs.created_at <= now() - interval '3 months'
+      AND fs.created_at <= now() - (${MOIS_MINIMUM_FILLEUL} || ' months')::interval
     WHERE s.status = 'active'
     GROUP BY s.id, s.user_id, u.email, s.parrainage_gratuit
   `;
