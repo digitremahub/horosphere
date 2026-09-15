@@ -25,14 +25,6 @@ export type SocialDraft = {
   // HEYGEN_API_KEY n'est pas configurée ou si la soumission a échoué
   // (jamais bloquant : le script texte reste disponible dans tous les cas).
   heygenVideoId?: string | null;
-  // Carrousel Instagram uniquement (voir construireCarrouselInstagramSigne) :
-  // les 5 diapositives dans l'ordre (couverture, Amour, Travail, Énergie,
-  // Action du jour). Reprend le nom de champ ET la convention d'index déjà
-  // câblés côté scénario Make "Génération quotidienne" (accès
-  // `imagesCarrousel[1]`..`imagesCarrousel[5]`, 1-indexé côté Make sur ce
-  // même tableau) — ne pas renommer sans mettre à jour ce scénario. Absent
-  // pour Facebook/TikTok.
-  imagesCarrousel?: string[];
 };
 
 export type DailySocialContent = {
@@ -302,54 +294,20 @@ async function genererPostInstagramSigne(date: Date, sign: Sign, autreSigne?: Si
   };
 }
 
-/** URL d'une diapositive du carrousel quotidien (voir
- * api/og/carrousel-signe/route.tsx) — `page` va de 1 (couverture, pas de
- * texte de lecture) à 5 (action du jour). Le texte de la page (`texte`,
- * absent pour la couverture) est transmis directement dans l'URL — même
- * principe que l'ancien /api/og/sign-slide (`&texte=...`) — plutôt que
- * laissé à la route pour rappeler generateHoroscope : un appel IA n'est
- * pas déterministe, un second appel au moment du rendu (quand Meta va
- * chercher l'image, potentiellement des heures après la génération de la
- * légende) pouvait renvoyer un texte différent de celui de la légende
- * Instagram — désynchronisation constatée en préparant le lancement du
- * 14/09. Passer le texte déjà calculé élimine à la fois cette
- * incohérence et 4 appels IA superflus par signe/jour. */
-function urlDiapositiveCarrousel(sign: Sign, page: 1 | 2 | 3 | 4 | 5, dateISO: string, texte?: string): string {
-  const base = `${siteUrl()}/api/og/carrousel-signe?sign=${sign.key}&page=${page}&date=${dateISO}`;
-  return texte ? `${base}&texte=${encodeURIComponent(texte)}` : base;
-}
-
-/** Les 5 URLs de diapositives d'un signe pour une date/lecture données
- * (couverture, Amour, Travail, Énergie, Action du jour) — factorisé pour
- * être partagé tel quel entre le carrousel Instagram et, depuis la demande
- * explicite de l'utilisateur ("sur Facebook pas de carrousel ?", 13/09), le
- * post Facebook multi-photos : les deux plateformes montrent alors
- * EXACTEMENT les mêmes visuels quand elles portent le même signe (l'après-
- * midi), au lieu de recalculer une lecture séparée côté Facebook — ce qui
- * pouvait renvoyer un texte légèrement différent (une génération IA n'est
- * pas déterministe), même risque de désynchronisation déjà corrigé une
- * fois pour la légende vs les diapositives (voir urlDiapositiveCarrousel). */
-function imagesCarrouselPourLecture(sign: Sign, dateISO: string, reading: HoroscopeReading): string[] {
-  const textesParPage: [1 | 2 | 3 | 4 | 5, string | undefined][] = [
-    [1, undefined],
-    [2, reading.amour],
-    [3, reading.travail],
-    [4, reading.energie],
-    [5, reading.conseil],
-  ];
-  return textesParPage.map(([page, texte]) => urlDiapositiveCarrousel(sign, page, dateISO, texte));
-}
-
-/** Construit le carrousel Instagram du jour (5 diapositives, identité
- * visuelle "édition automne" validée dans Canva le 13/09/2026 — voir
- * api/og/carrousel-signe/route.tsx) à partir d'une lecture déjà calculée
- * (voir generateDailySocialContent, qui la partage avec Facebook pour le
- * créneau de l'après-midi). Remplace, à partir du 14/09/2026
- * (SEUIL_DEUX_SIGNES), l'ancien post à image unique (genererPostInstagramSigne,
- * conservée ci-dessus pour les dates antérieures / repli). */
+/** Construit le carrousel Instagram du jour à partir d'une lecture déjà
+ * calculée (voir generateDailySocialContent, qui la partage avec Facebook
+ * pour le créneau de l'après-midi). `imageUrl` reste `null` : le VRAI
+ * visuel est un export Canva mis à jour manuellement à chaque publication
+ * (voir Canva, designs "{Signe} - Horosphère Instagram") — plus aucun
+ * visuel composé en code depuis la demande explicite de l'utilisateur
+ * (15/09 : "supprime tous les visuels que tu dois créer dans le code,
+ * n'utilise que les visuels Canva"), qui avait déjà valu un incident (un
+ * visuel de secours resté en place au lieu du vrai export Canva). Remplace,
+ * à partir du 14/09/2026 (SEUIL_DEUX_SIGNES), l'ancien post à image unique
+ * (genererPostInstagramSigne, conservée ci-dessus pour les dates
+ * antérieures / repli). */
 function construireCarrouselInstagramSigne(
   sign: Sign,
-  dateISO: string,
   reading: HoroscopeReading,
   moment: 'matin' | 'apres-midi',
   autreSigne?: Sign
@@ -367,13 +325,10 @@ function construireCarrouselInstagramSigne(
     ...(autreSigne ? ['', renvoiVersAutreCreneau(moment, autreSigne)] : []),
   ].join('\n');
 
-  const imagesCarrousel = imagesCarrouselPourLecture(sign, dateISO, reading);
-
   return {
     legende,
     hashtags: `${HASHTAGS_BASE} #${sign.key} #horoscope${sign.nom.replace(/\s/g, '')}`,
-    imageUrl: imagesCarrousel[0],
-    imagesCarrousel,
+    imageUrl: null,
     scriptVideo: null,
     mode: reading.mode,
   };
@@ -381,20 +336,9 @@ function construireCarrouselInstagramSigne(
 
 /** Symétrique de construireCarrouselInstagramSigne pour Facebook, actif à
  * partir du 14 septembre 2026 (voir SEUIL_DEUX_SIGNES) — même contenu de
- * valeur (une vraie lecture, pas du marketing générique) et, depuis la
- * demande explicite de l'utilisateur ("sur Facebook pas de carrousel ?",
- * 13/09), les mêmes 5 visuels que le carrousel Instagram de l'après-midi
- * (Facebook porte toujours le signe de l'après-midi — `imagesCarrousel` est
- * repris tel quel, jamais recalculé, pour rester identique pixel pour
- * pixel). `imagesCarrousel` vient donc de construireCarrouselInstagramSigne
- * pour ce même signe, appelé une seule fois côté generateDailySocialContent. */
-function construirePostFacebookSigne(
-  sign: Sign,
-  dateISO: string,
-  reading: HoroscopeReading,
-  autreSigne: Sign,
-  imagesCarrousel: string[]
-): SocialDraft {
+ * valeur (une vraie lecture, pas du marketing générique). `imageUrl` reste
+ * `null`, même règle Canva-uniquement que ci-dessus. */
+function construirePostFacebookSigne(sign: Sign, reading: HoroscopeReading, autreSigne: Sign): SocialDraft {
   const legende = [
     `${sign.symbole} ${sign.nom} — ${reading.headline}`,
     '',
@@ -409,17 +353,10 @@ function construirePostFacebookSigne(
     renvoiVersInstagram(autreSigne),
   ].join('\n');
 
-  // Post Facebook multi-photos (module Facebook CreatePostWithPhotos, champ
-  // `photos` — l'équivalent le plus proche du carrousel Instagram sur cette
-  // plateforme, une galerie non "swipeable" mais bien plusieurs images sur
-  // un même post) : les 5 mêmes visuels "édition automne" que le carrousel
-  // Instagram de l'après-midi. Avant cette demande, Facebook restait à
-  // image unique (couverture seule) — voir l'historique de cette fonction.
   return {
     legende,
     hashtags: `${HASHTAGS_BASE} #${sign.key} #horoscope${sign.nom.replace(/\s/g, '')}`,
-    imageUrl: imagesCarrousel[0],
-    imagesCarrousel,
+    imageUrl: null,
     scriptVideo: null,
     mode: reading.mode,
   };
@@ -587,9 +524,9 @@ export async function generateDailySocialContent(date: Date = new Date()): Promi
       generateHoroscope({ feature: 'horoscope_quotidien', sign: signeApresMidi, dateISO, langue: 'fr' }),
       genererFacebookTiktok(dateISO),
     ]);
-    const instagramMatin = construireCarrouselInstagramSigne(signeMatin, dateISO, readingMatin, 'matin', signeApresMidi);
-    const instagramApresMidi = construireCarrouselInstagramSigne(signeApresMidi, dateISO, readingApresMidi, 'apres-midi', signeMatin);
-    const facebook = construirePostFacebookSigne(signeApresMidi, dateISO, readingApresMidi, signeMatin, instagramApresMidi.imagesCarrousel!);
+    const instagramMatin = construireCarrouselInstagramSigne(signeMatin, readingMatin, 'matin', signeApresMidi);
+    const instagramApresMidi = construireCarrouselInstagramSigne(signeApresMidi, readingApresMidi, 'apres-midi', signeMatin);
+    const facebook = construirePostFacebookSigne(signeApresMidi, readingApresMidi, signeMatin);
     return { instagram: instagramMatin, instagramMatin, instagramApresMidi, facebook, tiktok };
   }
 

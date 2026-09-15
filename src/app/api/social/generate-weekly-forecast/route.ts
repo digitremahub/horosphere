@@ -2,30 +2,17 @@
 // Make chaque lundi tôt le matin (voir lib/weeklyForecastPost.ts), avant la
 // préparation manuelle Canva qui doit avoir lieu avant 9h. Comme
 // /api/social/generate, ne stocke rien côté app : Make écrit le brouillon
-// dans Airtable à partir de la réponse.
+// dans Airtable à partir de la réponse. Ne renvoie AUCUN visuel : le VRAI
+// visuel est exclusivement un export Canva mis à jour manuellement (demande
+// explicite de l'utilisateur, 15/09 — "supprime tous les visuels que tu
+// dois créer dans le code, n'utilise que les visuels Canva").
 
 import { NextRequest, NextResponse } from 'next/server';
 import { hasValidAutomationSecret } from '@/lib/automationAuth';
 import { genererPrevisionSemaine } from '@/lib/weeklyForecastPost';
-import { siteUrl } from '@/lib/social';
-
-function urlApercuPage(page: 1 | 2 | 3 | 4 | 5, periodeLabel: string, semaineISO: string, titre?: string, texte?: string): string {
-  const qs = new URLSearchParams({ page: String(page), periode: periodeLabel, semaine: semaineISO });
-  if (titre) qs.set('titre', titre);
-  if (texte) qs.set('texte', texte);
-  return `${siteUrl()}/api/og/carrousel-semaine?${qs.toString()}`;
-}
 
 async function handle(dateISO: string) {
   const prevision = await genererPrevisionSemaine(new Date(`${dateISO}T00:00:00Z`));
-
-  const imagesCarrousel = [
-    urlApercuPage(1, prevision.periode.label, prevision.periode.debut),
-    urlApercuPage(2, prevision.periode.label, prevision.periode.debut, prevision.pages[0].titre, prevision.pages[0].corps),
-    urlApercuPage(3, prevision.periode.label, prevision.periode.debut, prevision.pages[1].titre, prevision.pages[1].corps),
-    urlApercuPage(4, prevision.periode.label, prevision.periode.debut, prevision.pages[2].titre, prevision.pages[2].corps),
-    urlApercuPage(5, prevision.periode.label, prevision.periode.debut, prevision.pages[3].titre, prevision.pages[3].corps),
-  ];
 
   return NextResponse.json({
     ok: true,
@@ -35,8 +22,6 @@ async function handle(dateISO: string) {
     hashtags: prevision.hashtags,
     mode: prevision.mode,
     pages: prevision.pages,
-    imagesCarrousel,
-    imageUrl: imagesCarrousel[0],
   });
 }
 

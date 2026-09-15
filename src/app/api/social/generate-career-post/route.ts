@@ -2,37 +2,18 @@
 // lib/careerPost.ts) — appelé par Make les jours de publication (lundi,
 // mercredi, vendredi) avant la préparation manuelle Canva. Comme
 // /api/social/generate-weekly-forecast, ne stocke rien côté app : Make écrit
-// le brouillon dans Airtable à partir de la réponse.
+// le brouillon dans Airtable à partir de la réponse. Ne renvoie AUCUN
+// visuel : le VRAI visuel est exclusivement un export Canva mis à jour
+// manuellement (demande explicite de l'utilisateur, 15/09 — "supprime tous
+// les visuels que tu dois créer dans le code, n'utilise que les visuels
+// Canva").
 
 import { NextRequest, NextResponse } from 'next/server';
 import { hasValidAutomationSecret } from '@/lib/automationAuth';
-import { genererMetierTousSignes, type PageGroupe } from '@/lib/careerPost';
-import { siteUrl } from '@/lib/social';
-
-function urlCouverture(periodeLabel: string, debutISO: string): string {
-  const qs = new URLSearchParams({ page: '1', periode: periodeLabel, debut: debutISO });
-  return `${siteUrl()}/api/og/carrousel-metier?${qs.toString()}`;
-}
-
-function urlPageGroupe(page: 2 | 3 | 4, debutISO: string, groupe: PageGroupe): string {
-  const qs = new URLSearchParams({
-    page: String(page),
-    debut: debutISO,
-    titre: groupe.titre,
-    signes: JSON.stringify(groupe.signes.map((s) => ({ symbole: s.sign.symbole, nom: s.sign.nom, phrase: s.phrase }))),
-  });
-  return `${siteUrl()}/api/og/carrousel-metier?${qs.toString()}`;
-}
+import { genererMetierTousSignes } from '@/lib/careerPost';
 
 async function handle(dateISO: string) {
   const post = await genererMetierTousSignes(new Date(`${dateISO}T00:00:00Z`));
-
-  const imagesCarrousel = [
-    urlCouverture(post.periode.label, post.periode.debut),
-    urlPageGroupe(2, post.periode.debut, post.pages[0]),
-    urlPageGroupe(3, post.periode.debut, post.pages[1]),
-    urlPageGroupe(4, post.periode.debut, post.pages[2]),
-  ];
 
   return NextResponse.json({
     ok: true,
@@ -42,8 +23,6 @@ async function handle(dateISO: string) {
     hashtags: post.hashtags,
     mode: post.mode,
     pages: post.pages,
-    imagesCarrousel,
-    imageUrl: imagesCarrousel[0],
   });
 }
 

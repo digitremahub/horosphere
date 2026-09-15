@@ -18,11 +18,11 @@
 // format qui ne ressemble pas au carrousel quotidien par signe (pas de photo
 // de signe en fond, pas de triade, pas de découpage amour/travail/énergie).
 //
-// Comme les autres formats sociaux, le VRAI visuel publié est un export
-// Canva mis à jour manuellement à chaque publication (voir
-// api/og/carrousel-metier/route.tsx pour le rendu de secours/prévisualisation
-// uniquement) — jamais le rendu code utilisé tel quel pour la publication
-// réelle (règle absolue posée par l'utilisateur le 13/09).
+// Comme les autres formats sociaux, le VRAI visuel publié est EXCLUSIVEMENT
+// un export Canva mis à jour manuellement à chaque publication — plus aucun
+// rendu de prévisualisation généré en code depuis la demande explicite de
+// l'utilisateur (15/09 : "supprime tous les visuels que tu dois créer dans
+// le code, n'utilise que les visuels Canva").
 
 import { SIGNS, type Sign } from './zodiac';
 import { callClaude } from './anthropic';

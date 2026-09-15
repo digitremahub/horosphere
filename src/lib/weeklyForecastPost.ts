@@ -7,11 +7,13 @@
 // récap vidéo du dimanche (lib/reels.ts) : jamais deux sources différentes
 // pour un même type d'information.
 //
-// Comme les carrousels quotidiens par signe, le VRAI visuel publié est un
-// export Canva mis à jour manuellement à chaque publication (voir
-// api/og/carrousel-semaine/route.tsx pour le rendu de secours/prévisualisation
-// uniquement) — jamais le rendu code utilisé tel quel pour la publication
-// réelle (règle absolue posée par l'utilisateur le 13/09).
+// Comme les carrousels quotidiens par signe, le VRAI visuel publié est
+// EXCLUSIVEMENT un export Canva mis à jour manuellement à chaque
+// publication — plus aucun rendu de prévisualisation généré en code depuis
+// la demande explicite de l'utilisateur (15/09 : "supprime tous les
+// visuels que tu dois créer dans le code, n'utilise que les visuels
+// Canva"), qui avait déjà valu un incident (un visuel de secours resté en
+// place au lieu du vrai export Canva).
 
 import { callClaude } from './anthropic';
 import { getWeeklyHighlight, type WeeklyHighlight } from './weeklyHighlight';

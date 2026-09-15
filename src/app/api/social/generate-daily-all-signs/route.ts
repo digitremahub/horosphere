@@ -2,38 +2,17 @@
 // lib/dailyAllSignsPost.ts) — appelé par Make CHAQUE JOUR avant la
 // préparation manuelle Canva. Comme les autres endpoints /api/social/generate-*,
 // ne stocke rien côté app : Make écrit le brouillon dans Airtable à partir
-// de la réponse.
+// de la réponse. Ne renvoie AUCUN visuel : le VRAI visuel est exclusivement
+// un export Canva mis à jour manuellement (demande explicite de
+// l'utilisateur, 15/09 — "supprime tous les visuels que tu dois créer dans
+// le code, n'utilise que les visuels Canva").
 
 import { NextRequest, NextResponse } from 'next/server';
 import { hasValidAutomationSecret } from '@/lib/automationAuth';
 import { genererHoroscopeTousSignes } from '@/lib/dailyAllSignsPost';
-import { siteUrl } from '@/lib/social';
-import type { PageGroupe } from '@/lib/zodiacGroups';
-
-function urlCouverture(label: string, dateISO: string): string {
-  const qs = new URLSearchParams({ page: '1', periode: label, debut: dateISO });
-  return `${siteUrl()}/api/og/carrousel-jour?${qs.toString()}`;
-}
-
-function urlPageGroupe(page: 2 | 3 | 4, dateISO: string, groupe: PageGroupe): string {
-  const qs = new URLSearchParams({
-    page: String(page),
-    debut: dateISO,
-    titre: groupe.titre,
-    signes: JSON.stringify(groupe.signes.map((s) => ({ symbole: s.sign.symbole, nom: s.sign.nom, phrase: s.phrase }))),
-  });
-  return `${siteUrl()}/api/og/carrousel-jour?${qs.toString()}`;
-}
 
 async function handle(dateISO: string) {
   const post = await genererHoroscopeTousSignes(new Date(`${dateISO}T00:00:00Z`));
-
-  const imagesCarrousel = [
-    urlCouverture(post.label, post.dateISO),
-    urlPageGroupe(2, post.dateISO, post.pages[0]),
-    urlPageGroupe(3, post.dateISO, post.pages[1]),
-    urlPageGroupe(4, post.dateISO, post.pages[2]),
-  ];
 
   return NextResponse.json({
     ok: true,
@@ -43,8 +22,6 @@ async function handle(dateISO: string) {
     hashtags: post.hashtags,
     mode: post.mode,
     pages: post.pages,
-    imagesCarrousel,
-    imageUrl: imagesCarrousel[0],
   });
 }
 
