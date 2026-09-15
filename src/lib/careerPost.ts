@@ -27,6 +27,10 @@
 import { SIGNS, type Sign } from './zodiac';
 import { callClaude } from './anthropic';
 import { mulberry32, hashStr } from './fallback-generator';
+import { pagesParQualite, type PageGroupe, type SignePhrase } from './zodiacGroups';
+
+export type { PageGroupe };
+export type SigneMetier = SignePhrase;
 
 const HASHTAGS_METIER = '#horoscope #astrologie #horosphere #carriere #developpementpersonnel';
 
@@ -58,21 +62,6 @@ function periodeCouverte(date: Date): { debut: string; fin: string; label: strin
   const label = debutISO === finISO ? fmt(debutISO) : `${fmt(debutISO)} – ${fmt(finISO)}`;
   return { debut: debutISO, fin: finISO, label };
 }
-
-// Regroupement astrologique standard par qualité (cardinal/fixe/mutable) :
-// SIGNS est déjà dans l'ordre du calendrier (Bélier → Poissons), donc la
-// qualité se déduit directement de la position (index % 3) sans avoir
-// besoin d'un champ dédié sur Sign — 0 = cardinaux (Bélier, Cancer, Balance,
-// Capricorne), 1 = fixes (Taureau, Lion, Scorpion, Verseau), 2 = mutables
-// (Gémeaux, Vierge, Sagittaire, Poissons).
-const NOMS_QUALITE = ['Signes cardinaux', 'Signes fixes', 'Signes mutables'] as const;
-
-function signesParQualite(qualite: 0 | 1 | 2): Sign[] {
-  return SIGNS.filter((_, i) => i % 3 === qualite);
-}
-
-export type SigneMetier = { sign: Sign; phrase: string };
-export type PageGroupe = { titre: string; signes: SigneMetier[] };
 
 export type MetierTousSignesPost = {
   periode: { debut: string; fin: string; label: string };
@@ -180,11 +169,7 @@ async function phrasesParSigne(periodeLabel: string, seedKey: string): Promise<{
 export async function genererMetierTousSignes(date: Date = new Date()): Promise<MetierTousSignesPost> {
   const periode = periodeCouverte(date);
   const { phrases, mode } = await phrasesParSigne(periode.label, periode.debut);
-
-  const pages = ([0, 1, 2] as const).map((qualite) => ({
-    titre: NOMS_QUALITE[qualite],
-    signes: signesParQualite(qualite).map((sign) => ({ sign, phrase: phrases[sign.key] })),
-  })) as [PageGroupe, PageGroupe, PageGroupe];
+  const pages = pagesParQualite(phrases);
 
   const legende = [
     `🔮 Ton métier selon ton signe — ${periode.label}`,
