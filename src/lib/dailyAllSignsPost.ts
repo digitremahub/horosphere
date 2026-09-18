@@ -139,10 +139,20 @@ export async function genererHoroscopeTousSignes(date: Date = new Date()): Promi
   const { phrases, mode } = await phrasesParSigne(dateISO);
   const pages = pagesParQualite(phrases);
 
+  // Le visuel Canva ("12 signes") n'affiche que les glyphes, groupés par
+  // tiers du calendrier (Bélier→Cancer / Lion→Scorpion / Sagittaire→Poissons
+  // — pas par qualité astrologique) et sans aucun texte : la phrase de
+  // chaque signe n'existe donc que dans la légende, listée dans le même
+  // ordre calendaire que les 3 pages du visuel pour que "swipe" corresponde
+  // à la lecture.
+  const lignesSignes = SIGNS.map((s) => `${s.symbole} ${s.nom} : ${phrases[s.key]}`);
+
   const legende = [
     `🔮 Horoscope du jour — tous les signes — ${label}`,
     '',
-    "Cardinaux, fixes ou mutables : swipe pour trouver ton signe.",
+    'Swipe pour voir les 12 signes, puis retrouve le tien ci-dessous :',
+    '',
+    ...lignesSignes,
     '',
     `Ta lecture complète (Amour, Travail, Énergie, Action du jour) t'attend sur horosphere.fr.`,
   ].join('\n');
