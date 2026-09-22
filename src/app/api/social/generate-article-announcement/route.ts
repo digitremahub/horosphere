@@ -18,6 +18,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const titre = String(body.titre || '').trim();
   const resume = String(body.resume || '').trim();
+  const imageArticle = String(body.imageUrl || '').trim();
   if (!titre) {
     return NextResponse.json({ error: 'Paramètre titre requis.' }, { status: 400 });
   }
@@ -33,7 +34,13 @@ export async function POST(req: NextRequest) {
     `🔗 horosphere.fr/actualites`,
   ].join('\n');
 
-  const imageUrl = `${siteUrl()}/api/og/annonce-article?titre=${encodeURIComponent(titre)}`;
+  // Reprend l'illustration réelle de l'article (générée pour son sujet précis,
+  // voir imageArticle dans lib/skyNews.ts) plutôt qu'un fond uni générique :
+  // retour utilisateur (22/09) sur la carte "Nouvel article" précédente, qui
+  // ne montrait qu'un logo et ne représentait jamais le sujet réel.
+  const params = new URLSearchParams({ titre });
+  if (imageArticle) params.set('image', imageArticle);
+  const imageUrl = `${siteUrl()}/api/og/annonce-article?${params.toString()}`;
 
   return NextResponse.json({ ok: true, legende, hashtags: HASHTAGS, imageUrl });
 }
