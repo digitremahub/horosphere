@@ -99,6 +99,71 @@ async function getVisitesResume(sql: ReturnType<typeof requireDb>): Promise<Visi
   };
 }
 
+export type RapportTraficJour = {
+  jour: string;
+  vues: number;
+  visiteursUniques: number;
+  parChemin: { path: string; vues: number }[];
+};
+
+/** Détail d'une journée précise — voir api/admin/traffic-report : sert à
+ * comprendre un pic de fréquentation repéré dans getSerieTraficJours, en
+ * répartissant les vues par page. */
+export async function getRapportTraficJour(jour: string): Promise<RapportTraficJour> {
+  const sql = requireDb();
+  await ensurePageViewsTable(sql);
+  const [[{ count: vues }], [{ count: visiteursUniques }], parChemin] = await Promise.all([
+    sql<{ count: string }[]>`
+      SELECT COUNT(*)::text AS count FROM page_views
+      WHERE created_at >= ${jour}::date AND created_at < ${jour}::date + interval '1 day'
+    `,
+    sql<{ count: string }[]>`
+      SELECT COUNT(DISTINCT visitor_id)::text AS count FROM page_views
+      WHERE created_at >= ${jour}::date AND created_at < ${jour}::date + interval '1 day'
+    `,
+    sql<{ path: string; count: string }[]>`
+      SELECT path, COUNT(*)::text AS count FROM page_views
+      WHERE created_at >= ${jour}::date AND created_at < ${jour}::date + interval '1 day'
+      GROUP BY path ORDER BY COUNT(*) DESC LIMIT 30
+    `,
+  ]);
+  return {
+    jour,
+    vues: Number(vues),
+    visiteursUniques: Number(visiteursUniques),
+    parChemin: parChemin.map((r) => ({ path: r.path, vues: Number(r.count) })),
+  };
+}
+
+export type PointSerieTrafic = { jour: string; vues: number; visiteursUniques: number };
+
+/** Série jour par jour sur `joursN` jours — sert à repérer un pic (comparaison
+ * à la moyenne des jours voisins) avant d'aller chercher le détail par page
+ * avec getRapportTraficJour. */
+export async function getSerieTraficJours(joursN = 30): Promise<PointSerieTrafic[]> {
+  const sql = requireDb();
+  await ensurePageViewsTable(sql);
+  const rows = await sql<{ jour: string; vues: string; visiteurs: string }[]>`
+    SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') AS jour,
+           COUNT(*)::text AS vues,
+           COUNT(DISTINCT visitor_id)::text AS visiteurs
+    FROM page_views
+    WHERE created_at >= now() - (${joursN} || ' days')::interval
+    GROUP BY 1
+    ORDER BY 1
+  `;
+  const parJour = new Map(rows.map((r) => [r.jour, { vues: Number(r.vues), visiteurs: Number(r.visiteurs) }]));
+  const serie: PointSerieTrafic[] = [];
+  for (let i = joursN - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() - i);
+    const jour = d.toISOString().slice(0, 10);
+    const v = parJour.get(jour);
+    serie.push({ jour, vues: v?.vues ?? 0, visiteursUniques: v?.visiteurs ?? 0 });
+  }
+  return serie;
+}
+
 export type Kpis = {
   visites: VisitesResume;
   utilisateurs: { total: number; nouveaux7j: number; nouveaux30j: number };
