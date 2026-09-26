@@ -29,18 +29,38 @@ async function ensurePageViewsTable(sql: ReturnType<typeof requireDb>): Promise<
     )
   `);
   await sql.unsafe(`CREATE INDEX IF NOT EXISTS page_views_created_at_idx ON page_views (created_at)`);
+  // Colonnes UTM (26/09) — ajoutées après coup, comme `categorie`/`desactive_le`
+  // ailleurs dans le backoffice : ALTER TABLE ADD COLUMN IF NOT EXISTS plutôt
+  // que de dépendre d'une migration séparée. NULL quand la page vue n'arrive
+  // pas d'un lien marqué (navigation interne, visite directe) — voir
+  // app/r/[code]/route.ts pour les liens qui les posent, et
+  // components/VisiteBeacon.tsx pour leur capture côté client.
+  await sql.unsafe(`ALTER TABLE page_views ADD COLUMN IF NOT EXISTS utm_source TEXT`);
+  await sql.unsafe(`ALTER TABLE page_views ADD COLUMN IF NOT EXISTS utm_medium TEXT`);
+  await sql.unsafe(`ALTER TABLE page_views ADD COLUMN IF NOT EXISTS utm_campaign TEXT`);
   pageViewsTableEnsured = true;
 }
+
+export type ParametresUtm = { source?: string | null; medium?: string | null; campaign?: string | null };
 
 /** Enregistre une vue de page — appelée depuis /api/track-visit (voir
  * components/VisiteBeacon.tsx). `visitorId` est un identifiant anonyme tiré
  * d'un cookie (aucune donnée personnelle) : sert uniquement à distinguer
- * visiteurs uniques et vues de page, jamais à identifier quelqu'un. Ne lève
- * jamais d'erreur ne bloquant : une vue manquée n'est jamais grave. */
-export async function enregistrerVisite(path: string, visitorId: string): Promise<void> {
+ * visiteurs uniques et vues de page, jamais à identifier quelqu'un. `utm`
+ * n'est renseigné que sur la page d'atterrissage d'un lien marqué (voir
+ * ParametresUtm) — les navigations internes suivantes n'en portent pas,
+ * c'est attendu. Ne lève jamais d'erreur bloquante : une vue manquée n'est
+ * jamais grave. */
+export async function enregistrerVisite(path: string, visitorId: string, utm: ParametresUtm = {}): Promise<void> {
   const sql = requireDb();
   await ensurePageViewsTable(sql);
-  await sql`INSERT INTO page_views (path, visitor_id) VALUES (${path.slice(0, 300)}, ${visitorId.slice(0, 100)})`;
+  await sql`
+    INSERT INTO page_views (path, visitor_id, utm_source, utm_medium, utm_campaign)
+    VALUES (
+      ${path.slice(0, 300)}, ${visitorId.slice(0, 100)},
+      ${utm.source?.slice(0, 100) ?? null}, ${utm.medium?.slice(0, 100) ?? null}, ${utm.campaign?.slice(0, 100) ?? null}
+    )
+  `;
 }
 
 export type VisitesResume = {
@@ -104,15 +124,17 @@ export type RapportTraficJour = {
   vues: number;
   visiteursUniques: number;
   parChemin: { path: string; vues: number }[];
+  parCampagne: { source: string; campagne: string; vues: number }[];
 };
 
 /** Détail d'une journée précise — voir api/admin/traffic-report : sert à
  * comprendre un pic de fréquentation repéré dans getSerieTraficJours, en
- * répartissant les vues par page. */
+ * répartissant les vues par page et par campagne UTM (voir
+ * app/r/[code]/route.ts pour la pose de ces paramètres). */
 export async function getRapportTraficJour(jour: string): Promise<RapportTraficJour> {
   const sql = requireDb();
   await ensurePageViewsTable(sql);
-  const [[{ count: vues }], [{ count: visiteursUniques }], parChemin] = await Promise.all([
+  const [[{ count: vues }], [{ count: visiteursUniques }], parChemin, parCampagne] = await Promise.all([
     sql<{ count: string }[]>`
       SELECT COUNT(*)::text AS count FROM page_views
       WHERE created_at >= ${jour}::date AND created_at < ${jour}::date + interval '1 day'
@@ -126,12 +148,20 @@ export async function getRapportTraficJour(jour: string): Promise<RapportTraficJ
       WHERE created_at >= ${jour}::date AND created_at < ${jour}::date + interval '1 day'
       GROUP BY path ORDER BY COUNT(*) DESC LIMIT 30
     `,
+    sql<{ source: string; campagne: string; count: string }[]>`
+      SELECT COALESCE(utm_source, '(aucun)') AS source, COALESCE(utm_campaign, '(aucune)') AS campagne, COUNT(*)::text AS count
+      FROM page_views
+      WHERE created_at >= ${jour}::date AND created_at < ${jour}::date + interval '1 day'
+        AND utm_source IS NOT NULL
+      GROUP BY 1, 2 ORDER BY COUNT(*) DESC LIMIT 30
+    `,
   ]);
   return {
     jour,
     vues: Number(vues),
     visiteursUniques: Number(visiteursUniques),
     parChemin: parChemin.map((r) => ({ path: r.path, vues: Number(r.count) })),
+    parCampagne: parCampagne.map((r) => ({ source: r.source, campagne: r.campagne, vues: Number(r.count) })),
   };
 }
 

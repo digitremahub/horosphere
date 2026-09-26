@@ -256,7 +256,7 @@ async function genererPostInstagramSigne(date: Date, sign: Sign, autreSigne?: Si
     '',
     `✨ Action du jour : ${reading.conseil}`,
     '',
-    `Chaque signe a son jour sur Horosphère — découvre le tien sur horosphere.fr.`,
+    `Chaque signe a son jour sur Horosphère — découvre le tien sur horosphere.fr/r/ig-signe.`,
     ...(autreSigne ? ['', renvoiVersFacebook(autreSigne)] : []),
   ].join('\n');
 
@@ -321,7 +321,7 @@ function construireCarrouselInstagramSigne(
     '',
     `✨ Action du jour : ${reading.conseil}`,
     '',
-    `Chaque signe a son jour sur Horosphère — découvre le tien sur horosphere.fr.`,
+    `Chaque signe a son jour sur Horosphère — découvre le tien sur horosphere.fr/r/ig-signe.`,
     ...(autreSigne ? ['', renvoiVersAutreCreneau(moment, autreSigne)] : []),
   ].join('\n');
 
@@ -348,7 +348,7 @@ function construirePostFacebookSigne(sign: Sign, reading: HoroscopeReading, autr
     '',
     `✨ Action du jour : ${reading.conseil}`,
     '',
-    `Chaque signe a son jour sur Horosphère — découvre le tien sur horosphere.fr.`,
+    `Chaque signe a son jour sur Horosphère — découvre le tien sur horosphere.fr/r/fb-signe.`,
     '',
     renvoiVersInstagram(autreSigne),
   ].join('\n');
@@ -366,9 +366,9 @@ function construirePostFacebookSigne(sign: Sign, reading: HoroscopeReading, autr
 // Instagram étant géré par genererPostInstagramSigne ci-dessus. =====
 
 const FB_LEGENDES = [
-  "Aujourd'hui, la lune est en {phase}. {influence}\n\nHorosphère traduit ça en une action concrète pour votre journée, ajustée à votre profil de naissance. À découvrir sur horosphere.fr.",
-  "{phase} ce {jour} — {influence}\n\nChaque matin, Horosphère vous donne une lecture claire ET une action à mener pour avancer. Premiers crédits offerts à l'inscription.",
-  "Ce {jour}, le ciel est en {phase}. {influence}\n\nUne lecture par jour, une action à mener — c'est tout ce qu'Horosphère vous demande de temps.",
+  "Aujourd'hui, la lune est en {phase}. {influence}\n\nHorosphère traduit ça en une action concrète pour votre journée, ajustée à votre profil de naissance. À découvrir sur horosphere.fr/r/fb-demo.",
+  "{phase} ce {jour} — {influence}\n\nChaque matin, Horosphère vous donne une lecture claire ET une action à mener pour avancer. Premiers crédits offerts à l'inscription sur horosphere.fr/r/fb-demo.",
+  "Ce {jour}, le ciel est en {phase}. {influence}\n\nUne lecture par jour, une action à mener — c'est tout ce qu'Horosphère vous demande de temps. horosphere.fr/r/fb-demo.",
 ];
 const TIKTOK_HOOKS = [
   "Voici l'action à mener aujourd'hui selon TON signe 👀",

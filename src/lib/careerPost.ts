@@ -178,7 +178,7 @@ export async function genererMetierTousSignes(date: Date = new Date()): Promise<
     '',
     '👉 Swipe pour trouver ton signe et l\'action à mener.',
     '',
-    `Chaque semaine, retrouve aussi ton horoscope carrière complet sur horosphere.fr.`,
+    `Chaque semaine, retrouve aussi ton horoscope carrière complet sur horosphere.fr/r/metier.`,
   ].join('\n');
 
   return {

@@ -154,7 +154,7 @@ export async function genererHoroscopeTousSignes(date: Date = new Date()): Promi
     '',
     ...lignesSignes,
     '',
-    `Ta lecture complète (Amour, Travail, Énergie, Action du jour) t'attend sur horosphere.fr.`,
+    `Ta lecture complète (Amour, Travail, Énergie, Action du jour) t'attend sur horosphere.fr/r/ig-jour.`,
   ].join('\n');
 
   return { dateISO, label, legende, hashtags: HASHTAGS_JOUR, pages, mode };

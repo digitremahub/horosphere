@@ -14,6 +14,11 @@ const UN_AN_EN_SECONDES = 60 * 60 * 24 * 365;
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const path = typeof body.path === 'string' ? body.path.slice(0, 300) : '/';
+  const utm = {
+    source: typeof body.utmSource === 'string' ? body.utmSource : null,
+    medium: typeof body.utmMedium === 'string' ? body.utmMedium : null,
+    campaign: typeof body.utmCampaign === 'string' ? body.utmCampaign : null,
+  };
 
   // Identifiant anonyme (aucune donnée personnelle) — persistant 1 an,
   // uniquement pour distinguer "vues" de "visiteurs uniques" dans le KPI.
@@ -28,7 +33,7 @@ export async function POST(req: NextRequest) {
 
   if (dbConfigured) {
     try {
-      await enregistrerVisite(path, visitorId);
+      await enregistrerVisite(path, visitorId, utm);
     } catch (err) {
       console.error('track-visit: enregistrement échoué', err);
     }

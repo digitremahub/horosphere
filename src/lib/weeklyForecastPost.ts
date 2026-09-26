@@ -142,7 +142,7 @@ export async function genererPrevisionSemaine(date: Date = new Date()): Promise<
     '',
     `Action de la semaine : ${action}`,
     '',
-    `Chaque semaine, Horosphère décrypte le ciel pour vous — découvrez votre lecture complète sur horosphere.fr.`,
+    `Chaque semaine, Horosphère décrypte le ciel pour vous — découvrez votre lecture complète sur horosphere.fr/r/semaine.`,
   ].join('\n');
 
   return {

@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     '',
     ...(resume ? [resume, ''] : []),
     `L'article complet est en ligne sur horosphere.fr, section Actualités.`,
-    `🔗 horosphere.fr/actualites`,
+    `🔗 horosphere.fr/r/actu`,
   ].join('\n');
 
   // Reprend l'illustration réelle de l'article (générée pour son sujet précis,
