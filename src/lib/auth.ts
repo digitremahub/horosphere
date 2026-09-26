@@ -9,6 +9,7 @@ import { grantCredits } from './credits';
 import { resolveWelcomeCredits } from './promotions';
 import { finaliserParrainageSiPresent } from './referral';
 import { envoyerLienMagique } from './authEmail';
+import { estCompteDesactive } from './adminInactivity';
 
 declare global {
   // eslint-disable-next-line no-var
@@ -68,6 +69,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const valid = await bcrypt.compare(password, user.password_hash);
         if (!valid) return null;
 
+        if (await estCompteDesactive(user.id)) return null;
+
         return { id: String(user.id), name: user.name, email: user.email };
       },
     }),
@@ -83,13 +86,29 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     error: '/connexion',
   },
   callbacks: {
+    // Bloque la connexion par lien magique pour un compte désactivé depuis
+    // le backoffice (voir lib/adminInactivity.ts) — le provider Credentials
+    // est déjà couvert dans `authorize` ci-dessus, avant même d'arriver ici.
+    async signIn({ user }) {
+      if (!user?.id) return true;
+      if (await estCompteDesactive(Number(user.id))) return false;
+      return true;
+    },
     jwt({ token, user }) {
       if (user) token.id = user.id;
       return token;
     },
-    session({ session, token }) {
+    // Revérifié à chaque lecture de session (pas seulement à la connexion) :
+    // avec la stratégie JWT, un jeton déjà émis reste valide côté client
+    // jusqu'à expiration si on ne revérifie pas ici — c'est le seul moyen
+    // de couper l'accès à quelqu'un déjà connecté au moment où son compte
+    // est désactivé, faute de session révocable côté serveur.
+    async session({ session, token }) {
       if (session.user) {
         (session.user as typeof session.user & { id: string }).id = token.id as string;
+      }
+      if (token?.id && (await estCompteDesactive(Number(token.id)))) {
+        return { ...session, user: undefined, expires: new Date(0).toISOString() };
       }
       return session;
     },

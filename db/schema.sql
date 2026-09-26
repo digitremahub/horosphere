@@ -27,6 +27,12 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
 -- l'attribution. NULL = aucune catégorie particulière.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS categorie TEXT;
 
+-- Désactivation réversible d'un compte inactif depuis le backoffice (voir
+-- lib/adminInactivity.ts) — bloque la connexion (mot de passe, lien
+-- magique, sessions JWT déjà émises) sans supprimer aucune donnée.
+-- NULL = compte actif.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS desactive_le TIMESTAMPTZ;
+
 CREATE TABLE IF NOT EXISTS accounts (
   id SERIAL PRIMARY KEY,
   "userId" INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,

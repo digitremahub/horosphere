@@ -18,6 +18,7 @@ import { offrirMoisAbonnement } from '@/lib/adminSubscriptions';
 import { definirCategorieUtilisateur, CATEGORIE_LABEL, type Categorie } from '@/lib/adminCategories';
 import { listPromotions, createPromotion, updatePromotion, deletePromotion, bonusAbonnementRestant, type PromotionInput } from '@/lib/promotions';
 import { listPreuvesEnAttente, traiterPreuveSuivi } from '@/lib/followRewards';
+import { listInactiveUsersAdmin, listDeactivatedUsersAdmin, desactiverCompte, reactiverCompte } from '@/lib/adminInactivity';
 import { listerEtatsParrainageAbonnement, synchroniserParrainagesAbonnement, SEUIL_FILLEULS_ABONNES, MOIS_MINIMUM_FILLEUL } from '@/lib/referralSubscription';
 import { SUBSCRIPTIONS, CREDIT_EXPIRY_DAYS } from '@/lib/pricing';
 
@@ -50,6 +51,11 @@ const inputStyle: React.CSSProperties = {
 };
 
 const PLAN_NOMS: Record<string, string> = Object.fromEntries(SUBSCRIPTIONS.map((s) => [s.slug, s.nom]));
+
+// Voir lib/adminInactivity.ts pour la définition exacte d'un compte
+// "inactif" (profil complété il y a plus de ce nombre de jours, jamais
+// d'abonnement ni de crédit consommé).
+const SEUIL_INACTIVITE_JOURS = 90;
 
 export default async function AdminPage({ searchParams }: { searchParams: Promise<{ ok?: string }> }) {
   const session = await auth();
@@ -184,6 +190,32 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     });
   }
 
+  async function desactiverCompteAction(formData: FormData) {
+    'use server';
+    const session = await auth();
+    const email = (session?.user as { email?: string | null } | undefined)?.email;
+    if (!isAdminEmail(email)) return;
+    const userId = Number(formData.get('userId'));
+    const resultat = await desactiverCompte(userId);
+    redirect({
+      href: { pathname: '/app/admin', query: { ok: `desact:${resultat.ok ? '1' : '0'}:${encodeURIComponent(resultat.message)}` } },
+      locale,
+    });
+  }
+
+  async function reactiverCompteAction(formData: FormData) {
+    'use server';
+    const session = await auth();
+    const email = (session?.user as { email?: string | null } | undefined)?.email;
+    if (!isAdminEmail(email)) return;
+    const userId = Number(formData.get('userId'));
+    const resultat = await reactiverCompte(userId);
+    redirect({
+      href: { pathname: '/app/admin', query: { ok: `react:${resultat.ok ? '1' : '0'}:${encodeURIComponent(resultat.message)}` } },
+      locale,
+    });
+  }
+
   let stats: Awaited<ReturnType<typeof getAdminStats>> | null = null;
   let kpis: Kpis | null = null;
   let users: Awaited<ReturnType<typeof listUsersAdmin>> = [];
@@ -191,6 +223,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   let loadError: string | null = null;
   const promotions = dbConfigured ? await listPromotions().catch(() => []) : [];
   const preuvesSuivi = dbConfigured ? await listPreuvesEnAttente().catch(() => []) : [];
+  const comptesInactifs = dbConfigured ? await listInactiveUsersAdmin(SEUIL_INACTIVITE_JOURS).catch(() => []) : [];
+  const comptesDesactives = dbConfigured ? await listDeactivatedUsersAdmin().catch(() => []) : [];
   const etatsParrainageAbo = dbConfigured ? await listerEtatsParrainageAbonnement().catch(() => []) : [];
   const promotionsAffichage = await Promise.all(
     promotions.map(async (p) => ({ promo: p, quotaRestant: await bonusAbonnementRestant(p).catch(() => p.bonusAbonnementQuota) }))
@@ -244,6 +278,24 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           </div>
         )}
         {ok?.startsWith('abo:') && (() => {
+          const [, succes, ...reste] = ok.split(':');
+          const message = decodeURIComponent(reste.join(':'));
+          return (
+            <div className="card" style={{ padding: '12px 16px', marginBottom: 20, fontSize: '0.84rem', color: 'var(--lever-profond)', borderColor: succes === '1' ? undefined : 'var(--lever)' }}>
+              {message}
+            </div>
+          );
+        })()}
+        {ok?.startsWith('desact:') && (() => {
+          const [, succes, ...reste] = ok.split(':');
+          const message = decodeURIComponent(reste.join(':'));
+          return (
+            <div className="card" style={{ padding: '12px 16px', marginBottom: 20, fontSize: '0.84rem', color: 'var(--lever-profond)', borderColor: succes === '1' ? undefined : 'var(--lever)' }}>
+              {message}
+            </div>
+          );
+        })()}
+        {ok?.startsWith('react:') && (() => {
           const [, succes, ...reste] = ok.split(':');
           const message = decodeURIComponent(reste.join(':'));
           return (
@@ -608,6 +660,57 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
               Enregistrer
             </button>
           </form>
+        </div>
+
+        <div className="card" style={{ padding: '20px 22px', marginBottom: 28 }}>
+          <h2 style={{ fontSize: '1rem', marginBottom: 4 }}>Comptes inactifs ({comptesInactifs.length})</h2>
+          <p style={{ fontSize: '0.82rem', color: 'var(--sourdine)', marginBottom: 14 }}>
+            Profil complété il y a plus de {SEUIL_INACTIVITE_JOURS} jours, jamais d&apos;abonnement, jamais de crédit consommé.
+            Désactiver bloque la connexion (mot de passe, lien magique, sessions déjà ouvertes) mais ne supprime aucune donnée — réversible à tout moment.
+          </p>
+          {comptesInactifs.length === 0 && <p style={{ fontSize: '0.84rem', color: 'var(--sourdine)' }}>Aucun compte inactif détecté pour l&apos;instant.</p>}
+          {comptesInactifs.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {comptesInactifs.map((c) => (
+                <div key={c.user_id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', borderTop: '1px solid var(--trait)', paddingTop: 8 }}>
+                  <div style={{ fontSize: '0.84rem' }}>
+                    <strong>{c.prenom ? `${c.prenom} ${c.nom ?? ''}`.trim() : c.email}</strong>
+                    {c.prenom && <span style={{ color: 'var(--sourdine)' }}> · {c.email}</span>}
+                    <span className="mono" style={{ color: 'var(--sourdine)' }}> · inscrit il y a {c.jours_inscrit} jours</span>
+                  </div>
+                  <form action={desactiverCompteAction}>
+                    <input type="hidden" name="userId" value={c.user_id} />
+                    <button type="submit" className="btn btn-ghost" style={{ fontSize: '0.78rem', padding: '5px 12px', color: 'var(--lever-profond)' }}>
+                      Désactiver
+                    </button>
+                  </form>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {comptesDesactives.length > 0 && (
+            <>
+              <h3 style={{ fontSize: '0.86rem', marginTop: 22, marginBottom: 10 }}>Comptes désactivés ({comptesDesactives.length})</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {comptesDesactives.map((c) => (
+                  <div key={c.user_id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', borderTop: '1px solid var(--trait)', paddingTop: 8 }}>
+                    <div style={{ fontSize: '0.84rem' }}>
+                      <strong>{c.prenom ? `${c.prenom} ${c.nom ?? ''}`.trim() : c.email}</strong>
+                      {c.prenom && <span style={{ color: 'var(--sourdine)' }}> · {c.email}</span>}
+                      <span className="mono" style={{ color: 'var(--sourdine)' }}> · désactivé le {c.desactive_le.slice(0, 10)}</span>
+                    </div>
+                    <form action={reactiverCompteAction}>
+                      <input type="hidden" name="userId" value={c.user_id} />
+                      <button type="submit" className="btn btn-ghost" style={{ fontSize: '0.78rem', padding: '5px 12px' }}>
+                        Réactiver
+                      </button>
+                    </form>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
         <div className="card" style={{ padding: '20px 22px' }}>
